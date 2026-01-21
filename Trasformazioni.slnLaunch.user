@@ -1,0 +1,11 @@
+[
+  {
+    "Name": "Nuovo profilo",
+    "Projects": [
+      {
+        "Path": "Trasformazioni.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

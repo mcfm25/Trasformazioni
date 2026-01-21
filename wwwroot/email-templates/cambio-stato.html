@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{Titolo}}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            line-height: 1.6;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 30px 20px;
+            color: #333333;
+        }
+
+        .status-change {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .status-icon {
+            font-size: 36px;
+            margin: 15px 0;
+        }
+
+        .message {
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #38f9d7;
+            color: #333333;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="header-icon">🔄</div>
+            <h1>{{Titolo}}</h1>
+        </div>
+
+        <div class="content">
+            <div class="status-change">
+                <div class="status-label">Aggiornamento Stato</div>
+                <div class="status-icon">✅</div>
+            </div>
+
+            <div class="message">
+                {{Messaggio}}
+            </div>
+
+            {{#if Link}}
+            <div class="button-container">
+                <a href="{{Link}}" class="button">Visualizza Dettagli</a>
+            </div>
+            {{/if}}
+
+            <p style="margin-top: 20px; font-size: 14px; color: #666; text-align: center;">
+                Rimani aggiornato sullo stato della tua pratica attraverso la piattaforma.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Sistema Gestione Gare</strong></p>
+            <p>Riceverai notifiche per ogni cambio di stato importante.</p>
+        </div>
+    </div>
+</body>
+</html>
