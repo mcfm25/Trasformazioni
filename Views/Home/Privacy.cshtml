@@ -1,0 +1,94 @@
+﻿@{
+    ViewData["Title"] = "Privacy Policy";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="fw-bold mb-4">@ViewData["Title"]</h1>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-semibold mb-3">Informativa sulla Privacy</h5>
+                    <p class="text-muted">
+                        Questa applicazione rispetta la tua privacy e si impegna a proteggere i tuoi dati personali.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-semibold mb-3">Raccolta dei Dati</h5>
+                    <p class="text-muted mb-3">
+                        Raccogliamo solo i dati necessari per il funzionamento del sistema:
+                    </p>
+                    <ul class="text-muted">
+                        <li>Nome e cognome</li>
+                        <li>Indirizzo email</li>
+                        <li>Numero di telefono (opzionale)</li>
+                        <li>Informazioni lavorative (reparto, data assunzione)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-semibold mb-3">Utilizzo dei Dati</h5>
+                    <p class="text-muted mb-0">
+                        I tuoi dati vengono utilizzati esclusivamente per:
+                    </p>
+                    <ul class="text-muted">
+                        <li>Gestione dell'account utente</li>
+                        <li>Autenticazione e autorizzazione</li>
+                        <li>Comunicazioni relative al sistema</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-semibold mb-3">Sicurezza</h5>
+                    <p class="text-muted mb-0">
+                        Implementiamo misure di sicurezza appropriate per proteggere i tuoi dati:
+                    </p>
+                    <ul class="text-muted">
+                        <li>Crittografia delle password</li>
+                        <li>Connessioni HTTPS sicure</li>
+                        <li>Controllo degli accessi basato sui ruoli</li>
+                        <li>Audit trail delle operazioni</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-semibold mb-3">I Tuoi Diritti</h5>
+                    <p class="text-muted mb-0">
+                        Hai il diritto di:
+                    </p>
+                    <ul class="text-muted">
+                        <li>Accedere ai tuoi dati personali</li>
+                        <li>Correggere informazioni inesatte</li>
+                        <li>Richiedere la cancellazione dei tuoi dati</li>
+                        <li>Opporti al trattamento dei tuoi dati</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="alert alert-light border">
+                <p class="mb-0 small">
+                    <strong>Ultimo aggiornamento:</strong> @DateTime.Now.ToString("dd/MM/yyyy")
+                </p>
+                <p class="mb-0 small">
+                    Per domande sulla privacy, contatta l'amministratore del sistema.
+                </p>
+            </div>
+
+            <div class="text-center mt-4">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                    Torna alla Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

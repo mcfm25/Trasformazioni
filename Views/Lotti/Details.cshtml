@@ -1,0 +1,1405 @@
+@model LottoDetailsViewModel
+@using Trasformazioni.Helpers
+@using Trasformazioni.Models.Entities
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+
+@{
+    ViewData["Title"] = $"Lotto: {Model.CodiceLotto}";
+    var gara = ViewBag.Gara as GaraDetailsViewModel;// Gara;
+    var numPartecipanti = (int)(ViewBag.NumeroPartecipanti ?? 0);
+    var numValutazioni = (int)(ViewBag.NumeroValutazioni ?? 0);
+    var numElaborazioni = (int)(ViewBag.NumeroElaborazioni ?? 0);
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Gare" asp-action="Index">Gare</a>
+        </li>
+        @if (gara != null)
+        {
+            <li class="breadcrumb-item">
+                <a asp-controller="Gare" asp-action="Details" asp-route-id="@gara.Id">
+                    @gara.CodiceGara - @(gara.Titolo.Length > 30 ? gara.Titolo.Substring(0, 30) + "..." : gara.Titolo)
+                </a>
+            </li>
+        }
+        <li class="breadcrumb-item">
+            <a asp-controller="Lotti" asp-action="Index">Lotti</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.CodiceLotto</li>
+    </ol>
+</nav>
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-file-text"></i> Dettaglio Lotto: <strong>@Model.CodiceLotto</strong>
+    </h1>
+</div>
+
+<div class="row">
+    <!-- Colonna Principale (8 col) -->
+    <div class="col-lg-8">
+        
+        <!-- Card Informazioni Lotto -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Informazioni Lotto
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Codice Lotto:</strong><br>
+                            <span class="text-primary fs-5">@Model.CodiceLotto</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Stato Attuale:</strong><br>
+                            @{
+                                var badgeClass = Model.Stato switch
+                                {
+                                    StatoLotto.Bozza => "bg-secondary",
+                                    StatoLotto.InValutazioneTecnica => "bg-info",
+                                    StatoLotto.InValutazioneEconomica => "bg-info",
+                                    StatoLotto.Approvato => "bg-success",
+                                    StatoLotto.Rifiutato => "bg-danger",
+                                    StatoLotto.InElaborazione => "bg-warning text-dark",
+                                    StatoLotto.Presentato => "bg-primary",
+                                    StatoLotto.InEsame => "bg-primary",
+                                    StatoLotto.RichiestaIntegrazione => "bg-warning text-dark",
+                                    StatoLotto.Vinto => "bg-success",
+                                    StatoLotto.Perso => "bg-danger",
+                                    StatoLotto.Scartato => "bg-dark",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass fs-6">@EnumHelper.GetDisplayName(Model.Stato)</span>
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Tipologia:</strong><br>
+                            <span class="badge bg-secondary">@EnumHelper.GetDisplayName(Model.Tipologia)</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Importo Base Asta:</strong><br>
+                            @if (Model.ImportoBaseAsta.HasValue)
+                            {
+                                <span class="text-success fs-5">@Model.ImportoBaseAsta.Value.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Non specificato</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                @if (Model.Quotazione.HasValue)
+                {
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Quotazione:</strong><br>
+                                <span class="text-info fs-5">@Model.Quotazione.Value.ToString("C")</span>
+                            </p>
+                        </div>
+                    </div>
+                }
+
+                <hr>
+
+                <p class="mb-2">
+                    <strong>Descrizione:</strong><br>
+                    @Model.Descrizione
+                </p>
+
+                <hr>
+
+                <p class="mb-2">
+                    <strong>Gara Associata:</strong><br>
+                    @if (gara != null)
+                    {
+                        <a asp-controller="Gare" asp-action="Details" asp-route-id="@gara.Id" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-link-45deg"></i> @gara.CodiceGara - @gara.Titolo
+                        </a>
+                    }
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.LinkPiattaforma))
+                {
+                    <p class="mb-2">
+                        <strong>Link Piattaforma:</strong><br>
+                        <a href="@Model.LinkPiattaforma" target="_blank" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-box-arrow-up-right"></i> Apri Piattaforma
+                        </a>
+                    </p>
+                }
+
+                @if (Model.GiorniFornitura.HasValue)
+                {
+                    <p class="mb-2">
+                        <strong>Giorni Fornitura:</strong> @Model.GiorniFornitura giorni
+                    </p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.DurataContratto))
+                {
+                    <p class="mb-2">
+                        <strong>Durata Contratto:</strong> @Model.DurataContratto
+                    </p>
+                }
+
+                @if (Model.DataStipulaContratto.HasValue || Model.DataScadenzaContratto.HasValue)
+                {
+                    <hr>
+                    <div class="row">
+                        @if (Model.DataStipulaContratto.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Data Stipula Contratto:</strong><br>
+                                    @Model.DataStipulaContratto.Value.ToString("dd/MM/yyyy")
+                                </p>
+                            </div>
+                        }
+                        @if (Model.DataScadenzaContratto.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Data Scadenza Contratto:</strong><br>
+                                    @Model.DataScadenzaContratto.Value.ToString("dd/MM/yyyy")
+                                </p>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Fatturazione))
+                {
+                    <p class="mb-2">
+                        <strong>Fatturazione:</strong> @Model.Fatturazione
+                    </p>
+                }
+
+                <p class="mb-0">
+                    <strong>Richiede Fideiussione:</strong>
+                    @if (Model.RichiedeFideiussione)
+                    {
+                        <span class="badge bg-warning text-dark">Sì</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">No</span>
+                    }
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.OperatoreAssegnatoNome))
+                {
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Operatore Assegnato:</strong> @Model.OperatoreAssegnatoNome
+                    </p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.MotivoRifiuto))
+                {
+                    <hr>
+                    <div class="alert alert-danger mb-0">
+                        <strong>Motivo Rifiuto:</strong><br>
+                        @Model.MotivoRifiuto
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* <!-- Card Checklist Documenti Richiesti -->
+        @if (Model.ChecklistDocumenti != null && Model.ChecklistDocumenti.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check"></i> Checklist Documenti Richiesti
+                    </h5>
+                    <span class="badge @(Model.IsChecklistCompleta ? "bg-success" : "bg-secondary")">
+                        @Model.NumeroDocumentiCompletati / @Model.NumeroDocumentiRichiesti
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Barra di progresso -->
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar @(Model.IsChecklistCompleta ? "bg-success" : "bg-warning")"
+                             role="progressbar"
+                             style="width: @Model.PercentualeCompletamentoChecklist%;"
+                             aria-valuenow="@Model.PercentualeCompletamentoChecklist"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            @Model.PercentualeCompletamentoChecklist.ToString("0")%
+                        </div>
+                    </div>
+
+                    <!-- Lista documenti -->
+                    <div class="row">
+                        @foreach (var doc in Model.ChecklistDocumenti)
+                        {
+                            <div class="col-md-6 mb-2">
+                                <div class="d-flex align-items-center p-2 border rounded @(doc.IsPresente ? "border-success bg-success bg-opacity-10" : "border-secondary")">
+                                    @if (doc.IsPresente)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>
+                                        <div class="flex-grow-1">
+                                            <strong>@doc.TipoDocumentoNome</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-file-earmark"></i> @doc.NomeFile
+                                                <br>
+                                                <i class="bi bi-calendar"></i> @doc.DataCaricamento?.ToString("dd/MM/yyyy HH:mm")
+                                            </small>
+                                        </div>
+                                        @if (doc.DocumentoId.HasValue)
+                                        {
+                                            <a asp-controller="DocumentiGara" asp-action="Details" asp-route-id="@doc.DocumentoId"
+                                               class="btn btn-sm btn-outline-primary" title="Visualizza documento">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-x-circle text-secondary me-2 fs-5"></i>
+                                        <div class="flex-grow-1">
+                                            <span class="text-muted">@doc.TipoDocumentoNome</span>
+                                            <br>
+                                            <small class="text-danger">
+                                                <i class="bi bi-exclamation-triangle"></i> Mancante
+                                            </small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Alert se incompleta e stato prossimo a Presentato -->
+                    @if (!Model.IsChecklistCompleta &&
+                                    (Model.Stato == StatoLotto.Approvato || Model.Stato == StatoLotto.InElaborazione))
+                    {
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Attenzione:</strong> La checklist non è completa.
+                            Prima di passare allo stato "Presentato" si consiglia di caricare tutti i documenti richiesti.
+                        </div>
+                    }
+
+                    @if (Model.IsChecklistCompleta)
+                    {
+                        <div class="alert alert-success mt-3 mb-0">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Checklist completa!</strong> Tutti i documenti richiesti sono stati caricati.
+                        </div>
+                    }
+                </div>
+            </div>
+        } *@
+
+        <!-- Card Checklist Documenti Richiesti -->
+        @if ((Model.ChecklistDocumentiGara != null && Model.ChecklistDocumentiGara.Any()) ||
+                (Model.ChecklistDocumenti != null && Model.ChecklistDocumenti.Any()))
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check"></i> Checklist Documenti Richiesti
+                    </h5>
+                </div>
+                <div class="card-body">
+
+                    @* ===== SEZIONE DOCUMENTI GARA ===== *@
+                    @if (Model.ChecklistDocumentiGara != null && Model.ChecklistDocumentiGara.Any())
+                    {
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-briefcase text-primary"></i> Documenti Gara
+                                </h6>
+                                <span class="badge @(Model.IsChecklistGaraCompleta ? "bg-success" : "bg-secondary")">
+                                    @Model.NumeroDocumentiCompletatiGara / @Model.NumeroDocumentiRichiestiGara
+                                </span>
+                            </div>
+
+                            <!-- Barra di progresso Gara -->
+                            <div class="progress mb-3" style="height: 15px;">
+                                <div class="progress-bar @(Model.IsChecklistGaraCompleta ? "bg-success" : "bg-info")"
+                                     role="progressbar"
+                                     style="width: @Model.PercentualeCompletamentoChecklistGara%;"
+                                     aria-valuenow="@Model.PercentualeCompletamentoChecklistGara"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    @Model.PercentualeCompletamentoChecklistGara%
+                                </div>
+                            </div>
+
+                            <!-- Lista documenti Gara -->
+                            <div class="row">
+                                @foreach (var doc in Model.ChecklistDocumentiGara)
+                                {
+                                    <div class="col-md-6 mb-2">
+                                        <div class="d-flex align-items-center p-2 border rounded @(doc.IsPresente ? "border-success bg-success bg-opacity-10" : "border-secondary")">
+                                            @if (doc.IsPresente)
+                                            {
+                                                <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>
+                                                <div class="flex-grow-1">
+                                                    <strong>@doc.TipoDocumentoNome</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-file-earmark"></i> @doc.NomeFile
+                                                        <br>
+                                                        <i class="bi bi-calendar"></i> @doc.DataCaricamento?.ToString("dd/MM/yyyy HH:mm")
+                                                    </small>
+                                                </div>
+                                                @if (doc.DocumentoId.HasValue)
+                                                {
+                                                    <a asp-controller="DocumentiGara" asp-action="Details" asp-route-id="@doc.DocumentoId"
+                                                       class="btn btn-sm btn-outline-primary" title="Visualizza documento">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-x-circle text-secondary me-2 fs-5"></i>
+                                                <div class="flex-grow-1">
+                                                    <span class="text-muted">@doc.TipoDocumentoNome</span>
+                                                    <br>
+                                                    <small class="text-danger">
+                                                        <i class="bi bi-exclamation-triangle"></i> Mancante
+                                                    </small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (!Model.IsChecklistGaraCompleta)
+                            {
+                                <div class="alert alert-info mt-2 mb-0 small">
+                                    <i class="bi bi-info-circle"></i>
+                                    I documenti Gara vanno caricati dalla
+                                    <a asp-controller="Gare" asp-action="Details" asp-route-id="@Model.GaraId">pagina della Gara</a>.
+                                </div>
+                            }
+                        </div>
+
+                        @if (Model.ChecklistDocumenti != null && Model.ChecklistDocumenti.Any())
+                        {
+                            <hr>
+                        }
+                    }
+
+                    @* ===== SEZIONE DOCUMENTI LOTTO ===== *@
+                    @if (Model.ChecklistDocumenti != null && Model.ChecklistDocumenti.Any())
+                    {
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-file-text text-warning"></i> Documenti Lotto
+                                </h6>
+                                <span class="badge @(Model.IsChecklistCompleta ? "bg-success" : "bg-secondary")">
+                                    @Model.NumeroDocumentiCompletati / @Model.NumeroDocumentiRichiesti
+                                </span>
+                            </div>
+
+                            <!-- Barra di progresso Lotto -->
+                            <div class="progress mb-3" style="height: 15px;">
+                                <div class="progress-bar @(Model.IsChecklistCompleta ? "bg-success" : "bg-warning")"
+                                     role="progressbar"
+                                     style="width: @Model.PercentualeCompletamentoChecklist%;"
+                                     aria-valuenow="@Model.PercentualeCompletamentoChecklist"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    @Model.PercentualeCompletamentoChecklist%
+                                </div>
+                            </div>
+
+                            <!-- Lista documenti Lotto -->
+                            <div class="row">
+                                @foreach (var doc in Model.ChecklistDocumenti)
+                                {
+                                    <div class="col-md-6 mb-2">
+                                        <div class="d-flex align-items-center p-2 border rounded @(doc.IsPresente ? "border-success bg-success bg-opacity-10" : "border-secondary")">
+                                            @if (doc.IsPresente)
+                                            {
+                                                <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>
+                                                <div class="flex-grow-1">
+                                                    <strong>@doc.TipoDocumentoNome</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-file-earmark"></i> @doc.NomeFile
+                                                        <br>
+                                                        <i class="bi bi-calendar"></i> @doc.DataCaricamento?.ToString("dd/MM/yyyy HH:mm")
+                                                    </small>
+                                                </div>
+                                                @if (doc.DocumentoId.HasValue)
+                                                {
+                                                    <a asp-controller="DocumentiGara" asp-action="Details" asp-route-id="@doc.DocumentoId"
+                                                       class="btn btn-sm btn-outline-primary" title="Visualizza documento">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-x-circle text-secondary me-2 fs-5"></i>
+                                                <div class="flex-grow-1">
+                                                    <span class="text-muted">@doc.TipoDocumentoNome</span>
+                                                    <br>
+                                                    <small class="text-danger">
+                                                        <i class="bi bi-exclamation-triangle"></i> Mancante
+                                                    </small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Alert se incompleta e stato prossimo a Presentato -->
+                            @if (!Model.IsChecklistCompleta &&
+                                                (Model.Stato == StatoLotto.Approvato || Model.Stato == StatoLotto.InElaborazione))
+                            {
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <strong>Attenzione:</strong> La checklist Lotto non è completa.
+                                    Prima di passare allo stato "Presentato" si consiglia di caricare tutti i documenti richiesti.
+                                </div>
+                            }
+
+                            @if (Model.IsChecklistCompleta)
+                            {
+                                <div class="alert alert-success mt-3 mb-0">
+                                    <i class="bi bi-check-circle"></i>
+                                    <strong>Checklist Lotto completa!</strong> Tutti i documenti richiesti sono stati caricati.
+                                </div>
+                            }
+                        </div>
+                    }
+
+                </div>
+            </div>
+        }
+
+        <!-- Timeline Workflow -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-right-circle"></i> Workflow Stati
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="workflow-timeline">
+                    @{
+                        // Stati principali workflow (accorpati per visualizzazione)
+                        var workflowStates = new[]
+                        {
+                                        StatoLotto.Bozza,
+                                        StatoLotto.InValutazioneTecnica,  // Rappresenta entrambe le valutazioni
+                                        StatoLotto.Approvato,
+                                        StatoLotto.InElaborazione,
+                                        StatoLotto.Presentato,
+                                        StatoLotto.InEsame,  // Rappresenta anche RichiestaIntegrazione
+                                        StatoLotto.Vinto  // Rappresenta Vinto/Perso/Scartato
+                                        };
+
+                        // Label personalizzate per gli stati accorpati
+                        var stateLabels = new Dictionary<StatoLotto, string>
+                                        {
+                                        { StatoLotto.Bozza, "Bozza" },
+                                        { StatoLotto.InValutazioneTecnica, "In Valutazione" },
+                                        { StatoLotto.Approvato, "Approvato" },
+                                        { StatoLotto.InElaborazione, "In Elaborazione" },
+                                        { StatoLotto.Presentato, "Presentato" },
+                                        { StatoLotto.InEsame, "In Esame" },
+                                        { StatoLotto.Vinto, "Concluso" }  // ⭐ Label accorpata
+                                        };
+
+                        // ⭐ Mappa stati reali a stati timeline
+                        var statoPerTimeline = Model.Stato switch
+                        {
+                            StatoLotto.RichiestaIntegrazione => StatoLotto.InEsame,
+                            StatoLotto.InValutazioneEconomica => StatoLotto.InValutazioneTecnica,
+                            StatoLotto.Perso => StatoLotto.Vinto,  // ⭐ Accorpa
+                            StatoLotto.Scartato => StatoLotto.Vinto,  // ⭐ Accorpa
+                            _ => Model.Stato
+                        };
+
+                        var currentStateIndex = Array.IndexOf(workflowStates, statoPerTimeline);
+                    }
+
+                    @for (int i = 0; i < workflowStates.Length; i++)
+                    {
+                        var state = workflowStates[i];
+                        var isCompleted = i < currentStateIndex;
+                        var isActive = i == currentStateIndex;
+                        var isFuture = i > currentStateIndex;
+
+                        // ⭐ Classe CSS speciale per stati conclusi (rosso se Perso/Scartato)
+                        var stepClass = isCompleted ? "completed" : (isActive ? "active" : "future");
+                        if (isActive && state == StatoLotto.Vinto && (Model.Stato == StatoLotto.Perso || Model.Stato == StatoLotto.Scartato))
+                        {
+                            stepClass += " failed";  // ⭐ Classe aggiuntiva per rosso
+                        }
+
+                        // ⭐ Tooltip con dettaglio stato reale
+                        var tooltipText = isActive
+                        ? (Model.Stato == StatoLotto.RichiestaIntegrazione
+                        ? "In Esame (Richiesta Integrazione)"
+                        : (Model.Stato == StatoLotto.InValutazioneEconomica
+                        ? "In Valutazione (Economica)"
+                        : (Model.Stato == StatoLotto.InValutazioneTecnica
+                        ? "In Valutazione (Tecnica)"
+                        : (Model.Stato == StatoLotto.Vinto
+                        ? "Concluso - Vinto ✅"
+                        : (Model.Stato == StatoLotto.Perso
+                        ? "Concluso - Perso ❌"
+                        : (Model.Stato == StatoLotto.Scartato
+                        ? "Concluso - Scartato ❌"
+                        : "Stato corrente"))))))
+                        : (isCompleted ? "Completato" : "In attesa");
+
+                        <div class="timeline-step @stepClass">
+                            <div class="timeline-circle"
+                                 data-bs-toggle="tooltip"
+                                 title="@tooltipText">
+                                @if (isCompleted)
+                                {
+                                    <i class="bi bi-check"></i>
+                                }
+                                else if (isActive)
+                                {
+                                    @if (state == StatoLotto.Vinto)
+                                    {
+                                        @* ⭐ Icone diverse per stati conclusi *@
+                                        if (Model.Stato == StatoLotto.Vinto)
+                                        {
+                                            <i class="bi bi-trophy-fill"></i>
+                                        }
+                                        else if (Model.Stato == StatoLotto.Perso)
+                                        {
+                                            <i class="bi bi-x-circle-fill"></i>
+                                        }
+                                        else if (Model.Stato == StatoLotto.Scartato)
+                                        {
+                                            <i class="bi bi-dash-circle-fill"></i>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                                    }
+                                }
+                            </div>
+                            <small class="timeline-label">@stateLabels[state]</small>
+                        </div>
+                    }
+                </div>
+
+                <!-- Stati speciali -->
+                @if (Model.Stato == StatoLotto.Perso || Model.Stato == StatoLotto.Scartato ||
+                                Model.Stato == StatoLotto.Rifiutato)
+                {
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Stato Terminale:</strong> Il lotto è in stato @EnumHelper.GetDisplayName(Model.Stato) e non può più essere modificato.
+                    </div>
+                }
+
+                @if (Model.Stato == StatoLotto.RichiestaIntegrazione)
+                {
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Richiesta Integrazione:</strong> Sono state richieste integrazioni.
+                        Dopo aver completato le integrazioni, il lotto tornerà in esame.
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Sezioni Valutazione/Elaborazione Esistenti -->
+        @if (Model.HasValutazioneTecnica || Model.HasValutazioneEconomica)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Valutazioni</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasValutazioneTecnica)
+                    {
+                        <div class="mb-3 pb-3 border-bottom">
+                            <h6><i class="bi bi-tools"></i> Valutazione Tecnica</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Data Valutazione</small>
+                                    <p class="mb-1">@Model.DataValutazioneTecnica?.ToString("dd/MM/yyyy HH:mm")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Valutatore</small>
+                                    <p class="mb-1">@(Model.ValutatoreTecnicoNome ?? "N/D")</p>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Esito</small>
+                                <p class="mb-1">
+                                    @if (Model.TecnicaApprovata == true)
+                                    {
+                                        <span class="badge bg-success">Approvata</span>
+                                    }
+                                    else if (Model.TecnicaApprovata == false)
+                                    {
+                                        <span class="badge bg-danger">Rifiutata</span>
+                                        @if (!string.IsNullOrWhiteSpace(Model.MotivoRifiutoTecnico))
+                                        {
+                                            <br />
+                            
+                                            <small class="text-danger">@Model.MotivoRifiutoTecnico</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">In Valutazione</span>
+                                    }
+                                </p>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.NoteTecniche))
+                            {
+                                <div class="mt-2">
+                                    <small class="text-muted">Note</small>
+                                    <p class="mb-0 text-muted small">@Model.NoteTecniche</p>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (Model.HasValutazioneEconomica)
+                    {
+                        <div>
+                            <h6><i class="bi bi-cash-coin"></i> Valutazione Economica</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Data Valutazione</small>
+                                    <p class="mb-1">@Model.DataValutazioneEconomica?.ToString("dd/MM/yyyy HH:mm")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Valutatore</small>
+                                    <p class="mb-1">@(Model.ValutatoreEconomicoNome ?? "N/D")</p>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Esito</small>
+                                <p class="mb-1">
+                                    @if (Model.EconomicaApprovata == true)
+                                    {
+                                        <span class="badge bg-success">Approvata</span>
+                                    }
+                                    else if (Model.EconomicaApprovata == false)
+                                    {
+                                        <span class="badge bg-danger">Rifiutata</span>
+                                        @if (!string.IsNullOrWhiteSpace(Model.MotivoRifiutoEconomico))
+                                        {
+                                            <br />
+                            
+                                            <small class="text-danger">@Model.MotivoRifiutoEconomico</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">In Valutazione</span>
+                                    }
+                                </p>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.NoteEconomiche))
+                            {
+                                <div class="mt-2">
+                                    <small class="text-muted">Note</small>
+                                    <p class="mb-0 text-muted small">@Model.NoteEconomiche</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.HasElaborazione)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-calculator"></i> Elaborazione Prezzi</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">Prezzo Desiderato</small>
+                            <p class="mb-0 h5 text-primary">@(Model.PrezzoDesiderato?.ToString("C") ?? "N/D")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Prezzo Reale Uscita</small>
+                            <p class="mb-0 h5 text-success">@(Model.PrezzoRealeUscita?.ToString("C") ?? "N/D")</p>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.MotivazioneAdattamento))
+                    {
+                        <div class="mt-2">
+                            <small class="text-muted">Motivazione Adattamento</small>
+                            <p class="mb-0 text-muted small">@Model.MotivazioneAdattamento</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.NoteElaborazione))
+                    {
+                        <div class="mt-2">
+                            <small class="text-muted">Note Elaborazione</small>
+                            <p class="mb-0 text-muted small">@Model.NoteElaborazione</p>
+                        </div>
+                    }
+                    @if (Model.DataElaborazione.HasValue)
+                    {
+                        <div class="mt-2">
+                            <small class="text-muted">Data Elaborazione</small>
+                            <p class="mb-0">@Model.DataElaborazione.Value.ToString("dd/MM/yyyy HH:mm") - @(Model.ElaboratoDa ?? "N/D")</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Card Statistiche Veloci -->
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart"></i> Statistiche Rapide
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h3 class="text-primary mb-0">@numPartecipanti</h3>
+                            <small class="text-muted">Partecipanti</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h3 class="text-info mb-0">@numValutazioni</h3>
+                            <small class="text-muted">Valutazioni</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h3 class="text-warning mb-0">@numElaborazioni</h3>
+                            <small class="text-muted">Elaborazioni</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Nota Sviluppo (Fase 1):</strong> Gestione avanzata con tabs disponibile in Fase 2.
+                    Potrai gestire in dettaglio: Valutazioni, Elaborazioni, Richieste Integrazione, Partecipanti e Scadenze.
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS Entità Correlate -->
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="lottoTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-valutazioni" data-bs-toggle="tab" data-bs-target="#content-valutazioni"
+                                type="button" role="tab" data-url="@Url.Action("LoadValutazioni", "Lotti", new { id = Model.Id })">
+                            <i class="bi bi-clipboard-check"></i> Valutazioni
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-elaborazioni" data-bs-toggle="tab" data-bs-target="#content-elaborazioni"
+                                type="button" role="tab" data-url="@Url.Action("LoadElaborazioni", "Lotti", new { id = Model.Id })">
+                            <i class="bi bi-calculator"></i> Elaborazioni
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-richieste" data-bs-toggle="tab" data-bs-target="#content-richieste"
+                                type="button" role="tab" data-url="@Url.Action("LoadRichiesteIntegrazione", "Lotti", new { id = Model.Id })">
+                            <i class="bi bi-exclamation-circle"></i> Richieste Int.
+                            @if (Model.NumeroRichiesteIntegrazione > 0)
+                            {
+                                <span class="badge bg-warning text-dark">@Model.NumeroRichiesteIntegrazione</span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-partecipanti" data-bs-toggle="tab" data-bs-target="#content-partecipanti"
+                                type="button" role="tab" data-url="@Url.Action("LoadPartecipanti", "Lotti", new { id = Model.Id })">
+                            <i class="bi bi-people"></i> Partecipanti
+                            @if (Model.NumeroPartecipanti > 0)
+                            {
+                                <span class="badge bg-primary">@Model.NumeroPartecipanti</span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-scadenze" data-bs-toggle="tab" data-bs-target="#content-scadenze"
+                                type="button" role="tab" data-url="@Url.Action("LoadScadenze", "Lotti", new { id = Model.Id })">
+                            <i class="bi bi-calendar-event"></i> Scadenze
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="lottoTabsContent">
+                    <div class="tab-pane fade show active" id="content-valutazioni" role="tabpanel">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Caricamento...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="content-elaborazioni" role="tabpanel">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Caricamento...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="content-richieste" role="tabpanel">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Caricamento...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="content-partecipanti" role="tabpanel">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Caricamento...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="content-scadenze" role="tabpanel">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Caricamento...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Placeholder HTML commentato per future tabs (Fase 2) -->
+        @* 
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-info">Informazioni</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-valutazione">Valutazione</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-elaborazione">Elaborazione</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-integrazioni">Integrazioni</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-scadenze">Scadenze</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-partecipanti">Partecipanti</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-info">
+                        [CONTENUTO INFO]
+                    </div>
+                    <div class="tab-pane fade" id="tab-valutazione">
+                        [CONTENUTO VALUTAZIONE]
+                    </div>
+                    [...]
+                </div>
+            </div>
+        </div>
+         *@
+
+    </div>
+
+    <!-- Sidebar Destra (4 col) -->
+    <div class="col-lg-4">
+        
+        <!-- Card Azioni -->
+        <div class="card mb-3 sticky-top">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="bi bi-gear"></i> Azioni
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Modifica Lotto
+                    </a>
+
+                    @* Pulsante Cambia Stato - solo se non è terminale *@
+                    @if (Model.Stato != StatoLotto.Vinto &&
+                        Model.Stato != StatoLotto.Perso &&
+                        Model.Stato != StatoLotto.Scartato &&
+                        Model.Stato != StatoLotto.Rifiutato)
+                    {
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-arrow-repeat"></i> Cambia Stato
+                            </button>
+                            <ul class="dropdown-menu w-100">
+                                @* Qui andrebbero solo gli stati validi dal workflow *@
+                                @foreach (StatoLotto stato in Enum.GetValues(typeof(StatoLotto)))
+                                {
+                                    if (stato != Model.Stato)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="#" 
+                                               onclick="cambiaStato('@Model.Id', '@((int)stato)'); return false;">
+                                                @stato
+                                            </a>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <button type="button" class="btn btn-outline-danger" 
+                            onclick="confirmDelete('@Model.Id', '@Model.CodiceLotto')">
+                        <i class="bi bi-trash"></i> Elimina Lotto
+                    </button>
+
+                    <hr class="my-2">
+
+                    @* Valutazione Tecnica *@
+                    @if (!Model.HasValutazioneTecnica)
+                    {
+                        <a asp-controller="Valutazioni" asp-action="CreateTecnica" asp-route-lottoId="@Model.Id"
+                           class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-clipboard-check me-1"></i>
+                            Avvia Valutazione Tecnica
+                        </a>
+                    }
+
+                    @* Valutazione Economica *@
+                    @if (Model.HasValutazioneTecnica && Model.TecnicaApprovata == true && !Model.HasValutazioneEconomica)
+                    {
+                        <a asp-controller="Valutazioni" asp-action="CreateEconomica" asp-route-lottoId="@Model.Id"
+                           class="btn btn-success w-100 mb-2">
+                            <i class="bi bi-currency-euro me-1"></i>
+                            Completa Valutazione Economica
+                        </a>
+                    }
+
+                    @* Dettaglio Valutazione (se esiste) *@
+                    @if (Model.HasValutazioneTecnica || Model.HasValutazioneEconomica)
+                    {
+                        <a asp-controller="Valutazioni" asp-action="Details" asp-route-lottoId="@Model.Id"
+                           class="btn btn-outline-info w-100 mb-2">
+                            <i class="bi bi-eye me-1"></i>
+                            Vedi Valutazione Completa
+                        </a>
+
+                    }
+
+
+
+                    @* Dettaglio Elaborazione (se esiste) *@
+                    @if (Model.Stato == StatoLotto.Approvato)
+                    {
+                        <a asp-controller="Elaborazione" asp-action="Avvia" asp-route-lottoId="@Model.Id"
+                           class="btn btn-outline-info w-100 mb-2">
+                            <i class="bi bi-eye me-1"></i>
+                            Avvia elaborazione
+                        </a>
+                    }
+                    else if (Model.Stato == StatoLotto.InElaborazione)
+                    {
+                        <a asp-controller="Elaborazione" asp-action="Edit" asp-route-lottoId="@Model.Id"
+                           class="btn btn-outline-info w-100 mb-2">
+                            <i class="bi bi-eye me-1"></i>
+                            Completa elaborazione
+                        </a>
+                    }
+                    @* else if (Model.Stato == StatoLotto.Presentato)
+                    {
+                        <a asp-controller="Elaborazione" asp-action="Details" asp-route-lottoId="@Model.Id"
+                           class="btn btn-outline-info w-100 mb-2">
+                            <i class="bi bi-eye me-1"></i>
+                            Vedi elaborazione completa
+                        </a>
+                    } *@
+                    @if (Model.HasElaborazione)
+                    {
+                        <a asp-controller="Elaborazione" asp-action="Details" asp-route-lottoId="@Model.Id"
+                           class="btn btn-outline-info w-100 mb-2">
+                            <i class="bi bi-eye me-1"></i>
+                            Vedi elaborazione completa
+                        </a>
+                    }
+
+                    @* Dettaglio Richieste Integrazioni (se esiste) *@
+                    @if (Model.Stato == StatoLotto.InEsame)
+                    {
+                        <a asp-controller="RichiesteIntegrazione" asp-action="Create" asp-route-lottoId="@Model.Id"
+                           class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-clipboard-check me-1"></i>
+                            Avvia Richiesta Integrazione
+                        </a>
+                    }
+                    @if (Model.NumeroRichiesteIntegrazione > 0)
+                    {
+                        <a asp-controller="RichiesteIntegrazione" asp-action="Index" asp-route-lottoId="@Model.Id"
+                           class="btn btn-outline-info w-100 mb-2">
+                            <i class="bi bi-eye me-1"></i>
+                            Vedi Richieste Integrazioni
+                        </a>
+                    }
+
+                    <hr class="my-2">
+
+                    <a asp-controller="Gare" asp-action="Details" asp-route-id="@Model.GaraId" 
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Torna alla Gara
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Info Sistema -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Informazioni Sistema
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2 small">
+                    <strong>Creato il:</strong><br>
+                    @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                </p>
+                @if (!string.IsNullOrWhiteSpace(Model.CreatedBy))
+                {
+                    <p class="mb-2 small">
+                        <strong>Creato da:</strong> @Model.CreatedBy
+                    </p>
+                }
+                @if (Model.ModifiedAt.HasValue)
+                {
+                    <p class="mb-2 small">
+                        <strong>Modificato il:</strong><br>
+                        @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ModifiedBy))
+                {
+                    <p class="mb-0 small">
+                        <strong>Modificato da:</strong> @Model.ModifiedBy
+                    </p>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Stato failed (Perso/Scartato) */
+        .timeline-step.active.failed .timeline-circle {
+            background-color: #dc3545; /* Rosso Bootstrap */
+            border-color: #dc3545;
+        }
+
+            .timeline-step.active.failed .timeline-circle i {
+                color: white;
+            }
+
+        /* Opzionale: label rossa per stati failed */
+        .timeline-step.active.failed .timeline-label {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        /* Timeline Workflow Styles */
+        .workflow-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .timeline-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #dee2e6;
+            z-index: 0;
+        }
+
+        .timeline-step.completed::after {
+            background: #198754;
+        }
+
+        .timeline-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            background: white;
+            border: 2px solid #dee2e6;
+            cursor: default;
+            transition: all 0.3s;
+        }
+
+        .timeline-step.completed .timeline-circle {
+            background: #198754;
+            border-color: #198754;
+            color: white;
+        }
+
+        .timeline-step.active .timeline-circle {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+            transform: scale(1.2);
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+        }
+
+        .timeline-step.future .timeline-circle {
+            background: white;
+            border-color: #dee2e6;
+            color: #adb5bd;
+        }
+
+        .timeline-label {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .workflow-timeline {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .timeline-step {
+                flex-direction: row;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+            .timeline-step::after {
+                display: none;
+            }
+
+            .timeline-label {
+                margin-top: 0;
+                margin-left: 10px;
+                text-align: left;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Carica il primo tab automaticamente
+            loadTabContent('content-valutazioni', '@Url.Action("LoadValutazioni", "Lotti", new { id = Model.Id })');
+
+            // Event listener per i tab
+            const tabButtons = document.querySelectorAll('#lottoTabs button[data-bs-toggle="tab"]');
+            tabButtons.forEach(button => {
+                button.addEventListener('shown.bs.tab', function(event) {
+                    const targetId = event.target.getAttribute('data-bs-target').substring(1);
+                    const url = event.target.getAttribute('data-url');
+
+                    // Verifica se il contenuto è già stato caricato
+                    const content = document.getElementById(targetId);
+                    if (content && content.innerHTML.includes('spinner-border')) {
+                        loadTabContent(targetId, url);
+                    }
+                });
+            });
+
+            // Inizializza tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+        });
+
+        function loadTabContent(targetId, url) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Errore nel caricamento');
+                    return response.text();
+                })
+                .then(html => {
+                    document.getElementById(targetId).innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Errore:', error);
+                    document.getElementById(targetId).innerHTML =
+                        '<div class="alert alert-danger">Errore nel caricamento dei dati</div>';
+                });
+        }
+
+        // Cambio stato AJAX
+        function cambiaStato(lottoId, nuovoStato) {
+            if (!confirm('Confermi il cambio di stato?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("CambiaStato", "Lotti")',
+                type: 'POST',
+                data: {
+                    id: lottoId,
+                    nuovoStato: nuovoStato,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Errore: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Errore di connessione. Riprova.');
+                }
+            });
+        }
+
+        // Conferma eliminazione
+        function confirmDelete(lottoId, codiceLotto) {
+            if (confirm(`Sei sicuro di voler eliminare il lotto "${codiceLotto}"?\n\nQuesta azione non può essere annullata.`)) {
+                $.ajax({
+                    url: '@Url.Action("Delete", "Lotti")',
+                    type: 'POST',
+                    data: {
+                        id: lottoId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            window.location.href = response.redirectUrl;
+                        } else {
+                            alert('Errore: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Errore di connessione. Riprova.');
+                    }
+                });
+            }
+        }
+
+        // Funzione globale per completare scadenza (chiamata da onclick)
+        function completaScadenzaTab(scadenzaId, lottoId) {
+            if (!confirm('Confermi di voler completare questa scadenza?')) {
+                return;
+            }
+
+            // Trova il token anti-forgery dalla pagina padre
+            var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            var tokenValue = tokenInput ? tokenInput.value : '';
+
+            // Usa jQuery (presente nella pagina)
+            $.ajax({
+                url: '/Scadenze/Completa',
+                type: 'POST',
+                data: {
+                    id: scadenzaId,
+                    __RequestVerificationToken: tokenValue
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Ricarica il tab usando la funzione della pagina padre
+                        loadTabContent('content-scadenze', '/Lotti/LoadScadenze/' + lottoId);
+                    } else {
+                        alert('Errore: ' + (response.message || 'Errore sconosciuto'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Errore AJAX:', error);
+                    alert('Errore di connessione. Riprova.');
+                }
+            });
+        }
+    </script>
+
+    @Html.AntiForgeryToken()
+}

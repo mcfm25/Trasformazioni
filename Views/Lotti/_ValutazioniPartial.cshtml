@@ -1,0 +1,252 @@
+@using Trasformazioni.Models.Enums
+@model Trasformazioni.Models.ViewModels.LottoDetailsViewModel
+
+<!-- Link Doc Gara -->
+@if (Model.NumeroDocumenti > 0)
+{
+    <div class="card bg-light mb-2">
+        <div class="card-body">
+            <h6 class="card-title">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                Documenti Associati
+            </h6>
+            <p class="mb-2">
+                Questo lotto ha <strong>@Model.NumeroDocumentiValutazioneTecnica</strong> document@(Model.NumeroDocumentiValutazioneTecnica == 1 ? "o" : "i") tecnic@(Model.NumeroDocumentiValutazioneTecnica == 1 ? "o" : "i") associat@(Model.NumeroDocumentiValutazioneTecnica == 1 ? "o" : "i").
+            </p>
+            <p class="mb-2">
+                Questo lotto ha <strong>@Model.NumeroDocumentiValutazioneEconomica</strong> document@(Model.NumeroDocumentiValutazioneEconomica == 1 ? "o" : "i") economic@(Model.NumeroDocumentiValutazioneEconomica == 1 ? "o" : "i") associat@(Model.NumeroDocumentiValutazioneEconomica == 1 ? "o" : "i").
+            </p>
+            <a asp-controller="DocumentiGara" asp-action="Index" asp-route-lottoId="@Model.Id" asp-route-garaId="@Model.GaraId"
+               class="btn btn-sm btn-primary">
+                <i class="bi bi-arrow-right-circle me-1"></i>
+                Vedi Documenti
+            </a>
+        </div>
+    </div>
+}
+
+@if (!Model.HasValutazioneTecnica && !Model.HasValutazioneEconomica)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Nessuna valutazione presente</strong>
+        <p class="mb-0 mt-2">Il lotto non ha ancora valutazioni tecniche o economiche.</p>
+    </div>
+    <a asp-controller="Valutazioni" asp-action="CreateTecnica" asp-route-lottoId="@Model.Id"
+       class="btn btn-primary w-100 mb-2">
+        <i class="bi bi-clipboard-check me-1"></i>
+        Avvia Valutazione Tecnica
+    </a>
+}
+else
+{
+    <div class="row">
+        <!-- Valutazione Tecnica -->
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-check me-2"></i>
+                        Valutazione Tecnica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasValutazioneTecnica)
+                    {
+                        <div class="mb-3">
+                            <strong>Stato:</strong>
+                            @if (Model.TecnicaApprovata == true)
+                            {
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-check-circle me-1"></i>Approvata
+                                </span>
+                            }
+                            else if (Model.TecnicaApprovata == false)
+                            {
+                                <span class="badge bg-danger ms-2">
+                                    <i class="bi bi-x-circle me-1"></i>Rifiutata
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="bi bi-clock me-1"></i>In Valutazione
+                                </span>
+                            }
+                        </div>
+
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Data Valutazione:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.DataValutazioneTecnica.HasValue)
+                                {
+                                    @Model.DataValutazioneTecnica.Value.ToString("dd/MM/yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non disponibile</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Valutatore:</dt>
+                            <dd class="col-sm-7">
+                                @if (!string.IsNullOrEmpty(Model.ValutatoreTecnicoNome))
+                                {
+                                    @Model.ValutatoreTecnicoNome
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non assegnato</span>
+                                }
+                            </dd>
+
+                            @if (!string.IsNullOrEmpty(Model.MotivoRifiutoTecnico))
+                            {
+                                <dt class="col-sm-5">Motivo Rifiuto:</dt>
+                                <dd class="col-sm-7">
+                                    <div class="alert alert-danger mb-0 py-2">
+                                        @Model.MotivoRifiutoTecnico
+                                    </div>
+                                </dd>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.NoteTecniche))
+                            {
+                                <dt class="col-sm-5 mt-2">Note:</dt>
+                                <dd class="col-sm-7 mt-2">
+                                    <div class="alert alert-info mb-0 py-2">
+                                        @Model.NoteTecniche
+                                    </div>
+                                </dd>
+                            }
+                        </dl>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            <i class="bi bi-hourglass-split me-2"></i>
+                            Valutazione tecnica non ancora effettuata
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Valutazione Economica -->
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-currency-euro me-2"></i>
+                        Valutazione Economica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasValutazioneEconomica)
+                    {
+                        <div class="mb-3">
+                            <strong>Stato:</strong>
+                            @if (Model.EconomicaApprovata == true)
+                            {
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-check-circle me-1"></i>Approvata
+                                </span>
+                            }
+                            else if (Model.EconomicaApprovata == false)
+                            {
+                                <span class="badge bg-danger ms-2">
+                                    <i class="bi bi-x-circle me-1"></i>Rifiutata
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="bi bi-clock me-1"></i>In Valutazione
+                                </span>
+                            }
+                        </div>
+
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Data Valutazione:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.DataValutazioneEconomica.HasValue)
+                                {
+                                    @Model.DataValutazioneEconomica.Value.ToString("dd/MM/yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non disponibile</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Valutatore:</dt>
+                            <dd class="col-sm-7">
+                                @if (!string.IsNullOrEmpty(Model.ValutatoreEconomicoNome))
+                                {
+                                    @Model.ValutatoreEconomicoNome
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non assegnato</span>
+                                }
+                            </dd>
+
+                            @if (!string.IsNullOrEmpty(Model.MotivoRifiutoEconomico))
+                            {
+                                <dt class="col-sm-5">Motivo Rifiuto:</dt>
+                                <dd class="col-sm-7">
+                                    <div class="alert alert-danger mb-0 py-2">
+                                        @Model.MotivoRifiutoEconomico
+                                    </div>
+                                </dd>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.NoteEconomiche))
+                            {
+                                <dt class="col-sm-5 mt-2">Note:</dt>
+                                <dd class="col-sm-7 mt-2">
+                                    <div class="alert alert-info mb-0 py-2">
+                                        @Model.NoteEconomiche
+                                    </div>
+                                </dd>
+                            }
+                        </dl>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary mb-2">
+                            <i class="bi bi-hourglass-split me-2"></i>
+                            Valutazione economica non ancora effettuata
+                        </div>
+                        <a asp-controller="Valutazioni" asp-action="CreateEconomica" asp-route-lottoId="@Model.Id"
+                           class="btn btn-primary w-100 mb-0">
+                            <i class="bi bi-clipboard-check me-1"></i>
+                            Avvia Valutazione Economica
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Preventivi -->
+    @if (Model.NumeroPreventivi > 0)
+    {
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    Preventivi Associati
+                </h6>
+                <p class="mb-2">
+                    Questo lotto ha <strong>@Model.NumeroPreventivi</strong> preventiv@(Model.NumeroPreventivi == 1 ? "o" : "i") associat@(Model.NumeroPreventivi == 1 ? "o" : "i").
+                </p>
+                <a asp-controller="Preventivi" asp-action="Index" asp-route-lottoId="@Model.Id" 
+                   class="btn btn-sm btn-primary">
+                    <i class="bi bi-arrow-right-circle me-1"></i>
+                    Vedi Preventivi
+                </a>
+            </div>
+        </div>
+    }
+}

@@ -1,0 +1,305 @@
+@model Trasformazioni.Models.ViewModels.LottoDetailsViewModel
+
+@if (Model.NumeroPartecipanti == 0)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Nessun partecipante censito</strong>
+        <p class="mb-0 mt-2">Non sono ancora stati registrati partecipanti per questo lotto.</p>
+    </div>
+    <a asp-controller="PartecipantiLotto" asp-action="Create" asp-route-lottoId="@Model.Id"
+       class="btn btn-primary w-100 mb-2">
+        <i class="bi bi-clipboard-check me-1"></i>
+        Aggiungi Partecipanti
+    </a>
+}
+else
+{
+    <!-- Statistiche Partecipanti -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-people" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Totale Partecipanti</h6>
+                            <h3 class="mb-0">@Model.NumeroPartecipanti</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-trophy" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Aggiudicatario</h6>
+                            <h3 class="mb-0">
+                                @{
+                                    var aggiudicatario = Model.Partecipanti?.FirstOrDefault(p => p.IsNostraAzienda);
+                                    @(aggiudicatario != null ? "Sì" : "No")
+                                }
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-currency-euro" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Offerta Minima</h6>
+                            <h3 class="mb-0">
+                                @{
+                                    var offertaMinima = Model.Partecipanti?
+                                        .Where(p => p.ImportoOfferto.HasValue)
+                                        .OrderBy(p => p.ImportoOfferto)
+                                        .FirstOrDefault()?.ImportoOfferto;
+
+                                    if (offertaMinima.HasValue)
+                                    {
+                                        @offertaMinima.Value.ToString("C0")
+                                    }
+                                    else
+                                    {
+                                        <small>N/D</small>
+                                    }
+                                }
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-bar-chart" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Offerta Media</h6>
+                            <h3 class="mb-0">
+                                @{
+                                    var offerteValide = Model.Partecipanti?
+                                        .Where(p => p.ImportoOfferto.HasValue)
+                                        .Select(p => p.ImportoOfferto.Value)
+                                        .ToList();
+
+                                    if (offerteValide != null && offerteValide.Any())
+                                    {
+                                        var media = offerteValide.Average();
+                                        @media.ToString("C0")
+                                    }
+                                    else
+                                    {
+                                        <small>N/D</small>
+                                    }
+                                }
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista Partecipanti -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul me-2"></i>
+                Graduatoria Partecipanti
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Partecipanti != null && Model.Partecipanti.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 8%;">Pos.</th>
+                                <th style="width: 42%;">Ragione Sociale</th>
+                                <th style="width: 20%;">Offerta Economica</th>
+                                <th style="width: 20%;">Stato</th>
+                                <th style="width: 10%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var partecipantiOrdinati = Model.Partecipanti
+                                    .OrderBy(p => p.ImportoOfferto ?? decimal.MaxValue)
+                                    .ToList();
+
+                                int posizione = 1;
+                            }
+                            @foreach (var partecipante in partecipantiOrdinati)
+                            {
+                                <tr class="@(partecipante.IsNostraAzienda ? "table-success" : "")">
+                                    <td class="text-center">
+                                        @if (partecipante.ImportoOfferto.HasValue)
+                                        {
+                                            if (posizione == 1)
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="bi bi-trophy-fill me-1"></i>@posizione
+                                                </span>
+                                            }
+                                            else if (posizione == 2)
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-award-fill me-1"></i>@posizione
+                                                </span>
+                                            }
+                                            else if (posizione == 3)
+                                            {
+                                                <span class="badge" style="background-color: #cd7f32; color: white;">
+                                                    <i class="bi bi-award-fill me-1"></i>@posizione
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-dark">@posizione</span>
+                                            }
+                                            posizione++;
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong>@partecipante.Nome</strong>
+                                        @if (partecipante.IsNostraAzienda)
+                                        {
+                                            <span class="badge bg-primary ms-2">
+                                                <i class="bi bi-building me-1"></i>Nostra Azienda
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (partecipante.ImportoOfferto.HasValue)
+                                        {
+                                            <strong class="text-primary">@partecipante.ImportoOfferto.Value.ToString("C2")</strong>
+                                            
+                                            @if (Model.ImportoBaseAsta.HasValue && partecipante.ImportoOfferto.HasValue)
+                                            {
+                                                var scostamento = ((partecipante.ImportoOfferto.Value - Model.ImportoBaseAsta.Value) / Model.ImportoBaseAsta.Value * 100);
+                                                <br />
+                                                <small class="@(scostamento < 0 ? "text-success" : "text-danger")">
+                                                    (@(scostamento >= 0 ? "+" : "")@scostamento.ToString("F1")% vs base)
+                                                </small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Non specificata</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (partecipante.IsNostraAzienda)
+                                        {
+                                            @if (Model.Stato == Trasformazioni.Models.Enums.StatoLotto.Vinto)
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-trophy-fill me-1"></i>Aggiudicatario
+                                                </span>
+                                            }
+                                            else if (Model.Stato == Trasformazioni.Models.Enums.StatoLotto.Perso)
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="bi bi-x-circle me-1"></i>Non Aggiudicato
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-hourglass-split me-1"></i>In Gara
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-person me-1"></i>Concorrente
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="@Url.Action("Details", "PartecipantiLotto", new { id = partecipante.Id })" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Dettagli">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-3 text-center text-muted">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">Nessun partecipante trovato</p>
+                </div>
+            }
+        </div>
+        <div class="card-footer bg-light text-end">
+            <a asp-controller="PartecipantiLotto" asp-action="Index" asp-route-lottoId="@Model.Id" 
+               class="btn btn-primary">
+                <i class="bi bi-arrow-right-circle me-1"></i>
+                Gestisci Partecipanti
+            </a>
+        </div>
+    </div>
+
+    <!-- Info Aggiuntive -->
+    @if (Model.ImportoBaseAsta.HasValue)
+    {
+        <div class="card bg-light mt-3">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Informazioni Base Asta
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-6">Importo Base Asta:</dt>
+                            <dd class="col-sm-6">
+                                <strong>@Model.ImportoBaseAsta.Value.ToString("C2")</strong>
+                            </dd>
+                        </dl>
+                    </div>
+                    @if (Model.Quotazione.HasValue)
+                    {
+                        <div class="col-md-6">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-6">Quotazione:</dt>
+                                <dd class="col-sm-6">
+                                    <strong>@Model.Quotazione.Value.ToString("C2")</strong>
+                                </dd>
+                            </dl>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}

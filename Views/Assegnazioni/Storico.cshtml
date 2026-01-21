@@ -1,0 +1,236 @@
+﻿@model IEnumerable<Trasformazioni.Models.ViewModels.AssegnazioneMezzoListViewModel>
+
+@{
+    ViewData["Title"] = "Storico Assegnazioni";
+    var mezzo = ViewBag.Mezzo as Trasformazioni.Models.ViewModels.MezzoDetailsViewModel;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Storico Assegnazioni</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Mezzi" asp-action="Index">Mezzi</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Mezzi" asp-action="Details" asp-route-id="@mezzo.Id">@mezzo.Targa</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Storico</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @* Info Mezzo *@
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-1">@mezzo.DescrizioneCompleta</h4>
+                            <p class="text-muted mb-0">Storico completo delle assegnazioni</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a asp-controller="Mezzi" asp-action="Details" asp-route-id="@mezzo.Id"
+                               class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Torna al Mezzo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Statistiche *@
+    @if (Model.Any())
+    {
+        var totaleAssegnazioni = Model.Count();
+        var assegnazioniAttive = Model.Count(a => a.IsAttiva);
+        var assegnazioniChiuse = Model.Count(a => !a.IsAttiva);
+        var totaleGiorni = Model.Where(a => a.DurataGiorni.HasValue).Sum(a => a.DurataGiorni.Value);
+        var totaleKm = Model.Where(a => a.ChilometriPercorsi.HasValue).Sum(a => a.ChilometriPercorsi.Value);
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-primary mb-0">@totaleAssegnazioni</h3>
+                        <small class="text-muted">Totale Assegnazioni</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-success mb-0">@assegnazioniAttive</h3>
+                        <small class="text-muted">Attive/Prenotate</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-secondary mb-0">@totaleGiorni</h3>
+                        <small class="text-muted">Giorni Totali</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-info mb-0">@totaleKm.ToString("N0")</h3>
+                        <small class="text-muted">Km Percorsi</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Tabella Storico *@
+    <div class="card">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Stato</th>
+                                <th>Utente</th>
+                                <th>Data Inizio</th>
+                                <th>Data Fine</th>
+                                <th>Durata</th>
+                                <th>Motivo</th>
+                                <th>Km Inizio</th>
+                                <th>Km Fine</th>
+                                <th>Km Percorsi</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var assegnazione in Model)
+                            {
+                                <tr class="@(assegnazione.IsAttiva ? "table-active" : "")">
+                                    <td>
+                                        @if (assegnazione.IsPrenotazione)
+                                        {
+                                            <span class="badge bg-info">Prenotazione</span>
+                                        }
+                                        else if (assegnazione.IsInCorso)
+                                        {
+                                            <span class="badge bg-primary">In Corso</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Completata</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong>@assegnazione.UtenteNomeCompleto</strong>
+                                    </td>
+                                    <td>
+                                        @assegnazione.DataInizio.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.DataFine.HasValue)
+                                        {
+                                            @assegnazione.DataFine.Value.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.DurataGiorni.HasValue)
+                                        {
+                                            <span>@assegnazione.DurataGiorni giorni</span>
+                                        }
+                                        else if (assegnazione.IsInCorso)
+                                        {
+                                            var giorniDaInizio = (DateTime.Today - assegnazione.DataInizio.Date).Days;
+                                            <span class="text-primary">@giorniDaInizio giorni</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            @assegnazione.MotivoAssegnazioneDescrizione
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.ChilometraggioInizio.HasValue)
+                                        {
+                                            <span>@assegnazione.ChilometraggioInizio.Value.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.ChilometraggioFine.HasValue)
+                                        {
+                                            <span>@assegnazione.ChilometraggioFine.Value.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.ChilometriPercorsi.HasValue)
+                                        {
+                                            <strong class="text-success">@assegnazione.ChilometriPercorsi.Value.ToString("N0") km</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(assegnazione.Note))
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-info"
+                                                    data-bs-toggle="tooltip" data-bs-placement="left"
+                                                    title="@assegnazione.Note">
+                                                <i class="bi bi-file-text"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="lead text-muted mt-3">Nessuna assegnazione trovata per questo mezzo</p>
+                    <p class="text-muted">Il mezzo non è mai stato assegnato</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Inizializza tooltips Bootstrap per le note
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}

@@ -1,0 +1,311 @@
+@model Trasformazioni.Models.ViewModels.PartecipanteLottoCreateViewModel
+
+@{
+    ViewData["Title"] = "Nuovo Partecipante";
+    var lottoPreimpostato = ViewBag.LottoPreimpostato as bool? ?? false;
+    var lottoCodice = ViewBag.LottoCodice as string;
+    var lottoTitolo = ViewBag.LottoTitolo as string;
+}
+
+<div class="container-fluid">
+    <!-- Header con breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+                    @if (lottoPreimpostato && Model.LottoId != Guid.Empty)
+                    {
+                        <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">Lotto @lottoCodice</a></li>
+                        <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@Model.LottoId">Partecipanti</a></li>
+                    }
+                    <li class="breadcrumb-item active" aria-current="page">Nuovo</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Titolo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="bi bi-person-plus-fill text-primary"></i>
+                Nuovo Partecipante
+            </h2>
+            @if (lottoPreimpostato && !string.IsNullOrEmpty(lottoCodice))
+            {
+                <p class="text-muted">
+                    <strong>Lotto:</strong> @lottoCodice - @lottoTitolo
+                </p>
+            }
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Lotto -->
+                        <div class="mb-3">
+                            <label asp-for="LottoId" class="form-label">
+                                Lotto <span class="text-danger">*</span>
+                            </label>
+                            @if (lottoPreimpostato && Model.LottoId != Guid.Empty)
+                            {
+                                <!-- Lotto preimpostato (readonly) -->
+                                <input type="text" class="form-control" value="@lottoCodice - @lottoTitolo" readonly />
+                                <input type="hidden" asp-for="LottoId" />
+                            }
+                            else
+                            {
+                                <!-- Dropdown lotto -->
+                                <select asp-for="LottoId" class="form-select" asp-items="ViewBag.Lotti">
+                                    <option value="">-- Seleziona un lotto --</option>
+                                </select>
+                                <span asp-validation-for="LottoId" class="text-danger"></span>
+                            }
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Soggetto (opzionale) -->
+                        <div class="mb-3">
+                            <label asp-for="SoggettoId" class="form-label">
+                                Soggetto da Anagrafica <span class="text-muted">(opzionale)</span>
+                            </label>
+                            <select asp-for="SoggettoId" id="soggettoSelect" class="form-select" asp-items="ViewBag.Soggetti">
+                                <option value="">-- Soggetto non censito (inserisci manualmente) --</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Seleziona un soggetto dall'anagrafica oppure lascia vuoto e inserisci manualmente la Ragione Sociale
+                            </div>
+                            <span asp-validation-for="SoggettoId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Ragione Sociale -->
+                        <div class="mb-3">
+                            <label asp-for="RagioneSociale" class="form-label">
+                                Ragione Sociale <span class="text-danger" id="ragioneSocialeRequired">*</span>
+                            </label>
+                            <input asp-for="RagioneSociale" id="ragioneSocialeInput" class="form-control" placeholder="Es: Ditta ABC S.r.l." />
+                            <div class="form-text" id="ragioneSocialeHelp">
+                                <i class="bi bi-info-circle"></i>
+                                Obbligatoria se non viene selezionato un soggetto dall'anagrafica
+                            </div>
+                            <span asp-validation-for="RagioneSociale" class="text-danger"></span>
+                        </div>
+
+                        <!-- Offerta Economica -->
+                        <div class="mb-3">
+                            <label asp-for="OffertaEconomica" class="form-label">
+                                Offerta Economica <span class="text-muted">(opzionale)</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">€</span>
+                                <input asp-for="OffertaEconomica" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="OffertaEconomica" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Flags -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input asp-for="IsAggiudicatario" class="form-check-input" type="checkbox" id="isAggiudicatarioCheck" />
+                                        <label class="form-check-label" for="isAggiudicatarioCheck">
+                                            <i class="bi bi-trophy-fill text-success"></i>
+                                            <strong>È Aggiudicatario</strong>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        Indica se questo partecipante ha vinto il lotto
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input asp-for="IsScartatoDallEnte" class="form-check-input" type="checkbox" id="isScartatoCheck" />
+                                        <label class="form-check-label" for="isScartatoCheck">
+                                            <i class="bi bi-x-circle-fill text-danger"></i>
+                                            <strong>È Scartato dall'Ente</strong>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        Indica se il partecipante è stato scartato
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Note -->
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label">
+                                Note <span class="text-muted">(opzionale)</span>
+                            </label>
+                            <textarea asp-for="Note" class="form-control" rows="4" 
+                                      placeholder="Inserisci eventuali note sul partecipante..."></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="d-flex justify-content-between mt-4">
+                            @if (lottoPreimpostato && Model.LottoId != Guid.Empty)
+                            {
+                                <a asp-action="Index" asp-route-lottoId="@Model.LottoId" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Annulla
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Lotti" asp-action="Index" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Annulla
+                                </a>
+                            }
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Salva Partecipante
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> Informazioni
+                </div>
+                <div class="card-body">
+                    <h6>Censimento Partecipanti</h6>
+                    <p class="small">
+                        I partecipanti sono opzionali e vengono inseriti tipicamente per lotti <strong>non vinti</strong>.
+                    </p>
+                    <hr />
+                    <h6>Soggetto vs Ragione Sociale</h6>
+                    <ul class="small">
+                        <li>Se il partecipante è già censito in anagrafica, selezionalo dal dropdown</li>
+                        <li>Altrimenti, inserisci manualmente la Ragione Sociale</li>
+                    </ul>
+                    <hr />
+                    <h6>Aggiudicatario</h6>
+                    <p class="small">
+                        Può esserci <strong>massimo 1 aggiudicatario</strong> per lotto.
+                        Il sistema validerà questa condizione.
+                    </p>
+                    <hr />
+                    <h6>Incompatibilità</h6>
+                    <p class="small text-danger">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Un partecipante <strong>non può essere</strong> contemporaneamente Aggiudicatario e Scartato.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Riferimenti elementi
+            const soggettoSelect = $('#soggettoSelect');
+            const ragioneSocialeInput = $('#ragioneSocialeInput');
+            const ragioneSocialeRequired = $('#ragioneSocialeRequired');
+            const ragioneSocialeHelp = $('#ragioneSocialeHelp');
+            const isAggiudicatarioCheck = $('#isAggiudicatarioCheck');
+            const isScartatoCheck = $('#isScartatoCheck');
+
+            // === GESTIONE DROPDOWN SOGGETTO → RAGIONE SOCIALE ===
+            
+            // Salva testo originale dei soggetti
+            const soggettiData = {};
+            soggettoSelect.find('option').each(function() {
+                const option = $(this);
+                if (option.val()) {
+                    soggettiData[option.val()] = option.text();
+                }
+            });
+
+            // Evento cambio soggetto
+            soggettoSelect.on('change', function() {
+                const soggettoId = $(this).val();
+                
+                if (soggettoId) {
+                    // Soggetto selezionato → popola RagioneSociale e rendi readonly
+                    const ragioneSociale = soggettiData[soggettoId];
+                    ragioneSocialeInput.val(ragioneSociale);
+                    ragioneSocialeInput.prop('readonly', true);
+                    ragioneSocialeInput.addClass('bg-light');
+                    ragioneSocialeRequired.hide();
+                    ragioneSocialeHelp.html('<i class="bi bi-check-circle-fill text-success"></i> Ragione Sociale auto-popolata dal soggetto selezionato');
+                } else {
+                    // Nessun soggetto → RagioneSociale editabile
+                    ragioneSocialeInput.val('');
+                    ragioneSocialeInput.prop('readonly', false);
+                    ragioneSocialeInput.removeClass('bg-light');
+                    ragioneSocialeRequired.show();
+                    ragioneSocialeHelp.html('<i class="bi bi-info-circle"></i> Obbligatoria se non viene selezionato un soggetto dall\'anagrafica');
+                }
+            });
+
+            // Inizializza stato al caricamento (se già selezionato soggetto)
+            if (soggettoSelect.val()) {
+                soggettoSelect.trigger('change');
+            }
+
+            // === GESTIONE INCOMPATIBILITÀ AGGIUDICATARIO / SCARTATO ===
+            
+            isAggiudicatarioCheck.on('change', function() {
+                if ($(this).is(':checked')) {
+                    // Se Aggiudicatario → disabilita Scartato
+                    isScartatoCheck.prop('checked', false);
+                }
+            });
+
+            isScartatoCheck.on('change', function() {
+                if ($(this).is(':checked')) {
+                    // Se Scartato → disabilita Aggiudicatario
+                    isAggiudicatarioCheck.prop('checked', false);
+                }
+            });
+
+            // === VALIDAZIONE FORM SUBMIT ===
+            
+            $('form').on('submit', function(e) {
+                const soggettoId = soggettoSelect.val();
+                const ragioneSociale = ragioneSocialeInput.val().trim();
+                
+                // Se nessun soggetto selezionato, RagioneSociale è obbligatoria
+                if (!soggettoId && !ragioneSociale) {
+                    e.preventDefault();
+                    alert('Attenzione: inserire la Ragione Sociale se non si seleziona un soggetto dall\'anagrafica.');
+                    ragioneSocialeInput.focus();
+                    return false;
+                }
+
+                // Verifica incompatibilità flags
+                if (isAggiudicatarioCheck.is(':checked') && isScartatoCheck.is(':checked')) {
+                    e.preventDefault();
+                    alert('Errore: un partecipante non può essere contemporaneamente Aggiudicatario e Scartato.');
+                    return false;
+                }
+            });
+        });
+    </script>
+}

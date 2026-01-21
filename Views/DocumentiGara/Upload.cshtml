@@ -1,0 +1,750 @@
+@model Trasformazioni.Models.ViewModels.DocumentoGara.DocumentoGaraUploadViewModel
+
+@{
+
+    ViewData["Title"] = "Carica Documento";
+    var garaPreimpostata = ViewBag.GaraPreimpostata ?? false;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item">
+                @if (@garaPreimpostata)
+                {
+                    <a asp-action="Index" asp-route-garaId="@Model.GaraId" asp-route-lottoId="@Model.LottoId">Documenti</a>
+                }
+                else
+                {
+                    <a asp-action="Index" asp-route-lottoId="@Model.LottoId">Documenti</a>
+                }
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Carica</li>
+        </ol>
+    </nav>
+
+    <!-- Container per Alert Validazione -->
+    <div id="validationAlertContainer"></div>
+    
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-cloud-upload text-success me-2"></i>
+                Carica Documento
+            </h2>
+            @if (garaPreimpostata && ViewBag.GaraCodice != null)
+            {
+                <p class="text-muted mb-0">
+                    Gara: <strong>@ViewBag.GaraCodice</strong> - @ViewBag.GaraTitolo
+                    @if (ViewBag.LottoCodice != null)
+                    {
+                        <span class="ms-2">| Lotto: <strong>@ViewBag.LottoCodice</strong></span>
+                    }
+                </p>
+            }
+        </div>
+    </div>
+
+    <!-- Tabs: Upload Singolo / Upload Multiplo -->
+    <ul class="nav nav-tabs mb-3" id="uploadTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="single-tab" data-bs-toggle="tab" 
+                    data-bs-target="#single-upload" type="button" role="tab">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>
+                Upload Singolo
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="multiple-tab" data-bs-toggle="tab" 
+                    data-bs-target="#multiple-upload" type="button" role="tab">
+                <i class="bi bi-files me-1"></i>
+                Upload Multiplo
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="uploadTabsContent">
+        
+        <!-- ============================================ -->
+        <!-- TAB 1: UPLOAD SINGOLO -->
+        <!-- ============================================ -->
+        <div class="tab-pane fade show active" id="single-upload" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Upload" method="post" enctype="multipart/form-data">
+                        @if (garaPreimpostata)
+                        {
+                            <input type="hidden" asp-for="GaraId" />
+                            <input type="hidden" asp-for="LottoId" />
+                        }
+
+                        <div class="row g-3">
+                            <!-- Gara -->
+                            @if (!garaPreimpostata)
+                            {
+                                <div class="col-md-6">
+                                    <label asp-for="GaraId" class="form-label">Gara *</label>
+                                    <select asp-for="GaraId" class="form-select" id="singleGaraSelect" required>
+                                        <option value="">-- Seleziona Gara --</option>
+                                        @if (ViewBag.Gare != null)
+                                        {
+                                            @foreach (var item in (List<SelectListItem>)ViewBag.Gare)
+                                            {
+                                                <option value="@item.Value" selected="@item.Selected">
+                                                    @item.Text
+                                                </option>
+                                            }
+                                        }
+                                    </select>
+                                    <span asp-validation-for="GaraId" class="text-danger"></span>
+                                </div>
+
+                                <!-- Lotto -->
+                                <div class="col-md-6">
+                                    <label asp-for="LottoId" class="form-label">Lotto (opzionale)</label>
+                                    <select asp-for="LottoId" class="form-select" id="singleLottoSelect">
+                                        <option value="">-- Nessun Lotto --</option>
+                                        @if (ViewBag.Lotti != null)
+                                        {
+                                            @foreach (var item in (List<SelectListItem>)ViewBag.Lotti)
+                                            {
+                                                <option value="@item.Value" selected="@item.Selected">
+                                                    @item.Text
+                                                </option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            }
+
+                            <!-- Tipo Documento -->
+                            <div class="col-md-6">
+                                <label asp-for="TipoDocumentoId" class="form-label">Tipo Documento *</label>
+                                <select asp-for="TipoDocumentoId" class="form-select" required>
+                                    <option value="">-- Seleziona Tipo --</option>
+                                    @if (ViewBag.TipiDocumento != null)
+                                    {
+                                        var items = (List<SelectListItem>)ViewBag.TipiDocumento;
+                                        string currentGroupName = null;
+                                        
+                                        foreach (var item in items)
+                                        {
+                                            var itemGroupName = item.Group?.Name;
+                                            
+                                            // Se il gruppo è cambiato
+                                            if (itemGroupName != currentGroupName)
+                                            {
+                                                // Chiudi il gruppo precedente se esisteva
+                                                if (currentGroupName != null)
+                                                {
+                                                    @Html.Raw("</optgroup>")
+                                                }
+                                                
+                                                // Apri il nuovo gruppo se esiste
+                                                if (itemGroupName != null)
+                                                {
+                                                    @Html.Raw($"<optgroup label=\"{itemGroupName}\">")
+                                                }
+                                                
+                                                currentGroupName = itemGroupName;
+                                            }
+                                            
+                                            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                        }
+                                        
+                                        // Chiudi l'ultimo gruppo se era aperto
+                                        if (currentGroupName != null)
+                                        {
+                                            @Html.Raw("</optgroup>")
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="TipoDocumentoId" class="text-danger"></span>
+                            </div>
+
+                            <!-- File -->
+                            <div class="col-md-6">
+                                <label class="form-label">File *</label>
+                                <input type="file" name="file" class="form-control" id="singleFileInput"
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.jpg,.jpeg,.png" 
+                                       required />
+                                <small class="form-text text-muted">
+                                    Formati supportati: PDF, Word, Excel, Immagini, ZIP (Max 100MB)
+                                </small>
+                            </div>
+
+                            <!-- Descrizione -->
+                            <div class="col-md-12">
+                                <label asp-for="Descrizione" class="form-label">Descrizione (opzionale)</label>
+                                <textarea asp-for="Descrizione" class="form-control" rows="3" 
+                                          placeholder="Aggiungi una descrizione del documento..."></textarea>
+                                <span asp-validation-for="Descrizione" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-cloud-upload me-1"></i>
+                                    Carica Documento
+                                </button>
+                                <a asp-action="Index" asp-route-garaId="@Model.GaraId" asp-route-lottoId="@Model.LottoId" 
+                                   class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Annulla
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB 2: UPLOAD MULTIPLO (Opzione C) -->
+        <!-- ============================================ -->
+        <div class="tab-pane fade" id="multiple-upload" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <form id="multipleUploadForm">
+                        <input type="hidden" id="multiGaraId" value="@Model.GaraId" />
+                        <input type="hidden" id="multiLottoId" value="@Model.LottoId" />
+
+                        <div class="row g-3">
+                            <!-- Gara -->
+                            @if (!garaPreimpostata)
+                            {
+                                <div class="col-md-6">
+                                    <label class="form-label">Gara *</label>
+                                    <select class="form-select" id="multiGaraSelect" required>
+                                        <option value="">-- Seleziona Gara --</option>
+                                        @if (ViewBag.Gare != null)
+                                        {
+                                            @foreach (var item in (List<SelectListItem>)ViewBag.Gare)
+                                            {
+                                                <option value="@item.Value" selected="@item.Selected">
+                                                    @item.Text
+                                                </option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+
+                                <!-- Lotto -->
+                                <div class="col-md-6">
+                                    <label class="form-label">Lotto (opzionale)</label>
+                                    <select class="form-select" id="multiLottoSelect">
+                                        <option value="">-- Nessun Lotto --</option>
+                                        @if (ViewBag.Lotti != null)
+                                        {
+                                            @foreach (var item in (List<SelectListItem>)ViewBag.Lotti)
+                                            {
+                                                <option value="@item.Value" selected="@item.Selected">
+                                                    @item.Text
+                                                </option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            }
+
+                            <!-- Tipo Documento (COMUNE per tutti i file) -->
+                            <div class="col-md-12">
+                                <label class="form-label">Tipo Documento (Comune per tutti i file) *</label>
+                                <select class="form-select" id="multiTipo" required>
+                                    <option value="">-- Seleziona Tipo --</option>
+                                    @if (ViewBag.TipiDocumento != null)
+                                    {
+                                        var items = (List<SelectListItem>)ViewBag.TipiDocumento;
+                                        string currentGroupName = null;
+                                        
+                                        foreach (var item in items)
+                                        {
+                                            var itemGroupName = item.Group?.Name;
+                                            
+                                            if (itemGroupName != currentGroupName)
+                                            {
+                                                if (currentGroupName != null)
+                                                {
+                                                    @Html.Raw("</optgroup>")
+                                                }
+                                                
+                                                if (itemGroupName != null)
+                                                {
+                                                    @Html.Raw($"<optgroup label=\"{itemGroupName}\">")
+                                                }
+                                                
+                                                currentGroupName = itemGroupName;
+                                            }
+                                            
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                        
+                                        if (currentGroupName != null)
+                                        {
+                                            @Html.Raw("</optgroup>")
+                                        }
+                                    }
+                                </select>
+                                <small class="form-text text-muted">
+                                    Questo tipo sarà applicato a tutti i file caricati
+                                </small>
+                            </div>
+
+                            <!-- Drag & Drop Area -->
+                            <div class="col-md-12">
+                                <label class="form-label">File *</label>
+
+                                <!-- File input FUORI dal dropZone -->
+                                <input type="file" id="multipleFiles" multiple
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.jpg,.jpeg,.png"
+                                       style="display: none;" />
+
+                                <div id="dropZone" class="border border-2 border-dashed rounded p-5 text-center" 
+                                     style="cursor: pointer; background-color: #f8f9fa;">
+                                    <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #6c757d;"></i>
+                                    <h5 class="mt-3">Trascina i file qui</h5>
+                                    <p class="text-muted">oppure clicca per selezionare</p>
+                                    <button type="button" class="btn btn-outline-primary" id="selectFilesBtn">
+                                        <i class="bi bi-folder2-open me-1"></i>
+                                        Seleziona File
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Formati supportati: PDF, Word, Excel, Immagini, ZIP (Max 100MB per file)
+                                </small>
+                            </div>
+
+                            <!-- Preview File Selezionati -->
+                            <div class="col-md-12" id="filesPreviewContainer" style="display: none;">
+                                <label class="form-label">File Selezionati</label>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Puoi aggiungere una descrizione opzionale per ogni file
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 5%;"></th>
+                                                <th style="width: 40%;">Nome File</th>
+                                                <th style="width: 15%;">Dimensione</th>
+                                                <th style="width: 35%;">Descrizione (opzionale)</th>
+                                                <th style="width: 5%;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="filesPreviewList"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="col-md-12" id="uploadProgressContainer" style="display: none;">
+                                <label class="form-label">Caricamento in corso...</label>
+                                <div class="progress" style="height: 25px;">
+                                    <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%;">
+                                        <span id="uploadProgressText">0%</span>
+                                    </div>
+                                </div>
+                                <small class="text-muted" id="uploadProgressDetails"></small>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <button type="button" id="uploadMultipleBtn" class="btn btn-success" disabled>
+                                    <i class="bi bi-cloud-upload me-1"></i>
+                                    Carica Tutti i File
+                                </button>
+                                <a asp-action="Index" asp-route-garaId="@Model.GaraId" asp-route-lottoId="@Model.LottoId" 
+                                   class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Annulla
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function () {
+            var selectedFiles = [];
+
+            // // VALIDAZIONE FILE SIZE
+            // const MAX_FILE_SIZE = 130 * 1024 * 1024; // 130 MB
+            // const MAX_FILE_SIZE_MB = 100; // Per messaggi utente
+            const MAX_FILE_SIZE_MB = @ViewBag.MaxFileSizeMB;
+            const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+
+            // FUNZIONE HELPER ALERT
+            function showValidationAlert(message, type = 'danger') {
+                // Crea alert con ID univoco per stack verticale
+                const alertId = 'alert-' + Date.now();
+                const alertHtml = `
+                    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show mb-2" role="alert">
+                        <i class="bi bi-${type === 'danger' ? 'exclamation-triangle' : 'check-circle'}-fill me-2"></i>
+                        <strong>${type === 'danger' ? 'Errore!' : type === 'warning' ? 'Attenzione!' : 'Successo!'}</strong> ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+
+                $('#validationAlertContainer').append(alertHtml);
+
+                // Scroll alla top per vedere alert
+                $('html, body').animate({ scrollTop: 0 }, 300);
+
+                // Auto-hide dopo 8 secondi
+                setTimeout(function() {
+                    $('#validationAlertContainer .alert').fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 10000);
+            }
+
+            // ==========================================
+            // UPLOAD SINGOLO - Filtro dipendente Lotti
+            // ==========================================
+            $('#singleGaraSelect').change(function() {
+                var garaId = $(this).val();
+                if (!garaId) {
+                    $('#singleLottoSelect').html('<option value="">-- Nessun Lotto --</option>');
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("GetLottiByGara", "DocumentiGara")',
+                    type: 'GET',
+                    data: { garaId: garaId },
+                    success: function(lotti) {
+                        var options = '<option value="">-- Nessun Lotto --</option>';
+                        lotti.forEach(function(lotto) {
+                            options += '<option value="' + lotto.id + '">' + lotto.codiceLotto + ' - ' + lotto.descrizione + '</option>';
+                        });
+                        $('#singleLottoSelect').html(options);
+                    }
+                });
+            });
+
+            // ==========================================
+            // VALIDAZIONE UPLOAD SINGOLO
+            // ==========================================
+            $('#singleFileInput').on('change', function() {
+                const file = this.files[0];
+
+                if (file && file.size > MAX_FILE_SIZE) {
+                    showValidationAlert(
+                        `File troppo grande! Massimo consentito: ${MAX_FILE_SIZE_MB} MB. ` +
+                        `Il tuo file: <strong>${formatFileSize(file.size)}</strong>.`,
+                        'danger'
+                    );
+
+                    // Reset input
+                    this.value = '';
+                    return false;
+                }
+            });
+
+            // ==========================================
+            // UPLOAD MULTIPLO
+            // ==========================================
+
+            // Drag & Drop
+            var dropZone = $('#dropZone');
+            
+            dropZone.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('border-primary bg-light');
+            });
+
+            dropZone.on('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('border-primary bg-light');
+            });
+
+            dropZone.on('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('border-primary bg-light');
+                
+                var files = e.originalEvent.dataTransfer.files;
+                handleFiles(files);
+            });
+
+            // Click per selezionare
+            dropZone.on('click', function() {
+                $('#multipleFiles').click();
+            });
+
+            $('#selectFilesBtn').on('click', function(e) {
+                e.stopPropagation();
+                $('#multipleFiles').click();
+            });
+
+            $('#multipleFiles').on('change', function() {
+                handleFiles(this.files);
+            });
+
+            // Gestione file selezionati con VALIDAZIONE + APPEND
+            function handleFiles(files) {
+                if (files.length === 0) return;
+
+                // VALIDAZIONE FILE SIZE
+                var validFiles = [];
+                var invalidFiles = [];
+
+                Array.from(files).forEach(function(file) {
+                    // Controlla se file già presente (evita duplicati)
+                    var isDuplicate = selectedFiles.some(function(existingFile) {
+                        return existingFile.name === file.name && existingFile.size === file.size;
+                    });
+
+                    if (isDuplicate) {
+                        // Ignora silenziosamente i duplicati
+
+                        setTimeout(function() {
+                            showValidationAlert(
+                                `Rilevati file duplicati. Esclusi automaticamente.`,
+                                'warning'
+                            );
+                        }, 1000);
+
+                        return;
+                    }
+
+                    if (file.size > MAX_FILE_SIZE) {
+                        invalidFiles.push({
+                            name: file.name,
+                            size: formatFileSize(file.size)
+                        });
+                    } else {
+                        validFiles.push(file);
+                    }
+                });
+
+                // Mostra errore per file troppo grandi
+                if (invalidFiles.length > 0) {
+                    var errorMsg = `File troppo grandi (max ${MAX_FILE_SIZE_MB} MB):<br><ul class="mb-0 mt-2">`;
+                    invalidFiles.forEach(function(f) {
+                        errorMsg += `<li><strong>${f.name}</strong> (${f.size})</li>`;
+                    });
+                    errorMsg += '</ul>';
+
+                    setTimeout(function() {
+                        showValidationAlert(errorMsg, 'danger');
+                    }, 1000);
+                }
+
+                // Aggiungi solo file validi
+                if (validFiles.length > 0) {
+                    // Concatena invece di sostituire
+                    selectedFiles = selectedFiles.concat(validFiles);
+                    renderFilesPreview();
+                    $('#uploadMultipleBtn').prop('disabled', false);
+
+                    // Mostra successo DOPO con delay maggiore
+                    if (invalidFiles.length > 0) {
+                        setTimeout(function() {
+                            showValidationAlert(
+                                `${validFiles.length} file validi aggiunti (${invalidFiles.length} ignorati). Totale: ${selectedFiles.length} file.`,
+                                'warning'
+                            );
+                        }, 1000); // 1 secondo di delay per leggere prima l'errore
+                    } else {
+                        // Solo file validi, mostra subito
+                        showValidationAlert(
+                            `${validFiles.length} file aggiunti. Totale: ${selectedFiles.length} file.`,
+                            'success'
+                        );
+                    }
+                } else if (validFiles.length === 0 && selectedFiles.length === 0) {
+                    // Nessun file valido e nessun file precedente
+                    $('#filesPreviewContainer').hide();
+                    $('#uploadMultipleBtn').prop('disabled', true);
+                }
+                // Se validFiles=0 ma selectedFiles>0, mantieni preview esistente
+            }
+
+            // Render preview file
+            function renderFilesPreview() {
+                var html = '';
+                
+                selectedFiles.forEach(function(file, index) {
+                    var size = formatFileSize(file.size);
+                    var icon = getFileIcon(file.type);
+                    
+                    html += '<tr data-index="' + index + '">';
+                    html += '<td class="text-center"><i class="bi ' + icon + '"></i></td>';
+                    html += '<td><strong>' + file.name + '</strong></td>';
+                    html += '<td><small class="text-muted">' + size + '</small></td>';
+                    html += '<td><input type="text" class="form-control form-control-sm file-description" placeholder="Descrizione..."></td>';
+                    html += '<td class="text-center">';
+                    html += '<button type="button" class="btn btn-sm btn-outline-danger remove-file" data-index="' + index + '">';
+                    html += '<i class="bi bi-trash"></i>';
+                    html += '</button>';
+                    html += '</td>';
+                    html += '</tr>';
+                });
+
+                $('#filesPreviewList').html(html);
+                $('#filesPreviewContainer').show();
+            }
+
+            // Rimuovi file
+            $(document).on('click', '.remove-file', function() {
+                var index = $(this).data('index');
+                selectedFiles.splice(index, 1);
+                
+                if (selectedFiles.length === 0) {
+                    $('#filesPreviewContainer').hide();
+                    $('#uploadMultipleBtn').prop('disabled', true);
+                } else {
+                    renderFilesPreview();
+                }
+            });
+
+            // Upload multiplo
+            $('#uploadMultipleBtn').on('click', function() {
+                var garaId = $('#multiGaraId').val() || $('#multiGaraSelect').val();
+                var lottoId = $('#multiLottoId').val() || $('#multiLottoSelect').val() || null;
+                var tipo = $('#multiTipo').val();
+                debugger;
+                if (!garaId || !tipo) {
+                    showValidationAlert('Seleziona Gara e Tipo Documento prima di procedere.', 'danger');
+                    return;
+                }
+
+                if (selectedFiles.length === 0) {
+                    showValidationAlert('Seleziona almeno un file da caricare.', 'danger');
+                    return;
+                }
+
+                // Raccogli descrizioni
+                var descrizioni = [];
+                $('.file-description').each(function() {
+                    descrizioni.push($(this).val());
+                });
+
+                // Prepara FormData
+                var formData = new FormData();
+                formData.append('garaId', garaId);
+                if (lottoId) formData.append('lottoId', lottoId);
+                formData.append('tipoDocumentoId', tipo);
+                
+                selectedFiles.forEach(function(file) {
+                    formData.append('files', file);
+                });
+                
+                descrizioni.forEach(function(desc) {
+                    formData.append('descrizioni', desc);
+                });
+
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+                // Mostra progress bar
+                $('#uploadProgressContainer').show();
+                $('#uploadMultipleBtn').prop('disabled', true);
+
+                // Upload
+                $.ajax({
+                    url: '@Url.Action("UploadMultiple", "DocumentiGara")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    xhr: function() {
+                        var xhr = new window.XMLHttpRequest();
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if (e.lengthComputable) {
+                                var percent = Math.round((e.loaded / e.total) * 100);
+                                $('#uploadProgressBar').css('width', percent + '%');
+                                $('#uploadProgressText').text(percent + '%');
+                                $('#uploadProgressDetails').text('Caricamento: ' + formatFileSize(e.loaded) + ' / ' + formatFileSize(e.total));
+                            }
+                        }, false);
+                        return xhr;
+                    },
+                    success: function(result) {
+                        if (result.success) {
+                            showValidationAlert(result.message, 'success');
+                            setTimeout(function() {
+                                window.location.href = '@Url.Action("Index", "DocumentiGara")?garaId=' + garaId + (lottoId ? '&lottoId=' + lottoId : '');
+                            }, 1500);
+                        } else {
+                            showValidationAlert(result.message, 'danger');
+                            $('#uploadMultipleBtn').prop('disabled', false);
+                            $('#uploadProgressContainer').hide();
+                        }
+                    },
+                    error: function() {
+                        showValidationAlert('Errore durante il caricamento dei file. Riprova.', 'danger');
+                        $('#uploadMultipleBtn').prop('disabled', false);
+                        $('#uploadProgressContainer').hide();
+                    }
+                });
+            });
+
+            // Filtro dipendente multiplo
+            $('#multiGaraSelect').change(function() {
+                var garaId = $(this).val();
+                $('#multiGaraId').val(garaId);
+                
+                if (!garaId) {
+                    $('#multiLottoSelect').html('<option value="">-- Nessun Lotto --</option>');
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("GetLottiByGara", "DocumentiGara")',
+                    type: 'GET',
+                    data: { garaId: garaId },
+                    success: function(lotti) {
+                        var options = '<option value="">-- Nessun Lotto --</option>';
+                        lotti.forEach(function(lotto) {
+                            options += '<option value="' + lotto.id + '">' + lotto.codiceLotto + ' - ' + lotto.descrizione + '</option>';
+                        });
+                        $('#multiLottoSelect').html(options);
+                    }
+                });
+            });
+
+            $('#multiLottoSelect').change(function() {
+                $('#multiLottoId').val($(this).val());
+            });
+
+            // ==========================================
+            // HELPER FUNCTIONS
+            // ==========================================
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                var k = 1024;
+                var sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                var i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            function getFileIcon(mimeType) {
+                if (mimeType.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
+                if (mimeType.includes('word') || mimeType.includes('msword')) return 'bi-file-earmark-word text-primary';
+                if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'bi-file-earmark-excel text-success';
+                if (mimeType.includes('image')) return 'bi-file-earmark-image text-info';
+                if (mimeType.includes('zip') || mimeType.includes('rar')) return 'bi-file-earmark-zip text-warning';
+                return 'bi-file-earmark text-muted';
+            }
+        });
+    </script>
+}

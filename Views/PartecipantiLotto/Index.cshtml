@@ -1,0 +1,218 @@
+@model IEnumerable<Trasformazioni.Models.ViewModels.PartecipanteLottoListViewModel>
+
+@{
+    ViewData["Title"] = "Partecipanti Lotto";
+    var lottoId = ViewBag.LottoId as Guid?;
+    var lottoCodice = ViewBag.LottoCodice as string;
+    var lottoTitolo = ViewBag.LottoTitolo as string;
+    var garaCig = ViewBag.GaraCig as string;
+}
+
+<div class="container-fluid">
+    <!-- Header con breadcrumb e info lotto -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Gare" asp-action="Index">Gare</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId">Lotto @lottoCodice</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Partecipanti</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Info Lotto -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-folder2-open text-primary"></i>
+                        Partecipanti - Lotto @lottoCodice
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Titolo:</strong> @lottoTitolo</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Gara CIG:</strong> @garaCig</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Header con bottone Aggiungi -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4>
+                    <i class="bi bi-people-fill text-primary"></i>
+                    Lista Partecipanti
+                    <span class="badge bg-secondary">@Model.Count()</span>
+                </h4>
+                <a asp-action="Create" asp-route-lottoId="@lottoId" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Aggiungi Partecipante
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabella Partecipanti -->
+    <div class="row">
+        <div class="col-12">
+            @if (Model.Any())
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Ragione Sociale</th>
+                                        <th>Da Anagrafica</th>
+                                        <th class="text-end">Offerta Economica</th>
+                                        <th class="text-center">Status</th>
+                                        <th>Note</th>
+                                        <th class="text-center" style="width: 200px;">Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var partecipante in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@partecipante.RagioneSociale</strong>
+                                            </td>
+                                            <td>
+                                                @if (partecipante.SoggettoId.HasValue)
+                                                {
+                                                    <a asp-controller="Soggetti" asp-action="Details" asp-route-id="@partecipante.SoggettoId" 
+                                                       class="btn btn-sm btn-outline-info" title="Vedi anagrafica soggetto">
+                                                        <i class="bi bi-building"></i> Sì
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">
+                                                        <i class="bi bi-dash-circle"></i> No
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                @if (partecipante.OffertaEconomica.HasValue)
+                                                {
+                                                    <strong class="text-success">@partecipante.OffertaEconomica.Value.ToString("C2")</strong>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/D</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (partecipante.IsAggiudicatario)
+                                                {
+                                                    <span class="badge bg-success fs-6">
+                                                        <i class="bi bi-trophy-fill"></i> Aggiudicatario
+                                                    </span>
+                                                }
+                                                @if (partecipante.IsScartatoDallEnte)
+                                                {
+                                                    <span class="badge bg-danger fs-6">
+                                                        <i class="bi bi-x-circle-fill"></i> Scartato
+                                                    </span>
+                                                }
+                                                @if (!partecipante.IsAggiudicatario && !partecipante.IsScartatoDallEnte)
+                                                {
+                                                    <span class="badge bg-secondary fs-6">
+                                                        <i class="bi bi-circle"></i> Partecipante
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(partecipante.Note))
+                                                {
+                                                    <span title="@partecipante.Note" data-bs-toggle="tooltip">
+                                                        @(partecipante.Note.Length > 50 ? partecipante.Note.Substring(0, 50) + "..." : partecipante.Note)
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <a asp-action="Details" asp-route-id="@partecipante.Id" 
+                                                       class="btn btn-sm btn-outline-info" title="Dettagli">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a asp-action="Edit" asp-route-id="@partecipante.Id" 
+                                                       class="btn btn-sm btn-outline-warning" title="Modifica">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a asp-action="Delete" asp-route-id="@partecipante.Id" 
+                                                       class="btn btn-sm btn-outline-danger" title="Elimina">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Nessun partecipante censito per questo lotto.</strong>
+                    <br />
+                    I partecipanti sono opzionali e vengono inseriti tipicamente per lotti non vinti.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Pulsante Torna al Lotto -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Torna al Lotto
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Inizializza tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    </script>
+}

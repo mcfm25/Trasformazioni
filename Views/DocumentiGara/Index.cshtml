@@ -1,0 +1,573 @@
+@model IEnumerable<Trasformazioni.Models.ViewModels.DocumentoGara.DocumentoGaraListViewModel>
+
+@{
+    ViewData["Title"] = "Documenti Gara";
+    var gara = ViewBag.Gara as Trasformazioni.Models.ViewModels.GaraDetailsViewModel;
+    var lotto = ViewBag.Lotto as Trasformazioni.Models.ViewModels.LottoDetailsViewModel;
+    var filters = ViewBag.Filters as Trasformazioni.Models.ViewModels.DocumentoGara.DocumentoGaraFilterViewModel;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            @if (gara != null)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Gare" asp-action="Index">Gare</a></li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="Gare" asp-action="Details" asp-route-id="@gara.Id">@gara.CodiceGara</a>
+                </li>
+                @if (lotto != null)
+                {
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lotto.Id">@lotto.CodiceLotto</a>
+                    </li>
+                }
+            }
+            <li class="breadcrumb-item active" aria-current="page">Documenti</li>
+        </ol>
+    </nav>
+
+    <!-- Container per Alert Validazione -->
+    <div id="validationAlertContainer"></div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h2>
+                <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                Gestione Documenti
+            </h2>
+            @if (gara != null)
+            {
+                <p class="text-muted mb-0">
+                    Gara: <strong>@gara.CodiceGara</strong> - @gara.Titolo
+                    @if (lotto != null)
+                    {
+                        <span class="ms-2">| Lotto: <strong>@lotto.CodiceLotto</strong></span>
+                    }
+                </p>
+            }
+        </div>
+        <div class="col-md-2 text-end">
+            <a asp-action="Upload"
+               class="btn btn-success">
+                <i class="bi bi-cloud-upload me-1"></i>
+                Carica Documento
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-funnel me-2"></i>
+                Filtri di Ricerca
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" id="filterForm">
+                <div class="row g-3">
+                    <!-- Gara -->
+                    <div class="col-md-4">
+                        <label class="form-label">Gara</label>
+                        <select name="GaraId" id="garaSelect" class="form-select">
+                            <option value="">Tutte le gare</option>
+                            @if (ViewBag.Gare != null)
+                            {
+                                @foreach (var item in (List<SelectListItem>)ViewBag.Gare)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Lotto -->
+                    <div class="col-md-4">
+                        <label class="form-label">Lotto</label>
+                        <select name="LottoId" id="lottoSelect" class="form-select">
+                            <option value="">Tutti i lotti</option>
+                            @if (ViewBag.Lotti != null)
+                            {
+                                @foreach (var item in (List<SelectListItem>)ViewBag.Lotti)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Tipo Documento -->
+                    @* <div class="col-md-4">
+                        <label class="form-label">Tipo Documento</label>
+                        <select name="TipoDocumentoId" class="form-select">
+                            <option value="">Tutti i tipi</option>
+                            @if (ViewBag.TipiDocumento != null)
+                            {
+                                @foreach (var item in (List<SelectListItem>)ViewBag.TipiDocumento)
+                                {
+                                    <option value="@item.Value" selected="@(filters?.TipoDocumentoId?.ToString() == item.Value)">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div> *@
+                    <div class="col-md-4">
+                        <label class="form-label">Tipo Documento</label>
+                        <select name="TipoDocumentoId" class="form-select">
+                            <option value="">-- Seleziona Tipo --</option>
+                            @if (ViewBag.TipiDocumento != null)
+                            {
+                                var items = (List<SelectListItem>)ViewBag.TipiDocumento;
+                                string currentGroupName = null;
+
+                                foreach (var item in items)
+                                {
+                                    var itemGroupName = item.Group?.Name;
+
+                                    if (itemGroupName != currentGroupName)
+                                    {
+                                        if (currentGroupName != null)
+                                        {
+                                            @Html.Raw("</optgroup>")
+                                        }
+
+                                        if (itemGroupName != null)
+                                        {
+                                            @Html.Raw($"<optgroup label=\"{itemGroupName}\">")
+                                        }
+
+                                        currentGroupName = itemGroupName;
+                                    }
+
+                                    <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                }
+
+                                if (currentGroupName != null)
+                                {
+                                    @Html.Raw("</optgroup>")
+                                }
+                            }
+                        </select>
+                        </select>
+                    </div>
+
+                    <!-- Ricerca Nome File -->
+                    <div class="col-md-6">
+                        <label class="form-label">Nome File</label>
+                        <input type="text" name="NomeFile" class="form-control" 
+                               value="@filters?.NomeFile"
+                               placeholder="Cerca nel nome del file..." />
+                    </div>
+
+                    <!-- Data Caricamento Da -->
+                    <div class="col-md-3">
+                        <label class="form-label">Caricato Dal</label>
+                        <input type="date" name="DataCaricamentoDa" class="form-control" 
+                               value="@filters?.DataCaricamentoDa?.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <!-- Data Caricamento A -->
+                    <div class="col-md-3">
+                        <label class="form-label">Caricato Al</label>
+                        <input type="date" name="DataCaricamentoA" class="form-control" 
+                               value="@filters?.DataCaricamentoA?.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>
+                            Cerca
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Reset Filtri
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabella Documenti -->
+    @if (Model.Any())
+    {
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            Risultati: <strong>@Model.Count()</strong> document@(Model.Count() == 1 ? "o" : "i")
+                        </h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <!-- Badge Contatori per Tipo -->
+                        @* @{
+                            var contatoriTipo = Model.GroupBy(d => d.Tipo).ToDictionary(g => g.Key, g => g.Count());
+                        }
+                        @foreach (var tipo in contatoriTipo.OrderByDescending(x => x.Value).Take(3))
+                        {
+                            var badgeClass = tipo.Key switch
+                            {
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.BandoOriginale => "bg-primary",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.Disciplinare => "bg-info",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.CapitolatoSpeciale => "bg-info",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.DocumentoValutazioneTecnica => "bg-success",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.DocumentoValutazioneEconomica => "bg-success",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.Preventivo => "bg-warning text-dark",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.OffertaTecnica => "bg-primary",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.OffertaEconomica => "bg-primary",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.RichiestaIntegrazioneEnte => "bg-danger",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.RispostaIntegrazione => "bg-success",
+                                Trasformazioni.Models.Enums.TipoDocumentoGara.Contratto => "bg-success",
+                                _ => "bg-secondary"
+                            };
+                            
+                            <span class="badge @badgeClass me-1">
+                                @tipo.Key.ToString(): @tipo.Value
+                            </span>
+                        } *@
+                        @{
+                            var contatoriTipo = Model
+                            .GroupBy(d => new { d.TipoDocumentoNome, d.TipoDocumentoCodiceRiferimento })
+                            .ToDictionary(g => g.Key, g => g.Count());
+                        }
+                        @foreach (var tipo in contatoriTipo.OrderByDescending(x => x.Value).Take(3))
+                        {
+                            var badgeClass = tipo.Key.TipoDocumentoCodiceRiferimento switch
+                            {
+                                "BandoOriginale" => "bg-primary",
+                                "Disciplinare" => "bg-info",
+                                "CapitolatoSpeciale" => "bg-info",
+                                "DocumentoValutazioneTecnica" => "bg-success",
+                                "DocumentoValutazioneEconomica" => "bg-success",
+                                "Preventivo" => "bg-warning text-dark",
+                                "OffertaTecnica" => "bg-primary",
+                                "OffertaEconomica" => "bg-primary",
+                                "RichiestaIntegrazioneEnte" => "bg-danger",
+                                "RispostaIntegrazione" => "bg-success",
+                                "Contratto" => "bg-success",
+                                _ => "bg-secondary"
+                            };
+
+                            <span class="badge @badgeClass me-1">
+                                @tipo.Key.TipoDocumentoNome: @tipo.Value
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%;"></th>
+                            <th style="width: 25%;">Nome File</th>
+                            <th style="width: 15%;">Tipo</th>
+                            <th style="width: 20%;">Associazione</th>
+                            <th style="width: 8%;">Dimensione</th>
+                            <th style="width: 12%;">Caricato</th>
+                            <th style="width: 15%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <!-- Icona File -->
+                                <td class="text-center">
+                                    @{
+                                        var iconClass = item.MimeType switch
+                                        {
+                                            var m when m.Contains("pdf") => "bi-file-earmark-pdf text-danger",
+                                            var m when m.Contains("word") || m.Contains("msword") => "bi-file-earmark-word text-primary",
+                                            var m when m.Contains("excel") || m.Contains("spreadsheet") => "bi-file-earmark-excel text-success",
+                                            var m when m.Contains("image") => "bi-file-earmark-image text-info",
+                                            var m when m.Contains("zip") || m.Contains("rar") => "bi-file-earmark-zip text-warning",
+                                            _ => "bi-file-earmark text-muted"
+                                        };
+                                    }
+                                    <i class="bi @iconClass" style="font-size: 1.5rem;"></i>
+                                </td>
+
+                                <!-- Nome File -->
+                                <td>
+                                    <strong>@item.NomeFile</strong>
+                                    @if (!string.IsNullOrEmpty(item.Descrizione))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@item.Descrizione</small>
+                                    }
+                                </td>
+
+                                <!-- Tipo Documento -->
+                                <td>
+                                   @*  @{
+                                        var badgeClass = item.Tipo switch
+                                        {
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.DocumentoGeneraleGara => "bg-secondary",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.BandoOriginale => "bg-primary",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.Disciplinare => "bg-info",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.CapitolatoSpeciale => "bg-info",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.DocumentoValutazioneTecnica => "bg-success",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.DocumentoValutazioneEconomica => "bg-success",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.Preventivo => "bg-warning text-dark",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.DocumentoPresentazione => "bg-primary",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.OffertaTecnica => "bg-primary",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.OffertaEconomica => "bg-primary",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.RichiestaIntegrazioneEnte => "bg-danger",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.RispostaIntegrazione => "bg-success",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.ComunicazioneEnte => "bg-info",
+                                            Trasformazioni.Models.Enums.TipoDocumentoGara.Contratto => "bg-success",
+                                            _ => "bg-secondary"
+                                        };
+                                    } *@
+                                    @{
+                                        var badgeClass = item.TipoDocumentoCodiceRiferimento switch
+                                        {
+                                            "DocumentoGeneraleGara" => "bg-secondary",
+                                            "BandoOriginale" => "bg-primary",
+                                            "Disciplinare" => "bg-info",
+                                            "CapitolatoSpeciale" => "bg-info",
+                                            "DocumentoValutazioneTecnica" => "bg-success",
+                                            "DocumentoValutazioneEconomica" => "bg-success",
+                                            "Preventivo" => "bg-warning text-dark",
+                                            "DocumentoPresentazione" => "bg-primary",
+                                            "OffertaTecnica" => "bg-primary",
+                                            "OffertaEconomica" => "bg-primary",
+                                            "RichiestaIntegrazioneEnte" => "bg-danger",
+                                            "RispostaIntegrazione" => "bg-success",
+                                            "ComunicazioneEnte" => "bg-info",
+                                            "Contratto" => "bg-success",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@item.TipoDisplay</span>
+                                </td>
+
+                                <!-- Associazione -->
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.GaraCodice))
+                                    {
+                                        <a asp-controller="Gare" asp-action="Details" asp-route-id="@item.GaraId">
+                                            <i class="bi bi-folder text-primary me-1"></i>@item.GaraCodice
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.LottoCodice))
+                                    {
+                                        <br />
+                                        <a asp-controller="Lotti" asp-action="Details" asp-route-id="@item.LottoId">
+                                            <i class="bi bi-box text-secondary me-1"></i>@item.LottoCodice
+                                        </a>
+                                    }
+                                </td>
+
+                                <!-- Dimensione -->
+                                <td>
+                                    <small class="text-muted">@item.DimensioneFormatted</small>
+                                </td>
+
+                                <!-- Caricato -->
+                                <td>
+                                    <small>
+                                        @item.DataCaricamento.ToString("dd/MM/yyyy")
+                                        <br />
+                                        <span class="text-muted">@item.CaricatoDaNome</span>
+                                    </small>
+                                </td>
+
+                                <!-- Azioni -->
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Download" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-primary" title="Scarica">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-info" title="Dettagli">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-warning" title="Modifica">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-delete"
+                                                data-id="@item.Id" 
+                                                data-gara-id="@item.GaraId"
+                                                data-lotto-id="@item.LottoId"
+                                                title="Elimina">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        if (filters?.GaraId is null)
+        {
+            <div class="alert alert-danger">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>La selezione di una gara è obbligatoria.</strong>
+                <a asp-action="Upload"
+                   asp-route-garaId="@filters?.GaraId"
+                   asp-route-lottoId="@filters?.LottoId"
+                   class="btn btn-sm btn-primary ms-2">
+                    <i class="bi bi-cloud-upload me-1"></i>
+                    Carica il primo documento
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Nessun documento trovato</strong> con i filtri selezionati.
+                <a asp-action="Upload"
+                   asp-route-garaId="@filters?.GaraId"
+                   asp-route-lottoId="@filters?.LottoId"
+                   class="btn btn-sm btn-primary ms-2">
+                    <i class="bi bi-cloud-upload me-1"></i>
+                    Carica il primo documento
+                </a>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            // FUNZIONE HELPER ALERT
+            function showValidationAlert(message, type = 'danger') {
+                // Crea alert con ID univoco per stack verticale
+                const alertId = 'alert-' + Date.now();
+                const alertHtml = `
+                    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show mb-2" role="alert">
+                        <i class="bi bi-${type === 'danger' ? 'exclamation-triangle' : 'check-circle'}-fill me-2"></i>
+                        <strong>${type === 'danger' ? 'Errore!' : type === 'warning' ? 'Attenzione!' : 'Successo!'}</strong> ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+
+                $('#validationAlertContainer').append(alertHtml);
+
+                // Scroll alla top per vedere alert
+                $('html, body').animate({ scrollTop: 0 }, 300);
+
+                // Auto-hide dopo 8 secondi
+                setTimeout(function() {
+                    $('#validationAlertContainer .alert').fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 6000);
+            }
+
+            // Elimina Documento (AJAX con conferma)
+            $('.btn-delete').click(function () {
+                var button = $(this);
+                var documentoId = button.data('id');
+                var garaId = button.data('gara-id');
+                var lottoId = button.data('lotto-id');
+
+                if (!confirm('Sei sicuro di voler eliminare questo documento?\n\nIl file rimarrà su MinIO ma non sarà più accessibile dall\'applicazione.')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("Delete", "DocumentiGara")',
+                    type: 'POST',
+                    data: {
+                        id: documentoId,
+                        garaId: garaId,
+                        lottoId: lottoId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            // toastr.success('Documento eliminato con successo');
+                            window.location.href = result.redirectUrl;
+                        } else {
+                            // toastr.error(result.message);
+                            setTimeout(function() {
+                                showValidationAlert(
+                                    result.message,
+                                    'danger'
+                                );
+                            }, 300);
+                        }
+                    },
+                    error: function () {
+                        // toastr.error('Errore nell\'eliminazione del documento');
+                        setTimeout(function() {
+                            showValidationAlert(
+                                result.message,
+                                'danger'
+                            );
+                        }, 300);
+                    }
+                });
+            });
+
+            // Refresh lotti quando cambia gara (filtro dipendente)
+            $('#garaSelect').change(function() {
+                var garaId = $(this).val();
+                
+                if (!garaId) {
+                    $('#lottoSelect').html('<option value="">Tutti i lotti</option>');
+                    return;
+                }
+
+                // Carica lotti per la gara selezionata
+                $.ajax({
+                    url: '@Url.Action("GetLottiByGara", "DocumentiGara")',
+                    type: 'GET',
+                    data: { garaId: garaId },
+                    success: function(lotti) {
+                        var options = '<option value="">Tutti i lotti</option>';
+                        lotti.forEach(function(lotto) {
+                            options += '<option value="' + lotto.id + '">' + lotto.codiceLotto + ' - ' + lotto.descrizione + '</option>';
+                        });
+                        $('#lottoSelect').html(options);
+                    },
+                    error: function() {
+                        console.error('Errore nel caricamento dei lotti');
+                    }
+                });
+            });
+        });
+    </script>
+}

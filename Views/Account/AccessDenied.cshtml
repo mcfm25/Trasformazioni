@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "Accesso Negato";    
+}
+
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5 text-center">
+                    <!-- Icon -->
+                    <div class="mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="text-warning" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                            <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+                        </svg>
+                    </div>
+
+                    <!-- Header -->
+                    <h1 class="h3 fw-bold mb-3">Accesso Negato</h1>
+
+                    <!-- Message -->
+                    <p class="text-muted mb-4">
+                        Non hai i permessi necessari per accedere a questa risorsa.
+                    </p>
+
+                    <!-- Description -->
+                    <div class="alert alert-light border mb-4" role="alert">
+                        <p class="mb-0 small">
+                            Se ritieni di dover avere accesso a questa sezione,
+                            contatta l'amministratore di sistema per richiedere i permessi necessari.
+                        </p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <a asp-action="Index" asp-controller="Home" class="btn btn-primary">
+                            Torna alla Home
+                        </a>
+                        <button onclick="history.back()" class="btn btn-outline-secondary">
+                            Indietro
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,187 @@
+@model Trasformazioni.Models.ViewModels.LottoDetailsViewModel
+
+@if (Model.NumeroRichiesteIntegrazione == 0)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Nessuna richiesta di integrazione</strong>
+        <p class="mb-0 mt-2">Non ci sono richieste di integrazione per questo lotto.</p>
+    </div>
+}
+else
+{
+    <!-- Statistiche Richieste -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-list-ul" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Totali</h6>
+                            <h3 class="mb-0">@Model.NumeroRichiesteIntegrazione</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Aperte</h6>
+                            <h3 class="mb-0">@Model.RichiesteIntegrazioneAperte</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Chiuse</h6>
+                            <h3 class="mb-0">@(Model.NumeroRichiesteIntegrazione - Model.RichiesteIntegrazioneAperte)</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Richieste Aperte -->
+    @if (Model.RichiesteIntegrazioneAperte > 0)
+    {
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 1.5rem;"></i>
+            <div>
+                <strong>Attenzione!</strong> Ci sono <strong>@Model.RichiesteIntegrazioneAperte</strong>
+                richiest@(Model.RichiesteIntegrazioneAperte == 1 ? "a" : "e") di integrazione
+                apert@(Model.RichiesteIntegrazioneAperte == 1 ? "a" : "e") che richied@(Model.RichiesteIntegrazioneAperte == 1 ? "e" : "ono") attenzione.
+            </div>
+        </div>
+    }
+
+    <!-- Lista Richieste -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check me-2"></i>
+                Elenco Richieste di Integrazione
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.RichiesteIntegrazione != null && Model.RichiesteIntegrazione.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 10%;">N.</th>
+                                <th style="width: 15%;">Data Richiesta</th>
+                                <th style="width: 15%;">Data Risposta</th>
+                                <th style="width: 45%;">Oggetto</th>
+                                <th style="width: 10%;">Stato</th>
+                                <th style="width: 5%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var richiesta in Model.RichiesteIntegrazione.OrderByDescending(r => r.DataRichiestaEnte))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">#@richiesta.NumeroProgressivo</strong>
+                                    </td>
+                                    <td>
+                                        <small>@richiesta.DataRichiestaEnte.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        @if (richiesta.DataRispostaAzienda.HasValue)
+                                        {
+                                            <small>@richiesta.DataRispostaAzienda.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(richiesta.Oggetto))
+                                        {
+                                            <span>@(richiesta.Oggetto.Length > 80 ? richiesta.Oggetto.Substring(0, 80) + "..." : richiesta.Oggetto)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Nessun oggetto</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (richiesta.IsChiusa)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Chiusa
+                                            </span>
+                                        }
+                                        else if (richiesta.DataRispostaAzienda.HasValue)
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-reply me-1"></i>Risposta Inviata
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-clock me-1"></i>In Attesa
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="@Url.Action("Details", "RichiesteIntegrazione", new { richiestaId = richiesta.Id })"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Dettagli">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            @if (!richiesta.IsChiusa)
+                                            {
+                                                <a href="@Url.Action("Rispondi", "RichiesteIntegrazione", new { richiestaId = richiesta.Id })"
+                                                   class="btn btn-sm btn-outline-success"
+                                                   title="Rispondi">
+                                                    <i class="bi bi-reply"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-3 text-center text-muted">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">Nessuna richiesta trovata</p>
+                </div>
+            }
+        </div>
+        <div class="card-footer bg-light text-end">
+            <a asp-controller="RichiesteIntegrazione" asp-action="Index" asp-route-lottoId="@Model.Id"
+               class="btn btn-primary">
+                <i class="bi bi-arrow-right-circle me-1"></i>
+                Vedi Tutte le Richieste
+            </a>
+        </div>
+    </div>
+}

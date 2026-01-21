@@ -1,0 +1,787 @@
+﻿@model Trasformazioni.Models.ViewModels.GaraDetailsViewModel
+@using Trasformazioni.Helpers
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+@{
+    ViewData["Title"] = "Dettaglio Gara";
+    var lotti = ViewBag.Lotti as List<LottoListViewModel> ?? new List<LottoListViewModel>();
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Header con breadcrumb e azioni -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a asp-action="Index">Gare</a></li>
+                    <li class="breadcrumb-item active">@Model.CodiceGara</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold mb-1">
+                <i class="bi bi-briefcase-fill text-primary me-2"></i>
+                @Model.Titolo
+            </h1>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="@Model.StatoBadgeClass">@EnumHelper.GetDisplayName(Model.Stato)</span>
+                <span class="badge bg-secondary">@EnumHelper.GetDisplayName(Model.Tipologia)</span>
+                @if (Model.IsChiusaManualmente)
+                {
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-lock-fill me-1"></i>
+                        Chiusa Manualmente
+                    </span>
+                }
+                @if (Model.IsInScadenza)
+                {
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-clock-fill me-1"></i>
+                        In scadenza (@Model.GiorniRimanenti giorni)
+                    </span>
+                }
+                @if (Model.IsScaduta)
+                {
+                    <span class="badge bg-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Scaduta
+                    </span>
+                }
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Torna alla Lista
+                </a>
+                @if (Model.CanEdit)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="bi bi-pencil me-1"></i>
+                        Modifica
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna Sinistra - Informazioni Principali -->
+        <div class="col-lg-8">
+
+            <!-- Card Informazioni Generali -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informazioni Generali
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <strong>Codice Gara:</strong>
+                            <p class="mb-0">@Model.CodiceGara</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Tipologia:</strong>
+                            <p class="mb-0">@EnumHelper.GetDisplayName(Model.Tipologia)</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>PNRR:</strong>
+                            @if (Model.PNRR)
+                            {
+                                <span class="badge bg-warning text-dark">Sì</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">No</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Descrizione))
+                        {
+                            <div class="col-12">
+                                <strong>Descrizione:</strong>
+                                <p class="mb-0 text-muted">@Model.Descrizione</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Ente Appaltante -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        Ente Appaltante
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        @if (!string.IsNullOrWhiteSpace(Model.EnteAppaltante))
+                        {
+                            <div class="col-md-8">
+                                <strong>Denominazione:</strong>
+                                <p class="mb-0">@Model.EnteAppaltante</p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Regione))
+                        {
+                            <div class="col-md-4">
+                                <strong>Regione:</strong>
+                                <p class="mb-0">@Model.Regione</p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.NomePuntoOrdinante))
+                        {
+                            <div class="col-md-6">
+                                <strong>Punto Ordinante:</strong>
+                                <p class="mb-0">@Model.NomePuntoOrdinante</p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.TelefonoPuntoOrdinante))
+                        {
+                            <div class="col-md-6">
+                                <strong>Telefono:</strong>
+                                <p class="mb-0">
+                                    <a href="tel:@Model.TelefonoPuntoOrdinante">@Model.TelefonoPuntoOrdinante</a>
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Codici e Riferimenti -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-upc-scan me-2"></i>
+                        Codici e Riferimenti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        @if (!string.IsNullOrWhiteSpace(Model.CIG))
+                        {
+                            <div class="col-md-3">
+                                <strong>CIG:</strong>
+                                <p class="mb-0"><code>@Model.CIG</code></p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.CUP))
+                        {
+                            <div class="col-md-3">
+                                <strong>CUP:</strong>
+                                <p class="mb-0"><code>@Model.CUP</code></p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.RDO))
+                        {
+                            <div class="col-md-3">
+                                <strong>RDO:</strong>
+                                <p class="mb-0"><code>@Model.RDO</code></p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Bando))
+                        {
+                            <div class="col-md-3">
+                                <strong>Bando:</strong>
+                                <p class="mb-0"><code>@Model.Bando</code></p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.DenominazioneIniziativa))
+                        {
+                            <div class="col-12">
+                                <strong>Denominazione Iniziativa:</strong>
+                                <p class="mb-0">@Model.DenominazioneIniziativa</p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Procedura))
+                        {
+                            <div class="col-md-6">
+                                <strong>Procedura:</strong>
+                                <p class="mb-0">@Model.Procedura</p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.CriterioAggiudicazione))
+                        {
+                            <div class="col-md-6">
+                                <strong>Criterio Aggiudicazione:</strong>
+                                <p class="mb-0">@Model.CriterioAggiudicazione</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Date Importanti -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Date Importanti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        @if (Model.DataPubblicazione.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <strong>Data Pubblicazione:</strong>
+                                <p class="mb-0">@Model.DataPubblicazione.Value.ToString("dd/MM/yyyy")</p>
+                            </div>
+                        }
+                        @if (Model.DataInizioPresentazioneOfferte.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <strong>Inizio Presentazione Offerte:</strong>
+                                <p class="mb-0">@Model.DataInizioPresentazioneOfferte.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                        }
+                        @if (Model.DataTermineRichiestaChiarimenti.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <strong>Termine Richiesta Chiarimenti:</strong>
+                                <p class="mb-0">@Model.DataTermineRichiestaChiarimenti.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                        }
+                        @if (Model.DataTerminePresentazioneOfferte.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <strong>Termine Presentazione Offerte:</strong>
+                                <p class="mb-0">
+                                    @Model.DataTerminePresentazioneOfferte.Value.ToString("dd/MM/yyyy HH:mm")
+                                    @if (Model.GiorniRimanenti.HasValue)
+                                    {
+                                        if (Model.GiorniRimanenti.Value > 0)
+                                        {
+                                            <span class="badge @(Model.GiorniRimanenti.Value <= 7 ? "bg-warning text-dark" : "bg-success") ms-2">
+                                                @Model.GiorniRimanenti.Value giorni
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger ms-2">Scaduta</span>
+                                        }
+                                    }
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Link e Risorse/Doc Gara -->
+            @* @if (!string.IsNullOrWhiteSpace(Model.LinkPiattaforma))
+             { *@
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            Link e Risorse
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <strong>Piattaforma Gara:</strong>
+                        <p class="mb-0">
+                            <a href="@Model.LinkPiattaforma" target="_blank" rel="noopener noreferrer">
+                                @Model.LinkPiattaforma
+                                <i class="bi bi-box-arrow-up-right ms-1"></i>
+                            </a>
+                        </p>
+                    </div>
+                    @if (Model.NumeroDocumenti > 0)
+                    {
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-file-earmark-text me-2"></i>
+                                Documenti Associati
+                            </h6>
+                            <p class="mb-2">
+                                Questa gara ha <strong>@Model.NumeroDocumenti</strong> document@(Model.NumeroDocumenti == 1 ? "o" : "i") associat@(Model.NumeroDocumenti == 1 ? "o" : "i").
+                            </p>
+                            <a asp-controller="DocumentiGara" asp-action="Index" asp-route-garaId="@Model.Id"
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-arrow-right-circle me-1"></i>
+                                Vedi Documenti
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-file-earmark-text me-2"></i>
+                                Documenti Associati
+                            </h6>
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Attenzione:</strong> Non ci sono documenti associati a questa gara. Considera di caricarli prima di procedere con la valutazione.
+                                <a asp-controller="DocumentiGara" asp-action="Upload" asp-route-garaId="@Model.Id" class="btn btn-success">
+                                    <i class="bi bi-plus-circle me-1"></i>
+                                    Nuovo Documento
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            @*}*@
+
+            <!-- Card Checklist Documenti Richiesti -->
+            @if (Model.ChecklistDocumenti != null && Model.ChecklistDocumenti.Any())
+            {
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-check me-2"></i>
+                            Checklist Documenti Richiesti
+                        </h5>
+                        <span class="badge @(Model.IsChecklistCompleta ? "bg-success" : "bg-secondary")">
+                            @Model.NumeroDocumentiCompletati / @Model.NumeroDocumentiRichiesti
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Barra di progresso -->
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar @(Model.IsChecklistCompleta ? "bg-success" : "bg-warning")"
+                                 role="progressbar"
+                                 style="width: @Model.PercentualeCompletamentoChecklist%;"
+                                 aria-valuenow="@Model.PercentualeCompletamentoChecklist"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                @Model.PercentualeCompletamentoChecklist.ToString("0")%
+                            </div>
+                        </div>
+
+                        <!-- Lista documenti -->
+                        <div class="row">
+                            @foreach (var doc in Model.ChecklistDocumenti)
+                            {
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex align-items-center p-2 border rounded @(doc.IsPresente ? "border-success bg-success bg-opacity-10" : "border-secondary")">
+                                        @if (doc.IsPresente)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>
+                                            <div class="flex-grow-1">
+                                                <strong>@doc.TipoDocumentoNome</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-file-earmark"></i> @doc.NomeFile
+                                                    <br>
+                                                    <i class="bi bi-calendar"></i> @doc.DataCaricamento?.ToString("dd/MM/yyyy HH:mm")
+                                                </small>
+                                            </div>
+                                            @if (doc.DocumentoId.HasValue)
+                                            {
+                                                <a asp-controller="DocumentiGara" asp-action="Details" asp-route-id="@doc.DocumentoId"
+                                                   class="btn btn-sm btn-outline-primary" title="Visualizza documento">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-x-circle text-secondary me-2 fs-5"></i>
+                                            <div class="flex-grow-1">
+                                                <span class="text-muted">@doc.TipoDocumentoNome</span>
+                                                <br>
+                                                <small class="text-danger">
+                                                    <i class="bi bi-exclamation-triangle"></i> Mancante
+                                                </small>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Alert se incompleta -->
+                        @if (!Model.IsChecklistCompleta)
+                        {
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Attenzione:</strong> La checklist documenti non è completa.
+                                <a asp-controller="DocumentiGara" asp-action="Upload" asp-route-garaId="@Model.Id" class="btn btn-sm btn-success ms-2">
+                                    <i class="bi bi-plus-circle"></i> Carica Documento
+                                </a>
+                            </div>
+                        }
+
+                        @if (Model.IsChecklistCompleta)
+                        {
+                            <div class="alert alert-success mt-3 mb-0">
+                                <i class="bi bi-check-circle"></i>
+                                <strong>Checklist completa!</strong> Tutti i documenti richiesti sono stati caricati.
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Card Lotti Associati -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box-seam me-2"></i>
+                        Lotti Associati
+                        <span class="badge bg-white text-primary ms-2">@lotti.Count</span>
+                    </h5>
+                    <a asp-controller="Lotti" asp-action="Create" asp-route-garaId="@Model.Id" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Nuovo Lotto
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    @if (lotti.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Codice</th>
+                                        <th>Descrizione</th>
+                                        <th>Tipologia</th>
+                                        <th class="text-end">Importo</th>
+                                        <th class="text-center">Stato</th>
+                                        <th class="text-center">Operatore</th>
+                                        <th class="text-end">Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lotto in lotti)
+                                    {
+                                        <tr>
+                                            <td><strong>@lotto.CodiceLotto</strong></td>
+                                            <td>
+                                                <div class="text-truncate" style="max-width: 250px;" title="@lotto.Descrizione">
+                                                    @lotto.Descrizione
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@EnumHelper.GetDisplayName(lotto.Tipologia)</span>
+                                            </td>
+                                            <td class="text-end">
+                                                @if (lotto.ImportoBaseAsta.HasValue)
+                                                {
+                                                    @lotto.ImportoBaseAsta.Value.ToString("C2")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/D</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @{
+                                                    var statoBadge = lotto.Stato switch
+                                                    {
+                                                        StatoLotto.Bozza => "bg-secondary",
+                                                        StatoLotto.InValutazioneTecnica => "bg-info",
+                                                        StatoLotto.InValutazioneEconomica => "bg-info",
+                                                        StatoLotto.Approvato => "bg-success",
+                                                        StatoLotto.Rifiutato => "bg-danger",
+                                                        StatoLotto.InElaborazione => "bg-warning text-dark",
+                                                        StatoLotto.Presentato => "bg-primary",
+                                                        StatoLotto.InEsame => "bg-primary",
+                                                        StatoLotto.RichiestaIntegrazione => "bg-warning text-dark",
+                                                        StatoLotto.Vinto => "bg-success",
+                                                        StatoLotto.Perso => "bg-danger",
+                                                        StatoLotto.Scartato => "bg-dark",
+                                                        _ => "bg-light text-dark"
+                                                    };
+                                                }
+                                                <span class="badge @statoBadge">
+                                                    @EnumHelper.GetDisplayName(lotto.Stato)
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                @if (!string.IsNullOrWhiteSpace(lotto.OperatoreAssegnatoNome))
+                                                {
+                                                    <small>@lotto.OperatoreAssegnatoNome</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lotto.Id"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="Dettagli">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <p class="text-muted mt-2 mb-0">Nessun lotto associato a questa gara</p>
+                            <a asp-controller="Lotti" asp-action="Create" asp-route-garaId="@Model.Id" class="btn btn-sm btn-primary mt-2">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                Crea il primo lotto
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Colonna Destra - Statistiche e Azioni -->
+        <div class="col-lg-4">
+
+            <!-- Card Azioni Workflow -->
+            <div class="card shadow-sm border-0 mb-4 sticky-top">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>
+                        Azioni
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @switch (Model.Stato)
+                        {
+                            case StatoGara.Bozza:
+                                <button class="btn btn-primary" onclick="cambiaStato('@Model.Id', '@((int)StatoGara.InLavorazione)')">
+                                    <i class="bi bi-play-circle me-1"></i>
+                                    Inizia Lavorazione
+                                </button>
+                                break;
+
+                            case StatoGara.InLavorazione:
+                                @if (Model.NumeroLotti > 0 && !Model.HasLottiInLavorazione)
+                                {
+                                    <button class="btn btn-success" onclick="cambiaStato('@Model.Id', '@((int)StatoGara.Conclusa)')">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Concludi Gara
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-info mb-0 small">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        La gara può essere conclusa quando tutti i lotti sono in stato finale
+                                    </div>
+                                }
+                                break;
+
+                            case StatoGara.Conclusa:
+                                <div class="alert alert-success mb-0">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Gara Conclusa
+                                </div>
+                                break;
+                        }
+
+                        @if (Model.CanClose && Model.Stato != StatoGara.ChiusaManualmente)
+                        {
+                            <button class="btn btn-warning" onclick="cambiaStato('@Model.Id', '@((int)StatoGara.ChiusaManualmente)')">
+                                <i class="bi bi-lock-fill me-1"></i>
+                                Chiudi Manualmente
+                            </button>
+                        }
+
+                        @if (Model.IsChiusaManualmente)
+                        {
+                            <button class="btn btn-info" onclick="cambiaStato('@Model.Id', '@((int)StatoGara.InLavorazione)')">
+                                <i class="bi bi-unlock-fill me-1"></i>
+                                Riapri Gara
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Statistiche Lotti -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart-fill me-2"></i>
+                        Statistiche Lotti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded">
+                                <div class="display-6 fw-bold text-primary">@Model.NumeroLotti</div>
+                                <small class="text-muted">Totale</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded">
+                                <div class="display-6 fw-bold text-success">@Model.LottiVinti</div>
+                                <small class="text-muted">Vinti</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded">
+                                <div class="display-6 fw-bold text-danger">@Model.LottiPersi</div>
+                                <small class="text-muted">Persi</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded">
+                                <div class="display-6 fw-bold text-warning">@Model.LottiAttivi</div>
+                                <small class="text-muted">Attivi</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.PercentualeSuccesso.HasValue)
+                    {
+                        <hr />
+                        <div class="text-center">
+                            <strong>Tasso di Successo</strong>
+                            <div class="progress mt-2" style="height: 25px;">
+                                <div class="progress-bar @(Model.PercentualeSuccesso.Value >= 50 ? "bg-success" : "bg-warning")"
+                                     role="progressbar"
+                                     style="width: @Model.PercentualeSuccesso.Value%"
+                                     aria-valuenow="@Model.PercentualeSuccesso.Value"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    @Model.PercentualeSuccesso.Value%
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.ImportoLottiVinti > 0)
+                    {
+                        <hr />
+                        <div class="text-center">
+                            <strong>Valore Lotti Vinti</strong>
+                            <div class="h4 text-success mt-2 mb-0">
+                                @Model.ImportoLottiVinti.ToString("C2")
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Card Informazioni Sistema -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear-fill me-2"></i>
+                        Informazioni Sistema
+                    </h6>
+                </div>
+                <div class="card-body small">
+                    <div class="mb-2">
+                        <strong>Creata il:</strong>
+                        <div class="text-muted">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.CreatedBy))
+                        {
+                            <div class="text-muted">da @Model.CreatedBy</div>
+                        }
+                    </div>
+                    @if (Model.ModifiedAt.HasValue)
+                    {
+                        <div>
+                            <strong>Ultima modifica:</strong>
+                            <div class="text-muted">@Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                            @if (!string.IsNullOrWhiteSpace(Model.ModifiedBy))
+                            {
+                                <div class="text-muted">da @Model.ModifiedBy</div>
+                            }
+                        </div>
+                    }
+                    @if (Model.IsChiusaManualmente)
+                    {
+                        <hr />
+                        <div>
+                            <strong>Chiusa manualmente:</strong>
+                            @if (Model.DataChiusuraManuale.HasValue)
+                            {
+                                <div class="text-muted">@Model.DataChiusuraManuale.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.ChiusaDaNomeCompleto))
+                            {
+                                <div class="text-muted">da @Model.ChiusaDaNomeCompleto</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.MotivoChiusuraManuale))
+                            {
+                                <div class="text-muted mt-1">
+                                    <em>Motivo: @Model.MotivoChiusuraManuale</em>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function cambiaStato(garaId, nuovoStato) {
+            if (!confirm('Sei sicuro di voler cambiare lo stato della gara?')) {
+                return;
+            }
+
+            // Token antiforgery
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            // Disabilita tutti i pulsanti durante la richiesta
+            $('button').prop('disabled', true);
+
+            $.ajax({
+                url: `/Gare/CambiaStato/${garaId}`,
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                },
+                data: {
+                    nuovoStato: nuovoStato,
+                    __RequestVerificationToken: token
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Mostra messaggio di successo
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Errore durante il cambio stato');
+                        $('button').prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    alert('Errore durante il cambio stato della gara');
+                    $('button').prop('disabled', false);
+                }
+            });
+        }
+    </script>
+
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

@@ -1,0 +1,415 @@
+@model PagedResult<LottoListViewModel>
+@using Trasformazioni.Helpers
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+
+@{
+    ViewData["Title"] = "Gestione Lotti";
+    var filters = ViewBag.Filters as LottoFilterViewModel ?? new LottoFilterViewModel();
+}
+
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Lotti</li>
+            </ol>
+        </nav>
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-list-check text-primary me-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
+                        </svg>
+                        @ViewData["Title"]
+                    </h1>
+                    <p class="text-muted mb-0">Visualizza e gestisci i lotti di tutte le gare</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="btn-group">
+                        <a asp-action="Create" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Nuovo Lotto
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary" onclick="exportToExcel()" disabled title="Funzionalità in arrivo">
+                            <i class="bi bi-file-earmark-excel"></i> Esporta Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+
+    <!-- Filtri Card (Collapsable) -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <button class="btn btn-link text-decoration-none text-dark w-100 text-start" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#filtriCollapse" aria-expanded="true">
+                    <i class="bi bi-funnel"></i> Filtri di Ricerca
+                    @if (filters.SearchTerm != null || filters.Stato.HasValue || filters.Tipologia.HasValue ||
+                                        filters.GaraId.HasValue || filters.OperatoreAssegnatoId != null || filters.SoloConOperatore)
+                    {
+                        <span class="badge bg-primary ms-2">Filtri attivi</span>
+                    }
+                </button>
+            </h5>
+        </div>
+        <div id="filtriCollapse" class="collapse show">
+            <div class="card-body">
+                <form asp-action="Index" method="get">
+                    <div class="row g-3">
+                        <!-- Ricerca Testuale -->
+                        <div class="col-md-6">
+                            <label for="SearchTerm" class="form-label">Ricerca</label>
+                            <input type="text" class="form-control" id="SearchTerm" name="SearchTerm"
+                                   value="@filters.SearchTerm" placeholder="Codice, descrizione, codice gara...">
+                            <small class="form-text text-muted">Cerca per codice lotto, descrizione o codice gara</small>
+                        </div>
+
+                        <!-- Stato -->
+                        <div class="col-md-3">
+                            <label for="Stato" class="form-label">Stato</label>
+                            <select class="form-select" id="Stato" name="Stato">
+                                <option value="">Tutti gli stati</option>
+                                @foreach (var item in ViewBag.Stati as List<SelectListItem>)
+                                {
+                                    <option value="@item.Value" selected="@(filters.Stato?.ToString() == item.Text)">
+                                        @item.Text
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Tipologia -->
+                        <div class="col-md-3">
+                            <label for="Tipologia" class="form-label">Tipologia</label>
+                            <select class="form-select" id="Tipologia" name="Tipologia">
+                                <option value="">Tutte le tipologie</option>
+                                @foreach (var item in ViewBag.Tipologie as List<SelectListItem>)
+                                {
+                                    <option value="@item.Value" selected="@(filters.Tipologia?.ToString() == item.Text)">
+                                        @item.Text
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Gara -->
+                        <div class="col-md-6">
+                            <label for="GaraId" class="form-label">Gara</label>
+                            <select class="form-select" id="GaraId" name="GaraId">
+                                <option value="">Tutte le gare</option>
+                                @foreach (var item in ViewBag.Gare as List<SelectListItem>)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">
+                                        @item.Text
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Operatore Assegnato -->
+                        <div class="col-md-4">
+                            <label for="OperatoreAssegnatoId" class="form-label">Operatore</label>
+                            <input type="text" class="form-control" id="OperatoreAssegnatoId" name="OperatoreAssegnatoId"
+                                   value="@filters.OperatoreAssegnatoId" placeholder="ID operatore">
+                        </div>
+
+                        <!-- Solo con Operatore -->
+                        <div class="col-md-2">
+                            <label class="form-label d-block">&nbsp;</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="SoloConOperatore" name="SoloConOperatore"
+                                       value="true" @(filters.SoloConOperatore ? "checked" : "")>
+                                <label class="form-check-label" for="SoloConOperatore">
+                                    Solo assegnati
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Page Size -->
+                        <div class="col-md-3">
+                            <label for="PageSize" class="form-label">Risultati per pagina</label>
+                            <select class="form-select" id="PageSize" name="PageSize">
+                                <option value="10" selected="@(filters.PageSize == 10)">10</option>
+                                <option value="20" selected="@(filters.PageSize == 20)">20</option>
+                                <option value="50" selected="@(filters.PageSize == 50)">50</option>
+                                <option value="100" selected="@(filters.PageSize == 100)">100</option>
+                            </select>
+                        </div>
+
+                        <!-- Ordinamento -->
+                        <div class="col-md-3">
+                            <label for="OrderBy" class="form-label">Ordina per</label>
+                            <select class="form-select" id="OrderBy" name="OrderBy">
+                                <option value="">Default (data creazione)</option>
+                                <option value="codice" selected="@(filters.OrderBy == "codice")">Codice</option>
+                                <option value="descrizione" selected="@(filters.OrderBy == "descrizione")">Descrizione</option>
+                                <option value="stato" selected="@(filters.OrderBy == "stato")">Stato</option>
+                                <option value="importo" selected="@(filters.OrderBy == "importo")">Importo</option>
+                                <option value="gara" selected="@(filters.OrderBy == "gara")">Gara</option>
+                            </select>
+                        </div>
+
+                        <!-- Direzione ordinamento -->
+                        <div class="col-md-2">
+                            <label class="form-label d-block">&nbsp;</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="OrderDescending" name="OrderDescending"
+                                       value="true" @(filters.OrderDescending ? "checked" : "")>
+                                <label class="form-check-label" for="OrderDescending">
+                                    Decrescente
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti Azione -->
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Cerca
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabella Lotti -->
+    @if (Model.Items.Any())
+    {
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Codice</th>
+                                <th>Descrizione</th>
+                                <th>Gara</th>
+                                <th>Tipologia</th>
+                                <th class="text-end">Importo Base</th>
+                                <th class="text-center">Stato</th>
+                                <th class="text-center">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var lotto in Model.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@lotto.CodiceLotto</strong>
+                                        @if (!string.IsNullOrEmpty(lotto.OperatoreAssegnatoNome))
+                                        {
+                                            <br>
+
+                                            <small class="text-muted">
+                                                <i class="bi bi-person"></i> @lotto.OperatoreAssegnatoNome
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span title="@lotto.Descrizione">
+                                            @(lotto.Descrizione.Length > 50 ? lotto.Descrizione.Substring(0, 50) + "..." : lotto.Descrizione)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Gare" asp-action="Details" asp-route-id="@lotto.GaraId"
+                                           class="text-decoration-none">
+                                            <small>@lotto.CodiceGara</small>
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(lotto.EnteAppaltante))
+                                        {
+                                            <br>
+
+                                            <small class="text-muted">@lotto.EnteAppaltante</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">@EnumHelper.GetDisplayName(lotto.Tipologia)</span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (lotto.ImportoBaseAsta.HasValue)
+                                        {
+                                            <strong>@lotto.ImportoBaseAsta.Value.ToString("N2") €</strong>
+                                            @if (lotto.Quotazione.HasValue)
+                                            {
+                                                <br>
+
+                                                <small class="text-muted">
+                                                    <i class="bi bi-calculator"></i> @lotto.Quotazione.Value.ToString("N2") €
+                                                </small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @{
+                                            var badgeClass = lotto.Stato switch
+                                            {
+                                                StatoLotto.Bozza => "bg-secondary",
+                                                StatoLotto.InValutazioneTecnica => "bg-info",
+                                                StatoLotto.InValutazioneEconomica => "bg-info",
+                                                StatoLotto.Approvato => "bg-success",
+                                                StatoLotto.Rifiutato => "bg-danger",
+                                                StatoLotto.InElaborazione => "bg-warning text-dark",
+                                                StatoLotto.Presentato => "bg-primary",
+                                                StatoLotto.InEsame => "bg-primary",
+                                                StatoLotto.RichiestaIntegrazione => "bg-warning text-dark",
+                                                StatoLotto.Vinto => "bg-success",
+                                                StatoLotto.Perso => "bg-danger",
+                                                StatoLotto.Scartato => "bg-dark",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @badgeClass">@EnumHelper.GetDisplayName(lotto.Stato)</span>
+                                        @if (lotto.NumeroRichiesteIntegrazione > 0)
+                                        {
+                                            <br>
+
+                                            <small>
+                                                <span class="badge bg-warning text-dark mt-1">
+                                                    @lotto.RichiesteIntegrazioneAperte integrazioni
+                                                </span>
+                                            </small>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="Details" asp-route-id="@lotto.Id"
+                                               class="btn btn-outline-primary" title="Dettagli">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@lotto.Id"
+                                               class="btn btn-outline-secondary" title="Modifica">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger"
+                                                    onclick="confirmDelete('@lotto.Id', '@lotto.CodiceLotto')" title="Elimina">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paginazione -->
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            Mostrando @Model.Items.Count() di @Model.TotalItems risultati
+                            (Pagina @Model.PageNumber di @Model.TotalPages)
+                        </small>
+                    </div>
+                    <div>
+                        @await Html.PartialAsync("_PaginationPartial", Model)
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="mt-3">Nessun lotto trovato</h4>
+                <p class="text-muted">
+                    @if (filters.SearchTerm != null || filters.Stato.HasValue || filters.Tipologia.HasValue)
+                    {
+                        <text>Prova a modificare i filtri di ricerca.</text>
+                    }
+                    else
+                    {
+                        <text>Inizia creando il tuo primo lotto.</text>
+                    }
+                </p>
+                @if (filters.SearchTerm == null && !filters.Stato.HasValue && !filters.Tipologia.HasValue)
+                {
+                    <a asp-action="Create" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-circle"></i> Crea Primo Lotto
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary mt-3">
+                        <i class="bi bi-x-circle"></i> Reset Filtri
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        // Conferma eliminazione
+        function confirmDelete(lottoId, codiceLotto) {
+            if (confirm(`Sei sicuro di voler eliminare il lotto "${codiceLotto}"?\n\nQuesta azione non può essere annullata.`)) {
+                $.ajax({
+                    url: '@Url.Action("Delete", "Lotti")',
+                    type: 'POST',
+                    data: {
+                        id: lottoId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            window.location.href = response.redirectUrl;
+                        } else {
+                            alert('Errore: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Errore di connessione. Riprova.');
+                    }
+                });
+            }
+        }
+
+        // Export Excel (placeholder)
+        function exportToExcel() {
+            alert('Funzionalità in arrivo: Export Excel');
+        }
+    </script>
+
+    @Html.AntiForgeryToken()
+}

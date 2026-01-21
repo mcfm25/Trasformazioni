@@ -1,0 +1,263 @@
+﻿@model Trasformazioni.Models.ViewModels.AssegnazioneMezzoCloseViewModel
+
+@{
+    ViewData["Title"] = "Riconsegna Mezzo";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>@ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Mezzi" asp-action="Index">Mezzi</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Mezzi" asp-action="Details" asp-route-id="@Model.MezzoId">@Model.MezzoTarga</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Riconsegna</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            @* Riepilogo Assegnazione *@
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Riepilogo Assegnazione</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Mezzo</label>
+                            <p class="mb-0"><strong>@Model.MezzoDescrizioneCompleta</strong></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Assegnato a</label>
+                            <p class="mb-0"><strong>@Model.UtenteNomeCompleto</strong></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Data Inizio</label>
+                            <p class="mb-0">@Model.DataInizio.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                        @if (Model.ChilometraggioInizio.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <label class="text-muted small">Chilometraggio Iniziale</label>
+                                <p class="mb-0">@Model.ChilometraggioInizio.Value.ToString("N0") km</p>
+                            </div>
+                        }
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-clock"></i> Il mezzo è stato assegnato da
+                        <strong id="giorniAssegnato">@((DateTime.Today - Model.DataInizio.Date).Days)</strong> giorni
+                    </div>
+                </div>
+            </div>
+
+            @* Form Riconsegna *@
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-box-arrow-in-down"></i> Dati Riconsegna</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Riconsegna" asp-route-id="@Model.Id" method="post" id="riconsegnaForm" novalidate>
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="MezzoId" />
+                        <input type="hidden" asp-for="MezzoTarga" />
+                        <input type="hidden" asp-for="MezzoDescrizioneCompleta" />
+                        <input type="hidden" asp-for="UtenteNomeCompleto" />
+                        <input type="hidden" asp-for="DataInizio" />
+                        <input type="hidden" asp-for="ChilometraggioInizio" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        @* Data e Ora Riconsegna *@
+                        <div class="mb-3">
+                            <label asp-for="DataFine" class="form-label"></label>
+                            <input asp-for="DataFine" type="datetime-local" step="60" class="form-control" required id="dataFineInput" />
+                            <span asp-validation-for="DataFine" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Data e ora di riconsegna del mezzo (non può essere nel futuro né precedente all'inizio)
+                            </small>
+                        </div>
+
+                        @* Chilometraggio Finale *@
+                        <div class="mb-3">
+                            <label asp-for="ChilometraggioFine" class="form-label"></label>
+                            <input asp-for="ChilometraggioFine" type="number" step="0.01"
+                                   class="form-control" placeholder="Es: 50250" id="kmFineInput" />
+                            <span asp-validation-for="ChilometraggioFine" class="text-danger"></span>
+                            @if (Model.ChilometraggioInizio.HasValue)
+                            {
+                                <small class="form-text text-muted">
+                                    Chilometraggio attuale (iniziale: @Model.ChilometraggioInizio.Value.ToString("N0") km)
+                                </small>
+                            }
+                            else
+                            {
+                                <small class="form-text text-muted">Chilometraggio attuale del mezzo (opzionale)</small>
+                            }
+                            <div id="kmPercorsiInfo" class="alert alert-success mt-2" style="display: none;">
+                                <i class="bi bi-speedometer2"></i> Chilometri percorsi: <strong id="kmPercorsiValue">0</strong> km
+                            </div>
+                        </div>
+
+                        @* Note Riconsegna *@
+                        <div class="mb-3">
+                            <label asp-for="NoteRiconsegna" class="form-label"></label>
+                            <textarea asp-for="NoteRiconsegna" class="form-control" rows="3"
+                                      placeholder="Note sulla riconsegna (stato del mezzo, eventuali danni, ecc...)"></textarea>
+                            <span asp-validation-for="NoteRiconsegna" class="text-danger"></span>
+                        </div>
+
+                        @* Info Durata *@
+                        <div class="alert alert-light border">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Durata totale:</strong>
+                                    <span id="durataGiorni">-</span> giorni
+                                </div>
+                                @if (Model.ChilometraggioInizio.HasValue)
+                                {
+                                    <div class="col-md-6">
+                                        <strong>Km percorsi:</strong>
+                                        <span id="kmTotali">-</span> km
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @* Pulsanti *@
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-controller="Mezzi" asp-action="Details" asp-route-id="@Model.MezzoId"
+                               class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-success" id="submitBtn">
+                                <i class="bi bi-check-circle"></i> Conferma Riconsegna
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dataInizio = new Date('@Model.DataInizio.ToString("yyyy-MM-dd HH:mm")');
+            const dataFineInput = document.getElementById('dataFineInput');
+            const kmFineInput = document.getElementById('kmFineInput');
+            const kmPercorsiInfo = document.getElementById('kmPercorsiInfo');
+            const kmPercorsiValue = document.getElementById('kmPercorsiValue');
+            const durataGiorni = document.getElementById('durataGiorni');
+            const kmTotali = document.getElementById('kmTotali');
+            const kmInizio = @(Model.ChilometraggioInizio?.ToString("F2") ?? "null");
+
+            // Tronca secondi dal valore iniziale (dal server)
+            if (dataFineInput.value) {
+                // Es: "2025-10-20T15:30:47" → "2025-10-20T15:30"
+                dataFineInput.value = dataFineInput.value.substring(0, 16);
+            }
+
+            // Calcola durata in ore invece che in giorni
+            function calcolaDurata() {
+                if (!dataFineInput.value) return;
+
+                const dataFine = new Date(dataFineInput.value);
+                const diffTime = Math.abs(dataFine - dataInizio);
+                const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                const diffDays = Math.floor(diffHours / 24);
+                const remainingHours = diffHours % 24;
+
+                if (diffDays > 0) {
+                    durataGiorni.textContent = `${diffDays} giorni e ${remainingHours} ore`;
+                } else {
+                    durataGiorni.textContent = `${diffHours} ore`;
+                }
+            }
+
+            // Calcola km percorsi
+            function calcolaKmPercorsi() {
+                const kmFine = parseFloat(kmFineInput.value);
+
+                if (kmInizio !== null && !isNaN(kmFine) && kmFine > 0) {
+                    const percorsi = kmFine - kmInizio;
+
+                    if (percorsi >= 0) {
+                        kmPercorsiValue.textContent = percorsi.toFixed(0);
+                        kmPercorsiInfo.style.display = 'block';
+                        kmTotali.textContent = percorsi.toFixed(0);
+                    } else {
+                        kmPercorsiInfo.style.display = 'none';
+                        kmTotali.textContent = '-';
+                    }
+                } else {
+                    kmPercorsiInfo.style.display = 'none';
+                    kmTotali.textContent = '-';
+                }
+            }
+
+            // Event listeners
+            dataFineInput.addEventListener('change', calcolaDurata);
+            kmFineInput.addEventListener('input', calcolaKmPercorsi);
+
+            // Calcola al caricamento se ci sono valori
+            if (dataFineInput.value) {
+                calcolaDurata();
+            }
+            if (kmFineInput.value) {
+                calcolaKmPercorsi();
+            }
+
+            // Validazione form
+            const form = document.getElementById('riconsegnaForm');
+            form.addEventListener('submit', function(event) {
+                let isValid = true;
+
+                // Validazione: DataFine >= DataInizio (con ore)
+                const dataFine = new Date(dataFineInput.value);
+                const dataInizioCheck = new Date(dataInizio);
+
+                if (dataFine < dataInizioCheck) {
+                    event.preventDefault();
+                    alert('La data e ora di riconsegna non può essere precedente alla data di inizio (' +
+                          dataInizioCheck.toLocaleString('it-IT') + ')');
+                    dataFineInput.focus();
+                    isValid = false;
+                }
+
+                // Validazione: DataFine non nel futuro (con ore)
+                const ora = new Date();
+
+                if (dataFine > ora) {
+                    event.preventDefault();
+                    alert('La data e ora di riconsegna non può essere nel futuro');
+                    dataFineInput.focus();
+                    isValid = false;
+                }
+
+                // Validazione: KmFine >= KmInizio
+                if (kmInizio !== null && kmFineInput.value) {
+                    const kmFine = parseFloat(kmFineInput.value);
+
+                    if (kmFine < kmInizio) {
+                        event.preventDefault();
+                        alert('Il chilometraggio finale (' + kmFine.toFixed(0) + ' km) non può essere inferiore ' +
+                              'al chilometraggio iniziale (' + kmInizio.toFixed(0) + ' km)');
+                        kmFineInput.focus();
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+}

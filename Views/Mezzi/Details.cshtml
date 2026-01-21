@@ -1,0 +1,583 @@
+﻿@model Trasformazioni.Models.ViewModels.MezzoDetailsViewModel
+@using Trasformazioni.Models.Entities
+@using Trasformazioni.Authorization
+@using Trasformazioni.Models.Enums
+@inject Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> UserManager
+
+@{
+    var currentUserId = UserManager.GetUserId(User);
+
+    ViewData["Title"] = $"Dettaglio Mezzo - {Model.Targa}";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Dettaglio Mezzo</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Mezzi</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@Model.Targa</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @* Alert Scadenze *@
+    @if (Model.IsAssicurazioneScaduta || Model.IsRevisioneScaduta || Model.IsNoleggioScaduto)
+    {
+        <div class="alert alert-danger" role="alert">
+            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Attenzione - Scadenze</h5>
+            <ul class="mb-0">
+                @if (Model.IsAssicurazioneScaduta)
+                {
+                    <li><strong>Assicurazione scaduta</strong> il @Model.DataScadenzaAssicurazione?.ToString("dd/MM/yyyy")</li>
+                }
+                @if (Model.IsRevisioneScaduta)
+                {
+                    <li><strong>Revisione scaduta</strong> il @Model.DataScadenzaRevisione?.ToString("dd/MM/yyyy")</li>
+                }
+                @if (Model.IsNoleggioScaduto)
+                {
+                    <li><strong>Noleggio scaduto</strong> il @Model.DataFineNoleggio?.ToString("dd/MM/yyyy")</li>
+                }
+            </ul>
+        </div>
+    }
+    else if (Model.IsAssicurazioneInScadenza || Model.IsRevisioneInScadenza || Model.IsNoleggioInScadenza)
+    {
+        <div class="alert alert-warning" role="alert">
+            <h5 class="alert-heading"><i class="bi bi-exclamation-circle-fill"></i> Scadenze Imminenti</h5>
+            <ul class="mb-0">
+                @if (Model.IsAssicurazioneInScadenza && Model.GiorniAllaScadenzaAssicurazione.HasValue)
+                {
+                    <li><strong>Assicurazione</strong> in scadenza tra @Model.GiorniAllaScadenzaAssicurazione giorni (@Model.DataScadenzaAssicurazione?.ToString("dd/MM/yyyy"))</li>
+                }
+                @if (Model.IsRevisioneInScadenza && Model.GiorniAllaScadenzaRevisione.HasValue)
+                {
+                    <li><strong>Revisione</strong> in scadenza tra @Model.GiorniAllaScadenzaRevisione giorni (@Model.DataScadenzaRevisione?.ToString("dd/MM/yyyy"))</li>
+                }
+                @if (Model.IsNoleggioInScadenza)
+                {
+                    <li><strong>Noleggio</strong> in scadenza il @Model.DataFineNoleggio?.ToString("dd/MM/yyyy")</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-8">
+            @* Dati Identificativi *@
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-truck"></i> Dati Identificativi</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Targa</label>
+                            <p class="h4 mb-0">@Model.TargaFormattata</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Tipo Proprietà</label>
+                            <p class="mb-0">
+                                @if (Model.TipoProprieta == TipoProprietaMezzo.Proprieta)
+                                {
+                                    <span class="badge bg-info fs-6">@Model.TipoProprietaDescrizione</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark fs-6">@Model.TipoProprietaDescrizione</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Marca</label>
+                            <p class="mb-0"><strong>@Model.Marca</strong></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Modello</label>
+                            <p class="mb-0"><strong>@Model.Modello</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="text-muted small">Anno</label>
+                            <p class="mb-0">@(Model.Anno?.ToString() ?? "N/D")</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Tipo Mezzo</label>
+                            <p class="mb-0">
+                                <span class="badge bg-secondary">@Model.TipoDescrizione</span>
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Stato</label>
+                            <p class="mb-0">
+                                @switch (Model.Stato)
+                                {
+                                    case StatoMezzo.Disponibile:
+                                        <span class="badge bg-success">@Model.StatoDescrizione</span>
+                                        break;
+                                    case StatoMezzo.InUso:
+                                        <span class="badge bg-primary">@Model.StatoDescrizione</span>
+                                        break;
+                                    case StatoMezzo.InManutenzione:
+                                        <span class="badge bg-warning text-dark">@Model.StatoDescrizione</span>
+                                        break;
+                                    case StatoMezzo.Dismesso:
+                                        <span class="badge bg-dark">@Model.StatoDescrizione</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Dati Tecnici *@
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> Dati Tecnici</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Data Immatricolazione</label>
+                            <p class="mb-0">@(Model.DataImmatricolazione?.ToString("dd/MM/yyyy") ?? "N/D")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Chilometraggio</label>
+                            <p class="mb-0">
+                                @if (Model.Chilometraggio.HasValue)
+                                {
+                                    <strong>@Model.Chilometraggio.Value.ToString("N0") km</strong>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non disponibile</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Dati Acquisto o Noleggio *@
+            @if (Model.IsMezzoANoleggio)
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Dati Noleggio</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="text-muted small">Società Noleggio</label>
+                                <p class="mb-0">@(Model.SocietaNoleggio ?? "N/D")</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Data Inizio Noleggio</label>
+                                <p class="mb-0">@(Model.DataInizioNoleggio?.ToString("dd/MM/yyyy") ?? "N/D")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Data Fine Noleggio</label>
+                                <p class="mb-0">
+                                    @if (Model.DataFineNoleggio.HasValue)
+                                    {
+                                        @Model.DataFineNoleggio.Value.ToString("dd/MM/yyyy")
+                                        if (Model.IsNoleggioScaduto)
+                                        {
+                                            <span class="badge bg-danger ms-2">Scaduto</span>
+                                        }
+                                        else if (Model.IsNoleggioInScadenza)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-2">In scadenza</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/D</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-basket"></i> Dati Acquisto</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Data Acquisto</label>
+                                <p class="mb-0">@(Model.DataAcquisto?.ToString("dd/MM/yyyy") ?? "N/D")</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* Scadenze *@
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-x"></i> Scadenze</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Scadenza Assicurazione</label>
+                            <p class="mb-0">
+                                @if (Model.DataScadenzaAssicurazione.HasValue)
+                                {
+                                    @Model.DataScadenzaAssicurazione.Value.ToString("dd/MM/yyyy")
+                                    if (Model.IsAssicurazioneScaduta)
+                                    {
+                                        <span class="badge bg-danger ms-2">Scaduta</span>
+                                    }
+                                    else if (Model.IsAssicurazioneInScadenza)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-2">In scadenza</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non impostata</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Scadenza Revisione</label>
+                            <p class="mb-0">
+                                @if (Model.DataScadenzaRevisione.HasValue)
+                                {
+                                    @Model.DataScadenzaRevisione.Value.ToString("dd/MM/yyyy")
+                                    if (Model.IsRevisioneScaduta)
+                                    {
+                                        <span class="badge bg-danger ms-2">Scaduta</span>
+                                    }
+                                    else if (Model.IsRevisioneInScadenza)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-2">In scadenza</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non impostata</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Note *@
+            @if (!string.IsNullOrWhiteSpace(Model.Note))
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-sticky"></i> Note</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">@Model.Note</p>
+                    </div>
+                </div>
+            }
+
+            @* ===== SEZIONE ASSEGNAZIONE CORRENTE ===== *@
+            @if (Model.AssegnazioneAttiva != null)
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-person-check"></i> Assegnazione Corrente</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.AssegnazioneAttiva.IsPrenotazione)
+                        {
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-calendar-check"></i>
+                                <strong>Prenotazione</strong> - Il mezzo è prenotato a partire dal
+                                @Model.AssegnazioneAttiva.DataInizio.ToString("dd/MM/yyyy HH:mm")
+                                @if (Model.AssegnazioneAttiva.GiorniAllaDataInizio.HasValue)
+                                {
+                                    <text> (tra @Model.AssegnazioneAttiva.GiorniAllaDataInizio giorni)</text>
+                                }
+                            </div>
+                        }
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Assegnato a</label>
+                                <p class="mb-0"><strong>@Model.AssegnazioneAttiva.UtenteNomeCompleto</strong></p>
+                                <small class="text-muted">@Model.AssegnazioneAttiva.UtenteEmail</small>
+                                @if (!string.IsNullOrWhiteSpace(Model.AssegnazioneAttiva.UtenteReparto))
+                                {
+                                    <br />
+                            
+                                    <small class="text-muted">Reparto: @Model.AssegnazioneAttiva.UtenteReparto</small>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Dal</label>
+                                <p class="mb-0">@Model.AssegnazioneAttiva.DataInizio</p>
+                                @if (Model.AssegnazioneAttiva.IsInCorso && Model.AssegnazioneAttiva.GiorniDallInizio.HasValue)
+                                {
+                                    <small class="text-primary">
+                                        <i class="bi bi-clock"></i> Da @Model.AssegnazioneAttiva.GiorniDallInizio giorni
+                                    </small>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Motivo</label>
+                                <p class="mb-0">
+                                    <span class="badge bg-light text-dark">
+                                        @Model.AssegnazioneAttiva.MotivoAssegnazioneDescrizione
+                                    </span>
+                                </p>
+                            </div>
+                            @if (Model.AssegnazioneAttiva.ChilometraggioInizio.HasValue)
+                            {
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Km all'assegnazione</label>
+                                    <p class="mb-0">@Model.AssegnazioneAttiva.ChilometraggioInizio.Value.ToString("N0") km</p>
+                                </div>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.AssegnazioneAttiva.Note))
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="text-muted small">Note</label>
+                                    <p class="mb-0 fst-italic">@Model.AssegnazioneAttiva.Note</p>
+                                </div>
+                            </div>
+                        }
+
+                        @* Pulsanti Azioni *@
+                        @if (User.IsInRole(RoleNames.Amministrazione) ||
+                            Model.AssegnazioneAttiva.UtenteId == currentUserId)
+                        {
+                            <hr />
+                            <div class="d-flex gap-2">
+                                @if (Model.AssegnazioneAttiva.IsInCorso)
+                                {
+                                    <a asp-controller="Assegnazioni" asp-action="Riconsegna"
+                                       asp-route-id="@Model.AssegnazioneAttiva.Id"
+                                       class="btn btn-success">
+                                        <i class="bi bi-box-arrow-in-down"></i> Riconsegna Mezzo
+                                    </a>
+                                }
+
+                                @* @if (Model.AssegnazioneAttiva.IsPrenotazione) *@
+                                @* { *@
+                                    <form asp-controller="Assegnazioni" asp-action="CancellaPrenotazione"
+                                          asp-route-id="@Model.AssegnazioneAttiva.Id"
+                                          asp-route-mezzoId="@Model.Id" method="post" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger"
+                                                onclick="return confirm('Vuoi cancellare questa prenotazione?')">
+                                            <i class="bi bi-x-circle"></i> Cancella Prenotazione
+                                        </button>
+                                    </form>
+                                @* } *@
+
+                                @if (Model.AssegnazioneAttiva.DataFine != null)
+                                {
+                                    <a asp-controller="Assegnazioni" asp-action="Assegna" asp-route-mezzoId="@Model.Id"
+                                       class="btn btn-primary btn-lg">
+                                        <i class="bi bi-plus-circle"></i> Assegna Mezzo
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else if (
+                @* Model.Stato == StatoMezzo.Disponibile &&  *@
+                (User.IsInRole(RoleNames.Amministrazione) || 
+                User.IsInRole(RoleNames.UfficioGare) ||
+                User.IsInRole(RoleNames.DataEntry))
+            )
+            {
+                @* Pulsante Assegna se mezzo disponibile *@
+                <div class="card mb-4 border-success">
+                    <div class="card-body text-center">
+                        <p class="mb-3">
+                            <i class="bi bi-check-circle text-success fs-1"></i>
+                        </p>
+                        <h5 class="text-success mb-3">Mezzo Disponibile</h5>
+                        <a asp-controller="Assegnazioni" asp-action="Assegna" asp-route-mezzoId="@Model.Id"
+                           class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle"></i> Assegna Mezzo
+                        </a>
+                    </div>
+                </div>
+            }
+
+
+            @* ===== SEZIONE STORICO ASSEGNAZIONI ===== *@
+            @if (Model.UltimeAssegnazioni != null && Model.UltimeAssegnazioni.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Ultime Assegnazioni</h5>
+                            @if (User.IsInRole(RoleNames.Amministrazione) || User.IsInRole(RoleNames.UfficioGare))
+                            {
+                                <a asp-controller="Assegnazioni" asp-action="Storico" asp-route-mezzoId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-list-ul"></i> Vedi tutto lo storico
+                                </a>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            @foreach (var assegnazione in Model.UltimeAssegnazioni)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <h6 class="mb-0 me-2">@assegnazione.UtenteNomeCompleto</h6>
+                                                @if (assegnazione.IsPrenotazione)
+                                                {
+                                                    <span class="badge bg-info">Prenotazione</span>
+                                                }
+                                                else if (assegnazione.IsInCorso)
+                                                {
+                                                    <span class="badge bg-primary">In Corso</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Completata</span>
+                                                }
+                                            </div>
+                                            <div class="text-muted small">
+                                                <i class="bi bi-calendar3"></i>
+                                                @assegnazione.DataInizio.ToString("dd/MM/yyyy H:mm")
+                                                @if (assegnazione.DataFine.HasValue)
+                                                {
+                                                    <text> - @assegnazione.DataFine.Value.ToString("dd/MM/yyyy H:mm")</text>
+                                                }
+                                                else
+                                                {
+                                                    <text> - in corso</text>
+                                                }
+                                            </div>
+                                            @if (assegnazione.DurataGiorni.HasValue)
+                                            {
+                                                <div class="text-muted small">
+                                                    <i class="bi bi-clock"></i> Durata: @assegnazione.DurataGiorni giorni
+                                                </div>
+                                            }
+                                            else if (assegnazione.IsInCorso)
+                                            {
+                                                var giorniDaInizio = (DateTime.Today - assegnazione.DataInizio.Date).Days;
+                                                <div class="text-primary small">
+                                                    <i class="bi bi-clock"></i> Da @giorniDaInizio giorni
+                                                </div>
+                                            }
+                                            @if (assegnazione.ChilometriPercorsi.HasValue)
+                                            {
+                                                <div class="text-success small">
+                                                    <i class="bi bi-speedometer2"></i> @assegnazione.ChilometriPercorsi.Value.ToString("N0") km percorsi
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="text-end ms-3">
+                                            <span class="badge bg-light text-dark">
+                                                @assegnazione.MotivoAssegnazioneDescrizione
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @if (Model.UltimeAssegnazioni.Count >= 5)
+                        {
+                            <div class="text-center mt-3">
+                                <small class="text-muted">
+                                    Mostrate le ultime 5 assegnazioni.
+                                    @if (User.IsInRole(RoleNames.Amministrazione) || User.IsInRole(RoleNames.UfficioGare))
+                                    {
+                                        <a asp-controller="Assegnazioni" asp-action="Storico" asp-route-mezzoId="@Model.Id">
+                                            Visualizza tutte
+                                        </a>
+                                    }
+                                </small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* Sidebar - Azioni e Info Audit *@
+        <div class="col-lg-4">
+            @* Azioni *@
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Azioni</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (User.IsInRole(RoleNames.Amministrazione))
+                        {
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                                <i class="bi bi-pencil"></i> Modifica Mezzo
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                                <i class="bi bi-trash"></i> Elimina Mezzo
+                            </a>
+                            <hr />
+                        }
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Torna alla Lista
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @* Informazioni Audit *@
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informazioni Sistema</h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted d-block mb-2">
+                        <strong>Creato il:</strong><br />
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")<br />
+                        da @Model.CreatedBy
+                    </small>
+                    @if (Model.ModifiedAt.HasValue)
+                    {
+                        <small class="text-muted d-block">
+                            <strong>Ultima modifica:</strong><br />
+                            @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")<br />
+                            da @Model.ModifiedBy
+                        </small>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

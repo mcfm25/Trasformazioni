@@ -1,0 +1,497 @@
+@model Trasformazioni.Models.ViewModels.PagedResult<Trasformazioni.Models.ViewModels.GaraListViewModel>
+@using Trasformazioni.Helpers
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+@{
+    ViewData["Title"] = "Gestione Gare";
+    var filters = ViewBag.CurrentFilters as GaraFilterViewModel ?? new GaraFilterViewModel();
+
+    // Configurazione paginazione
+    ViewData["PaginationRoute"] = new Dictionary<string, object>
+    {
+        ["SearchTerm"] = filters.SearchTerm ?? "",
+        ["Stato"] = filters.Stato?.ToString() ?? "",
+        ["Tipologia"] = filters.Tipologia?.ToString() ?? "",
+        ["Regione"] = filters.Regione ?? "",
+        ["DataPubblicazioneDa"] = filters.DataPubblicazioneDa?.ToString("yyyy-MM-dd") ?? "",
+        ["DataPubblicazioneA"] = filters.DataPubblicazioneA?.ToString("yyyy-MM-dd") ?? "",
+        ["SoloAttive"] = filters.SoloAttive.ToString(),
+        ["PageSize"] = filters.PageSize,
+        ["OrderBy"] = filters.OrderBy ?? "",
+        ["OrderDescending"] = filters.OrderDescending.ToString()
+    };
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-briefcasebi text-primary me-2" viewBox="0 0 16 16">
+                    <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5m1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0M1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5" />
+                </svg>
+                Gestione Gare
+            </h1>
+            <p class="text-muted mb-0">Visualizza e gestisci tutte le gare</p>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>
+                Nuova Gara
+            </a>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Filtri -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-0">
+            <button class="btn btn-link text-decoration-none text-dark w-100 text-start p-0" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#filtriCollapse">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>
+                        Filtri di Ricerca
+                    </h6>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+            </button>
+        </div>
+        <div class="collapse" id="filtriCollapse">
+            <div class="card-body">
+                <form asp-action="Index" method="get" id="filterForm">
+                    <div class="row g-3">
+                        <!-- Search Term (ricerca libera) -->
+                        <div class="col-md-6">
+                            <label for="SearchTerm" class="form-label">Ricerca Libera</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="SearchTerm" 
+                                   name="SearchTerm" 
+                                   value="@filters.SearchTerm"
+                                   placeholder="Cerca per codice, titolo, descrizione o ente...">
+                            <small class="text-muted">Cerca in: Codice Gara, Titolo, Descrizione, Ente Appaltante</small>
+                        </div>
+
+                        <!-- Stato -->
+                        <div class="col-md-3">
+                            <label for="Stato" class="form-label">Stato</label>
+                            <select class="form-select" id="Stato" name="Stato">
+                                <option value="">Tutti gli stati</option>
+                                @foreach (var item in ViewBag.StatiGara as List<SelectListItem>)
+                                {
+                                    <option value="@item.Value" selected="@(item.Value == filters.Stato?.ToString())">
+                                        @item.Text
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Tipologia -->
+                        <div class="col-md-3">
+                            <label for="Tipologia" class="form-label">Tipologia</label>
+                            <select class="form-select" id="Tipologia" name="Tipologia">
+                                <option value="">Tutte le tipologie</option>
+                                @foreach (var item in ViewBag.TipologieGara as List<SelectListItem>)
+                                {
+                                    <option value="@item.Value" selected="@(item.Value == filters.Tipologia?.ToString())">
+                                        @item.Text
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Regione -->
+                        <div class="col-md-4">
+                            <label for="Regione" class="form-label">Regione</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="Regione" 
+                                   name="Regione" 
+                                   value="@filters.Regione"
+                                   placeholder="Filtra per regione...">
+                        </div>
+
+                        <!-- Data Pubblicazione Da -->
+                        <div class="col-md-2">
+                            <label for="DataPubblicazioneDa" class="form-label">Pubblicazione Da</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="DataPubblicazioneDa" 
+                                   name="DataPubblicazioneDa" 
+                                   value="@filters.DataPubblicazioneDa?.ToString("yyyy-MM-dd")">
+                        </div>
+
+                        <!-- Data Pubblicazione A -->
+                        <div class="col-md-2">
+                            <label for="DataPubblicazioneA" class="form-label">Pubblicazione A</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="DataPubblicazioneA" 
+                                   name="DataPubblicazioneA" 
+                                   value="@filters.DataPubblicazioneA?.ToString("yyyy-MM-dd")">
+                        </div>
+
+                        <!-- Solo Attive -->
+                        <div class="col-md-2">
+                            <label class="form-label d-block">&nbsp;</label>
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="SoloAttive" 
+                                       name="SoloAttive" 
+                                       value="true"
+                                       @(filters.SoloAttive ? "checked" : "")>
+                                <label class="form-check-label" for="SoloAttive">
+                                    Solo Gare Attive
+                                </label>
+                            </div>
+                            <small class="text-muted">Escludi chiuse manualmente</small>
+                        </div>
+
+                        <!-- Page Size -->
+                        <div class="col-md-2">
+                            <label for="PageSize" class="form-label">Elementi per pagina</label>
+                            <select class="form-select" id="PageSize" name="PageSize">
+                                <option value="10" selected="@(filters.PageSize == 10)">10</option>
+                                <option value="25" selected="@(filters.PageSize == 25)">25</option>
+                                <option value="50" selected="@(filters.PageSize == 50)">50</option>
+                                <option value="100" selected="@(filters.PageSize == 100)">100</option>
+                            </select>
+                        </div>
+
+                        <!-- Pulsanti Azione -->
+                        <div class="col-12 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>
+                                Applica Filtri
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Cancella Filtri
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Hidden campo per PageNumber -->
+                    <input type="hidden" name="PageNumber" value="1" />
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Risultati e Paginazione Top -->
+    @if (Model.TotalItems > 0)
+    {
+        <div class="row mb-3 align-items-center">
+            <div class="col">
+                <p class="text-muted mb-0">
+                    Mostra <strong>@Model.FirstItemOnPage-@Model.LastItemOnPage</strong> 
+                    di <strong>@Model.TotalItems</strong> gare
+                    @if (filters.HasFilters)
+                    {
+                        <span class="badge bg-info">Filtrate</span>
+                    }
+                </p>
+            </div>
+            <div class="col-auto">
+                @await Html.PartialAsync("_PaginationPartial", Model)
+            </div>
+        </div>
+    }
+
+    <!-- Tabella Risultati -->
+    @if (Model.TotalItems == 0)
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="mt-3">Nessuna gara trovata</h4>
+                <p class="text-muted mb-0">
+                    Prova a modificare i filtri di ricerca o crea la prima gara.
+                </p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Codice</th>
+                            <th>Titolo</th>
+                            <th>Tipologia</th>
+                            <th>Ente</th>
+                            <th class="text-center">Lotti</th>
+                            <th>Scadenza</th>
+                            <th class="text-center">Stato</th>
+                            <th class="text-end">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var gara in Model.Items)
+                        {
+                            <tr>
+                                <!-- Codice Gara -->
+                                <td>
+                                    <strong>@gara.CodiceGara</strong>
+                                    @if (!string.IsNullOrWhiteSpace(gara.CIG))
+                                    {
+                                        <br />
+                                        <small class="text-muted">CIG: @gara.CIG</small>
+                                    }
+                                </td>
+
+                                <!-- Titolo -->
+                                <td>
+                                    <div class="text-truncate" style="max-width: 300px;" title="@gara.Titolo">
+                                        @gara.Titolo
+                                    </div>
+                                    @if (gara.DataPubblicazione.HasValue)
+                                    {
+                                        <small class="text-muted">
+                                            Pubbl: @gara.DataPubblicazione.Value.ToString("dd/MM/yyyy")
+                                        </small>
+                                    }
+                                </td>
+
+                                <!-- Tipologia -->
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        @EnumHelper.GetDisplayName(gara.Tipologia)
+                                    </span>
+                                </td>
+
+                                <!-- Ente -->
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(gara.EnteAppaltante))
+                                    {
+                                        <div class="text-truncate" style="max-width: 200px;" title="@gara.EnteAppaltante">
+                                            @gara.EnteAppaltante
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+
+                                <!-- Lotti -->
+                                <td class="text-center">
+                                    <span class="badge rounded-pill @(gara.NumeroLotti > 0 ? "bg-primary" : "bg-secondary")">@gara.NumeroLotti</span>
+                                </td>
+
+                                <!-- Scadenza -->
+                                <td>
+                                    @if (gara.DataTerminePresentazioneOfferte.HasValue)
+                                    {
+                                        var dataScadenza = gara.DataTerminePresentazioneOfferte.Value;
+                                        var giorniRimasti = (dataScadenza.Date - DateTime.Today).Days;
+                                        
+                                        <div>
+                                            @dataScadenza.ToString("dd/MM/yyyy")
+                                        </div>
+                                        
+                                        @if (giorniRimasti < 0)
+                                        {
+                                            <small class="text-danger">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                Scaduta
+                                            </small>
+                                        }
+                                        else if (giorniRimasti <= 7)
+                                        {
+                                            <small class="text-warning">
+                                                <i class="bi bi-clock"></i>
+                                                @giorniRimasti giorni
+                                            </small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">
+                                                @giorniRimasti giorni
+                                            </small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+
+                                <!-- Stato -->
+                                <td class="text-center">
+                                    @switch (gara.Stato)
+                                    {
+                                        case StatoGara.Bozza:
+                                            <span class="badge bg-secondary">Bozza</span>
+                                            break;
+                                        case StatoGara.InLavorazione:
+                                            <span class="badge bg-primary">In Lavorazione</span>
+                                            break;
+                                        case StatoGara.Conclusa:
+                                            <span class="badge bg-success">Conclusa</span>
+                                            break;
+                                        case StatoGara.ChiusaManualmente:
+                                            <span class="badge bg-dark">Chiusa</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-light text-dark">
+                                                @EnumHelper.GetDisplayName(gara.Stato)
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+
+                                <!-- Azioni -->
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" 
+                                           asp-route-id="@gara.Id" 
+                                           class="btn btn-outline-primary"
+                                           title="Dettagli">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" 
+                                           asp-route-id="@gara.Id" 
+                                           class="btn btn-outline-secondary"
+                                           title="Modifica">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-outline-danger"
+                                                onclick="confirmDelete('@gara.Id', '@gara.CodiceGara')"
+                                                title="Elimina">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Paginazione Bottom -->
+        <div class="row mt-3 align-items-center">
+            <div class="col">
+                <p class="text-muted mb-0">
+                    Pagina <strong>@Model.PageNumber</strong> di <strong>@Model.TotalPages</strong>
+                </p>
+            </div>
+            <div class="col-auto">
+                @await Html.PartialAsync("_PaginationPartial", Model)
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal Conferma Delete -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Conferma Eliminazione
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare la gara <strong id="deleteGaraCodice"></strong>?</p>
+                <p class="text-muted mb-0">
+                    <small>
+                        <i class="bi bi-info-circle me-1"></i>
+                        Questa operazione può essere annullata solo da un amministratore.
+                    </small>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash me-1"></i>
+                    Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let deleteGaraId = null;
+
+        function confirmDelete(garaId, codiceGara) {
+            deleteGaraId = garaId;
+            document.getElementById('deleteGaraCodice').textContent = codiceGara;
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (!deleteGaraId) return;
+
+            // Disabilita il pulsante durante la richiesta
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Eliminazione...';
+
+            // Token antiforgery
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            fetch(`/Gare/Delete/${deleteGaraId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Chiudi modal e ricarica pagina
+                    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Errore durante l\'eliminazione');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-trash me-1"></i>Elimina';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Errore durante l\'eliminazione della gara');
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-trash me-1"></i>Elimina';
+            });
+        });
+
+        // Auto-submit quando cambia PageSize
+        document.getElementById('PageSize').addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    </script>
+}

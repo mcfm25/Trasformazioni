@@ -1,0 +1,167 @@
+﻿@model Trasformazioni.Models.ViewModels.MezzoDetailsViewModel
+@using Trasformazioni.Models.Entities
+@using Trasformazioni.Models.Enums
+
+@{
+    ViewData["Title"] = "Elimina Mezzo";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-danger"><i class="bi bi-exclamation-triangle"></i> @ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Mezzi</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Targa</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Elimina</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="alert alert-warning" role="alert">
+                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Attenzione</h5>
+                <p class="mb-0">
+                    Sei sicuro di voler eliminare questo mezzo? Questa operazione eseguirà un soft delete (il mezzo verrà marcato come cancellato ma rimarrà nel database).
+                </p>
+            </div>
+
+            @* Riepilogo Mezzo *@
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Riepilogo Mezzo da Eliminare</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="text-muted small">Targa</label>
+                            <p class="h5 mb-0">@Model.TargaFormattata</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Veicolo</label>
+                            <p class="mb-0"><strong>@Model.Marca @Model.Modello</strong></p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Tipo</label>
+                            <p class="mb-0">
+                                <span class="badge bg-secondary">@Model.TipoDescrizione</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="text-muted small">Stato Attuale</label>
+                            <p class="mb-0">
+                                @switch (Model.Stato)
+                                {
+                                    case StatoMezzo.Disponibile:
+                                        <span class="badge bg-success">@Model.StatoDescrizione</span>
+                                        break;
+                                    case StatoMezzo.InUso:
+                                        <span class="badge bg-primary">@Model.StatoDescrizione</span>
+                                        break;
+                                    case StatoMezzo.InManutenzione:
+                                        <span class="badge bg-warning text-dark">@Model.StatoDescrizione</span>
+                                        break;
+                                    case StatoMezzo.Dismesso:
+                                        <span class="badge bg-dark">@Model.StatoDescrizione</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Proprietà</label>
+                            <p class="mb-0">
+                                @if (Model.TipoProprieta == TipoProprietaMezzo.Proprieta)
+                                {
+                                    <span class="badge bg-info">@Model.TipoProprietaDescrizione</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">@Model.TipoProprietaDescrizione</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Chilometraggio</label>
+                            <p class="mb-0">
+                                @if (Model.Chilometraggio.HasValue)
+                                {
+                                    @Model.Chilometraggio.Value.ToString("N0") <text> km</text>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/D</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Note))
+                    {
+                        <hr />
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="text-muted small">Note</label>
+                                <p class="mb-0 fst-italic">@Model.Note</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Form Conferma Eliminazione *@
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-arrow-left"></i> Annulla
+                    </a>
+                    <button type="submit" class="btn btn-danger btn-lg" id="deleteBtn">
+                        <i class="bi bi-trash"></i> Conferma Eliminazione
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteBtn = document.getElementById('deleteBtn');
+            const form = deleteBtn.closest('form');
+
+            // Conferma eliminazione con doppio check
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const confirmed = confirm('ATTENZIONE: Confermi l\'eliminazione del mezzo @Model.Targa?\n\nQuesta operazione non può essere annullata.');
+
+                if (confirmed) {
+                    // Disabilita pulsante per evitare doppio submit
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Eliminazione...';
+
+                    // Submit del form
+                    form.submit();
+                }
+            });
+        });
+    </script>
+}

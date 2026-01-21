@@ -1,0 +1,327 @@
+﻿@model IEnumerable<Trasformazioni.Models.ViewModels.AssegnazioneMezzoListViewModel>
+
+@{
+    ViewData["Title"] = "Storico Assegnazioni Utente";
+    var utente = ViewBag.Utente as Trasformazioni.Models.Entities.ApplicationUser;
+    var isCurrentUser = ViewBag.IsCurrentUser ?? false;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>@ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Mezzi" asp-action="Index">Mezzi</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        Storico @(isCurrentUser ? "Mio" : utente.NomeCompleto)
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @* Info Utente *@
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-1">
+                                @utente.NomeCompleto
+                                @if (isCurrentUser)
+                                {
+                                    <span class="badge bg-primary ms-2">Tu</span>
+                                }
+                            </h4>
+                            <p class="text-muted mb-1">@utente.Email</p>
+                            @if (!string.IsNullOrWhiteSpace(utente.RepartoNome))
+                            {
+                                <p class="text-muted mb-0">Reparto: <strong>@utente.RepartoNome</strong></p>
+                            }
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a asp-controller="Mezzi" asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Torna ai Mezzi
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Statistiche *@
+    @if (Model.Any())
+    {
+        var mezziUsati = Model.Select(a => a.MezzoId).Distinct().Count();
+        var assegnazioniAttive = Model.Count(a => a.IsAttiva);
+        var assegnazioniChiuse = Model.Count(a => !a.IsAttiva);
+        var totaleGiorni = Model.Where(a => a.DurataGiorni.HasValue).Sum(a => a.DurataGiorni.Value);
+        var totaleKm = Model.Where(a => a.ChilometriPercorsi.HasValue).Sum(a => a.ChilometriPercorsi.Value);
+
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-primary mb-0">@mezziUsati</h3>
+                        <small class="text-muted">Mezzi Usati</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-success mb-0">@assegnazioniAttive</h3>
+                        <small class="text-muted">Attive</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-secondary mb-0">@assegnazioniChiuse</h3>
+                        <small class="text-muted">Completate</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-info mb-0">@totaleGiorni</h3>
+                        <small class="text-muted">Giorni Totali</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-warning mb-0">@totaleKm.ToString("N0")</h3>
+                        <small class="text-muted">Km Percorsi</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Filtro Stato *@
+    @if (Model.Any())
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="btn-group" role="group" aria-label="Filtro stato">
+                    <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                        Tutte (@Model.Count())
+                    </button>
+                    <button type="button" class="btn btn-outline-success" data-filter="attive">
+                        Attive (@Model.Count(a => a.IsAttiva))
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-filter="completate">
+                        Completate (@Model.Count(a => !a.IsAttiva))
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Tabella Storico *@
+    <div class="card">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="storicoTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Stato</th>
+                                <th>Mezzo</th>
+                                <th>Data Inizio</th>
+                                <th>Data Fine</th>
+                                <th>Durata</th>
+                                <th>Motivo</th>
+                                <th>Km Inizio</th>
+                                <th>Km Fine</th>
+                                <th>Km Percorsi</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var assegnazione in Model)
+                            {
+                                var rowClass = "";
+                                if (assegnazione.IsAttiva) rowClass = "table-active row-attiva";
+                                if (!assegnazione.IsAttiva) rowClass = "row-completata";
+
+                                <tr class="@rowClass">
+                                    <td>
+                                        @if (assegnazione.IsPrenotazione)
+                                        {
+                                            <span class="badge bg-info">Prenotazione</span>
+                                        }
+                                        else if (assegnazione.IsInCorso)
+                                        {
+                                            <span class="badge bg-primary">In Corso</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Completata</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong>@assegnazione.MezzoTarga</strong>
+                                        <br />
+                                        <small class="text-muted">@assegnazione.MezzoDescrizioneCompleta</small>
+                                    </td>
+                                    <td>
+                                        @assegnazione.DataInizio.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.DataFine.HasValue)
+                                        {
+                                            @assegnazione.DataFine.Value.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.DurataGiorni.HasValue)
+                                        {
+                                            <span>@assegnazione.DurataGiorni giorni</span>
+                                        }
+                                        else if (assegnazione.IsInCorso)
+                                        {
+                                            var giorniDaInizio = (DateTime.Today - assegnazione.DataInizio.Date).Days;
+                                            <span class="text-primary">@giorniDaInizio giorni</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            @assegnazione.MotivoAssegnazioneDescrizione
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.ChilometraggioInizio.HasValue)
+                                        {
+                                            <span>@assegnazione.ChilometraggioInizio.Value.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.ChilometraggioFine.HasValue)
+                                        {
+                                            <span>@assegnazione.ChilometraggioFine.Value.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (assegnazione.ChilometriPercorsi.HasValue)
+                                        {
+                                            <strong class="text-success">@assegnazione.ChilometriPercorsi.Value.ToString("N0") km</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-controller="Mezzi" asp-action="Details" asp-route-id="@assegnazione.MezzoId"
+                                               class="btn btn-outline-primary" title="Dettagli Mezzo">
+                                                <i class="bi bi-truck"></i>
+                                            </a>
+                                            @if (assegnazione.IsInCorso && isCurrentUser)
+                                            {
+                                                <a asp-controller="Assegnazioni" asp-action="Riconsegna" asp-route-id="@assegnazione.Id"
+                                                   class="btn btn-outline-success" title="Riconsegna">
+                                                    <i class="bi bi-box-arrow-in-down"></i>
+                                                </a>
+                                            }
+                                            @if (assegnazione.IsPrenotazione && isCurrentUser)
+                                            {
+                                                <form asp-controller="Assegnazioni" asp-action="CancellaPrenotazione"
+                                                      asp-route-id="@assegnazione.Id" asp-route-mezzoId="@assegnazione.MezzoId"
+                                                      method="post" style="display: inline;">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                            title="Cancella Prenotazione"
+                                                            onclick="return confirm('Vuoi cancellare questa prenotazione?')">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="lead text-muted mt-3">
+                        @if (isCurrentUser)
+                        {
+                            <text>Non hai ancora assegnazioni</text>
+                        }
+                        else
+                        {
+                            <text>Nessuna assegnazione trovata per questo utente</text>
+                        }
+                    </p>
+                    @if (isCurrentUser)
+                    {
+                        <a asp-controller="Mezzi" asp-action="Index" class="btn btn-primary">
+                            <i class="bi bi-truck"></i> Visualizza Mezzi Disponibili
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filtro stato assegnazioni
+            const filterButtons = document.querySelectorAll('[data-filter]');
+            const tableRows = document.querySelectorAll('#storicoTable tbody tr');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Rimuovi active da tutti i bottoni
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    // Aggiungi active al bottone cliccato
+                    this.classList.add('active');
+
+                    const filter = this.getAttribute('data-filter');
+
+                    tableRows.forEach(row => {
+                        if (filter === 'all') {
+                            row.style.display = '';
+                        } else if (filter === 'attive') {
+                            row.style.display = row.classList.contains('row-attiva') ? '' : 'none';
+                        } else if (filter === 'completate') {
+                            row.style.display = row.classList.contains('row-completata') ? '' : 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,161 @@
+﻿@model Trasformazioni.Models.ViewModels.NotificheConfigIndexViewModel
+@{
+    ViewData["Title"] = "Configurazione Notifiche Email";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-envelope-gear me-2"></i>Configurazione Notifiche Email
+            </h1>
+            <p class="text-muted mb-0">Gestisci i destinatari delle notifiche automatiche</p>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <!-- Statistiche -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-primary">@Model.TotaleConfigurazioni</div>
+                    <div class="text-muted">Totale Configurazioni</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-success">@Model.TotaleAttive</div>
+                    <div class="text-muted">Notifiche Attive</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-info">@Model.TotaleConDestinatari</div>
+                    <div class="text-muted">Con Destinatari</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configurazioni per Modulo -->
+    @foreach (var modulo in Model.ConfigurazioniPerModulo)
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0">
+                    <i class="bi bi-folder me-2"></i>@modulo.Key
+                    <span class="badge bg-secondary ms-2">@modulo.Value.Count</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">Stato</th>
+                                <th>Descrizione</th>
+                                <th>Codice</th>
+                                <th class="text-center">Destinatari</th>
+                                <th class="text-end" style="width: 150px;">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var config in modulo.Value)
+                            {
+                                <tr>
+                                    <td class="text-center">
+                                        <form asp-action="ToggleAttiva" asp-route-id="@config.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="returnUrl" value="@Url.Action("Index")" />
+                                            <button type="submit" class="btn btn-sm p-0 border-0 bg-transparent"
+                                                    title="@(config.IsAttiva ? "Clicca per disattivare" : "Clicca per attivare")">
+                                                @if (config.IsAttiva)
+                                                {
+                                                    <i class="bi bi-toggle-on text-success fs-4"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-toggle-off text-secondary fs-4"></i>
+                                                }
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@config.Id" class="text-decoration-none fw-semibold">
+                                            @config.Descrizione
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <code class="small">@config.Codice</code>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (config.DestinatariCount > 0)
+                                        {
+                                            <span class="badge bg-primary">
+                                                <i class="bi bi-people me-1"></i>@config.DestinatariCount
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>Nessuno
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@config.Id"
+                                               class="btn btn-outline-primary" title="Dettagli">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@config.Id"
+                                               class="btn btn-outline-secondary" title="Modifica">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="AddDestinatario" asp-route-configurazioneId="@config.Id"
+                                               class="btn btn-outline-success" title="Aggiungi destinatario">
+                                                <i class="bi bi-person-plus"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.ConfigurazioniPerModulo.Any())
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-envelope-x display-4 text-muted"></i>
+                <p class="text-muted mt-3 mb-0">Nessuna configurazione trovata</p>
+                <p class="text-muted small">Esegui il seeding del database per creare le configurazioni predefinite.</p>
+            </div>
+        </div>
+    }
+</div>

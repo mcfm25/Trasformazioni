@@ -1,0 +1,114 @@
+@{
+    ViewData["Title"] = "Avvia Elaborazione";
+    var lottoId = ViewBag.LottoId as Guid?;
+    var codiceLotto = ViewBag.CodiceLotto as string ?? "";
+    var descrizioneLotto = ViewBag.DescrizioneLotto as string ?? "";
+    var codiceGara = ViewBag.CodiceGara as string ?? "";
+    var titoloGara = ViewBag.TitoloGara as string ?? "";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId">@codiceLotto</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Avvia Elaborazione</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-calculator text-primary me-2"></i>
+                Avvia Elaborazione Lotto
+            </h2>
+        </div>
+    </div>
+
+    <!-- Card Conferma -->
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Conferma Avvio Elaborazione
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Info Lotto -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-box-seam me-2"></i>
+                            Lotto Selezionato
+                        </h6>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Codice Lotto:</dt>
+                            <dd class="col-sm-8"><strong>@codiceLotto</strong></dd>
+
+                            <dt class="col-sm-4">Descrizione:</dt>
+                            <dd class="col-sm-8">@descrizioneLotto</dd>
+
+                            <dt class="col-sm-4">Gara:</dt>
+                            <dd class="col-sm-8">@codiceGara - @titoloGara</dd>
+                        </dl>
+                    </div>
+
+                    <!-- Warning Cambio Stato -->
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Attenzione
+                        </h6>
+                        <p class="mb-2">Avviando l'elaborazione:</p>
+                        <ul class="mb-0">
+                            <li>Il lotto passerà allo stato <strong>"In Elaborazione"</strong></li>
+                            <li>Verrà creato un nuovo record di elaborazione</li>
+                            <li>Dovrai compilare i prezzi desiderato e reale per procedere</li>
+                            <li>Potrai annullare l'elaborazione tornando allo stato <strong>"Approvato"</strong></li>
+                        </ul>
+                    </div>
+
+                    <!-- Istruzioni -->
+                    <div class="alert alert-light border">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Cosa Fare Dopo
+                        </h6>
+                        <p class="mb-1">Dopo aver avviato l'elaborazione dovrai:</p>
+                        <ol class="mb-0">
+                            <li>Consultare i <strong>preventivi selezionati</strong> per i fornitori</li>
+                            <li>Definire il <strong>prezzo desiderato</strong> di uscita</li>
+                            <li>Compilare il <strong>prezzo reale finale</strong> (obbligatorio)</li>
+                            <li>Aggiungere eventuali note e motivazioni</li>
+                            <li><strong>Finalizzare</strong> l'elaborazione per presentare l'offerta</li>
+                        </ol>
+                    </div>
+
+                    <!-- Form Conferma -->
+                    <form asp-action="Avvia" asp-route-lottoId="@lottoId" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="dummy" value="confirm" />
+
+                        <div class="row mt-4">
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-play-circle me-2"></i>
+                                    Avvia Elaborazione
+                                </button>
+                                <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId" 
+                                   class="btn btn-secondary btn-lg">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Annulla
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

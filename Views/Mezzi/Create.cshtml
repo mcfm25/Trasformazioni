@@ -1,0 +1,349 @@
+﻿@model Trasformazioni.Models.ViewModels.MezzoCreateViewModel
+@using Trasformazioni.Models.Entities
+@using Trasformazioni.Models.Enums
+
+@{
+    ViewData["Title"] = "Nuovo Mezzo";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+
+            <div class="row mb-4">
+                <div class="col">
+                    <h2>@ViewData["Title"]</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a asp-action="Index">Mezzi</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Nuovo</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+
+
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Create" method="post" id="mezzoForm" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        @* Dati Identificativi *@
+                        <h5 class="border-bottom pb-2 mb-3">Dati Identificativi</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Targa" class="form-label"></label>
+                                <input asp-for="Targa" class="form-control text-uppercase"
+                                       placeholder="Es: AB123CD" maxlength="10" required />
+                                <span asp-validation-for="Targa" class="text-danger"></span>
+                                <small id="targa-validation-message" class="form-text"></small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TipoProprieta" class="form-label"></label>
+                                <select asp-for="TipoProprieta" asp-items="Html.GetEnumSelectList<TipoProprietaMezzo>()"
+                                        class="form-select" required></select>
+                                <span asp-validation-for="TipoProprieta" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Marca" class="form-label"></label>
+                                <input asp-for="Marca" class="form-control" placeholder="Es: Fiat" required />
+                                <span asp-validation-for="Marca" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Modello" class="form-label"></label>
+                                <input asp-for="Modello" class="form-control" placeholder="Es: Ducato" required />
+                                <span asp-validation-for="Modello" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Anno" class="form-label"></label>
+                                <input asp-for="Anno" type="number" class="form-control"
+                                       min="1900" max="2100" placeholder="Es: 2020" />
+                                <span asp-validation-for="Anno" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Tipo" class="form-label"></label>
+                                <select asp-for="Tipo" asp-items="Html.GetEnumSelectList<TipoMezzo>()"
+                                        class="form-select" required></select>
+                                <span asp-validation-for="Tipo" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Stato" class="form-label"></label>
+                                <select asp-for="Stato" asp-items="Html.GetEnumSelectList<StatoMezzo>()"
+                                        class="form-select" required></select>
+                                <span asp-validation-for="Stato" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        @* Dati Tecnici *@
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">Dati Tecnici</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DataImmatricolazione" class="form-label"></label>
+                                <input asp-for="DataImmatricolazione" type="date" class="form-control" />
+                                <span asp-validation-for="DataImmatricolazione" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Chilometraggio" class="form-label"></label>
+                                <input asp-for="Chilometraggio" type="number" step="0.01"
+                                       class="form-control" placeholder="Es: 50000" />
+                                <span asp-validation-for="Chilometraggio" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        @* Sezione Proprietà (visibile solo se TipoProprieta = Proprietà) *@
+                        <div id="sezione-proprieta">
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Dati Acquisto</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="DataAcquisto" class="form-label"></label>
+                                    <input asp-for="DataAcquisto" type="date" class="form-control" />
+                                    <span asp-validation-for="DataAcquisto" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Sezione Noleggio (visibile solo se TipoProprieta = Noleggio) *@
+                        <div id="sezione-noleggio" style="display: none;">
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Dati Noleggio</h5>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label asp-for="SocietaNoleggio" class="form-label"></label>
+                                    <input asp-for="SocietaNoleggio" class="form-control"
+                                           placeholder="Es: Hertz" />
+                                    <span asp-validation-for="SocietaNoleggio" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="DataInizioNoleggio" class="form-label"></label>
+                                    <input asp-for="DataInizioNoleggio" type="date" class="form-control" />
+                                    <span asp-validation-for="DataInizioNoleggio" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="DataFineNoleggio" class="form-label"></label>
+                                    <input asp-for="DataFineNoleggio" type="date" class="form-control" />
+                                    <span asp-validation-for="DataFineNoleggio" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Scadenze *@
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">Scadenze</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DataScadenzaAssicurazione" class="form-label"></label>
+                                <input asp-for="DataScadenzaAssicurazione" type="date" class="form-control" />
+                                <span asp-validation-for="DataScadenzaAssicurazione" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DataScadenzaRevisione" class="form-label"></label>
+                                <input asp-for="DataScadenzaRevisione" type="date" class="form-control" />
+                                <span asp-validation-for="DataScadenzaRevisione" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        @* Note *@
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label"></label>
+                            <textarea asp-for="Note" class="form-control" rows="3"
+                                      placeholder="Note aggiuntive sul mezzo..."></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DeviceIMEI" class="form-label"></label>
+                                <input asp-for="DeviceIMEI" class="form-control" placeholder="Es: 000000000" />
+                                <span asp-validation-for="DeviceIMEI" class="text-danger"></span>
+                                <small id="deviceIMEI-validation-message" class="form-text"></small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DevicePhoneNumber" class="form-label"></label>
+                                <input asp-for="DevicePhoneNumber" class="form-control" placeholder="Es: +393330011222" />
+                                <span asp-validation-for="DevicePhoneNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        @* Pulsanti *@
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-save"></i> Salva Mezzo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('mezzoForm');
+            const targaInput = document.getElementById('Targa');
+            const tipoProprieta = document.getElementById('TipoProprieta');
+            const sezioneNoleggio = document.getElementById('sezione-noleggio');
+            const sezioneProprieta = document.getElementById('sezione-proprieta');
+            const targaValidationMessage = document.getElementById('targa-validation-message');
+
+            const deviceIMEIInput = document.getElementById('DeviceIMEI');
+            const deviceIMEIValidationMessage = document.getElementById('deviceIMEI-validation-message');
+
+
+            // deviceIMEI
+            if (deviceIMEIInput) {
+                // Validazione formato targa italiana (blur)
+                deviceIMEIInput.addEventListener('blur', async function() {
+                    const deviceIMEI = this.value.trim();
+                    if (!deviceIMEI) return;
+
+                    // Check unicità via AJAX
+                    try {
+                        const response = await fetch(`/Mezzi/CheckDeviceIMEI?deviceIMEI=${encodeURIComponent(deviceIMEI)}`);
+                        const data = await response.json();
+
+                        if (data.isUnique) {
+                            deviceIMEIValidationMessage.textContent = '✓ Device disponibile';
+                            deviceIMEIValidationMessage.className = 'form-text text-success';
+                        } else {
+                            deviceIMEIValidationMessage.textContent = '✗ ' + data.message;
+                            deviceIMEIValidationMessage.className = 'form-text text-danger';
+                        }
+                    } catch (error) {
+                        console.error('Errore controllo targa:', error);
+                    }
+                });
+            }
+
+            // Targa sempre uppercase
+            if (targaInput) {
+                targaInput.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase().replace(/\s/g, '');
+                });
+
+                // Validazione formato targa italiana (blur)
+                targaInput.addEventListener('blur', async function() {
+                    const targa = this.value.trim();
+                    if (!targa) return;
+
+                    // Validazione formato
+                    const formatoValido = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/.test(targa) ||
+                                         /^[A-Z]{2}[0-9]{4,6}$/.test(targa);
+
+                    if (!formatoValido) {
+                        targaValidationMessage.textContent = '⚠ Formato targa non valido (es: AB123CD)';
+                        targaValidationMessage.className = 'form-text text-danger';
+                        return;
+                    }
+
+                    // Check unicità via AJAX
+                    try {
+                        const response = await fetch(`/Mezzi/CheckTarga?targa=${encodeURIComponent(targa)}`);
+                        const data = await response.json();
+
+                        if (data.isUnique) {
+                            targaValidationMessage.textContent = '✓ Targa disponibile';
+                            targaValidationMessage.className = 'form-text text-success';
+                        } else {
+                            targaValidationMessage.textContent = '✗ ' + data.message;
+                            targaValidationMessage.className = 'form-text text-danger';
+                        }
+                    } catch (error) {
+                        console.error('Errore controllo targa:', error);
+                    }
+                });
+            }
+
+            // Mostra/nascondi sezioni Proprietà/Noleggio
+            function toggleSezioni() {
+                const isNoleggio = tipoProprieta.value === '@((int)TipoProprietaMezzo.Noleggio)';
+
+                if (sezioneNoleggio && sezioneProprieta) {
+                    sezioneNoleggio.style.display = isNoleggio ? 'block' : 'none';
+                    sezioneProprieta.style.display = isNoleggio ? 'none' : 'block';
+
+                    // Disabilita campi nascosti per evitare validazione
+                    sezioneNoleggio.querySelectorAll('input, select, textarea').forEach(input => {
+                        input.disabled = !isNoleggio;
+                    });
+                    sezioneProprieta.querySelectorAll('input, select, textarea').forEach(input => {
+                        input.disabled = isNoleggio;
+                    });
+                }
+            }
+
+            if (tipoProprieta) {
+                tipoProprieta.addEventListener('change', toggleSezioni);
+                toggleSezioni(); // Esegui al caricamento
+            }
+
+            // Validazione form prima del submit
+            form.addEventListener('submit', function(event) {
+                let isValid = true;
+
+                // Validazione targa formato
+                const targa = targaInput.value.trim();
+                const formatoValido = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/.test(targa) ||
+                                     /^[A-Z]{2}[0-9]{4,6}$/.test(targa);
+
+                if (!formatoValido) {
+                    event.preventDefault();
+                    targaValidationMessage.textContent = '⚠ Formato targa non valido';
+                    targaValidationMessage.className = 'form-text text-danger';
+                    targaInput.focus();
+                    isValid = false;
+                }
+
+                // Validazione date noleggio
+                if (tipoProprieta.value === '@((int)TipoProprietaMezzo.Noleggio)') {
+                    const dataInizio = document.getElementById('DataInizioNoleggio');
+                    const dataFine = document.getElementById('DataFineNoleggio');
+
+                    if (dataInizio && !dataInizio.disabled && !dataInizio.value) {
+                        event.preventDefault();
+                        alert('Per i mezzi a noleggio è obbligatoria la data di inizio noleggio');
+                        dataInizio.focus();
+                        isValid = false;
+                    }
+
+                    if (dataInizio && dataFine && dataInizio.value && dataFine.value) {
+                        if (new Date(dataFine.value) < new Date(dataInizio.value)) {
+                            event.preventDefault();
+                            alert('La data fine noleggio non può essere precedente alla data inizio');
+                            dataFine.focus();
+                            isValid = false;
+                        }
+                    }
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+}

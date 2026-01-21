@@ -1,0 +1,483 @@
+@using Trasformazioni.Helpers
+@model Trasformazioni.Models.ViewModels.ElaborazioneLottoDetailsViewModel
+
+@{
+    ViewData["Title"] = "Dettaglio Elaborazione";
+    
+    // Recupera dati ViewBag
+    var lottoId = ViewBag.LottoId as Guid?;
+    var codiceLotto = ViewBag.CodiceLotto as string ?? "";
+    var descrizioneLotto = ViewBag.DescrizioneLotto as string ?? "";
+    var codiceGara = ViewBag.CodiceGara as string ?? "";
+    var titoloGara = ViewBag.TitoloGara as string ?? "";
+    var statoLotto = ViewBag.StatoLotto;
+    
+    var importoBaseAsta = ViewBag.ImportoBaseAsta as decimal?;
+    var quotazione = ViewBag.Quotazione as decimal?;
+    var giorniFornitura = ViewBag.GiorniFornitura as int?;
+    
+    var preventiviSelezionati = ViewBag.PreventiviSelezionati as List<Trasformazioni.Models.ViewModels.PreventivoListViewModel> ?? new List<Trasformazioni.Models.ViewModels.PreventivoListViewModel>();
+    var numeroPreventiviSelezionati = ViewBag.NumeroPreventiviSelezionati as int? ?? 0;
+    
+    var documentiLotto = ViewBag.DocumentiLotto as IEnumerable<Trasformazioni.Models.ViewModels.DocumentoGara.DocumentoGaraListViewModel>;
+    var documentiList = documentiLotto?.ToList() ?? new List<Trasformazioni.Models.ViewModels.DocumentoGara.DocumentoGaraListViewModel>();
+    var numeroDocumenti = ViewBag.NumeroDocumenti as int? ?? 0;
+    
+    var importoMinimo = ViewBag.ImportoMinimo as decimal?;
+    var importoMassimo = ViewBag.ImportoMassimo as decimal?;
+    var importoMedio = ViewBag.ImportoMedio as decimal?;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId">@codiceLotto</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Dettaglio Elaborazione</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-eye text-primary me-2"></i>
+                Dettaglio Elaborazione: @codiceLotto
+            </h2>
+            <p class="text-muted mb-0">
+                Visualizzazione completa dell'elaborazione con prezzi, preventivi e documenti
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna Sinistra -->
+        <div class="col-lg-8">
+            
+            <!-- Card 1: Info Lotto -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box-seam me-2"></i>
+                        Informazioni Lotto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Codice Lotto:</dt>
+                        <dd class="col-sm-8"><strong>@Model.CodiceLotto</strong></dd>
+
+                        <dt class="col-sm-4">Descrizione:</dt>
+                        <dd class="col-sm-8">@Model.DescrizioneLotto</dd>
+
+                        <dt class="col-sm-4">Gara:</dt>
+                        <dd class="col-sm-8">@Model.CodiceGara - @Model.TitoloGara</dd>
+
+                        <dt class="col-sm-4">Stato Lotto:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.StatoLotto.HasValue)
+                            {
+                                @switch (Model.StatoLotto.Value.ToString())
+                                {
+                                    case "InElaborazione":
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-hourglass-split me-1"></i>
+                                            In Elaborazione
+                                        </span>
+                                        break;
+                                    case "Presentato":
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Presentato
+                                        </span>
+                                        break;
+                                    case "Approvato":
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Approvato
+                                        </span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@EnumHelper.GetDisplayName(Model.StatoLotto)</span>
+                                        break;
+                                }
+                            }
+                        </dd>
+
+                        @if (importoBaseAsta.HasValue)
+                        {
+                            <dt class="col-sm-4">Importo Base d'Asta:</dt>
+                            <dd class="col-sm-8"><strong class="text-primary">@importoBaseAsta.Value.ToString("C2")</strong></dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Card 2: Prezzi e Scostamenti -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash-stack me-2"></i>
+                        Prezzi e Scostamenti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Prezzo Desiderato -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <small class="text-muted d-block">Prezzo Desiderato</small>
+                                @if (Model.PrezzoDesiderato.HasValue)
+                                {
+                                    <h4 class="mb-0 text-info">@Model.PrezzoDesiderato.Value.ToString("C2")</h4>
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0"><em>Non definito</em></p>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Prezzo Reale -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 bg-light">
+                                <small class="text-muted d-block">Prezzo Reale Uscita</small>
+                                @if (Model.PrezzoRealeUscita.HasValue)
+                                {
+                                    <h4 class="mb-0 text-success">@Model.PrezzoRealeUscita.Value.ToString("C2")</h4>
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0"><em>Non definito</em></p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scostamenti (se entrambi i prezzi presenti) -->
+                    @if (Model.PrezzoDesiderato.HasValue && Model.PrezzoRealeUscita.HasValue)
+                    {
+                        <hr />
+                        <h6><i class="bi bi-graph-up-arrow me-2"></i>Analisi Scostamenti</h6>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-6">Differenza Assoluta:</dt>
+                            <dd class="col-sm-6">
+                                @if (Model.DifferenzaAssoluta.HasValue)
+                                {
+                                    var cssClass = Model.DifferenzaAssoluta.Value >= 0 ? "text-danger" : "text-success";
+                                    var simbolo = Model.DifferenzaAssoluta.Value >= 0 ? "+" : "";
+                                    <strong class="@cssClass">@simbolo@Model.DifferenzaAssoluta.Value.ToString("C2")</strong>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-6">Scostamento Percentuale:</dt>
+                            <dd class="col-sm-6">
+                                @if (Model.ScostamentoPercentuale.HasValue)
+                                {
+                                    var cssClass = Model.IsPrezzoRealeSuperiore ? "text-danger" : "text-success";
+                                    var simbolo = Model.IsPrezzoRealeSuperiore ? "+" : "";
+                                    <strong class="@cssClass">@simbolo@Model.ScostamentoPercentuale.Value.ToString("F2")%</strong>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-6">Valutazione:</dt>
+                            <dd class="col-sm-6">
+                                @if (Model.IsPrezzoRealeSuperiore)
+                                {
+                                    <span class="badge bg-danger">Prezzo Reale Superiore</span>
+                                }
+                                else if (Model.IsPrezzoRealeInferiore)
+                                {
+                                    <span class="badge bg-success">Prezzo Reale Inferiore</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Prezzi Uguali</span>
+                                }
+                            </dd>
+                        </dl>
+                    }
+
+                    <!-- Confronto con preventivi -->
+                    @if (Model.PrezzoRealeUscita.HasValue && importoMedio.HasValue)
+                    {
+                        <hr />
+                        <h6><i class="bi bi-bar-chart me-2"></i>Confronto con Preventivi</h6>
+                        <div class="row text-center">
+                            @if (importoMinimo.HasValue)
+                            {
+                                var diffMinimo = Model.PrezzoRealeUscita.Value - importoMinimo.Value;
+                                var percMinimo = (diffMinimo / importoMinimo.Value) * 100;
+                                <div class="col-md-4">
+                                    <small class="text-muted d-block">vs Minimo (@importoMinimo.Value.ToString("C2"))</small>
+                                    <strong class="@(diffMinimo >= 0 ? "text-danger" : "text-success")">
+                                        @(diffMinimo >= 0 ? "+" : "")@percMinimo.ToString("F1")%
+                                    </strong>
+                                </div>
+                            }
+                            @if (importoMedio.HasValue)
+                            {
+                                var diffMedio = Model.PrezzoRealeUscita.Value - importoMedio.Value;
+                                var percMedio = (diffMedio / importoMedio.Value) * 100;
+                                <div class="col-md-4">
+                                    <small class="text-muted d-block">vs Medio (@importoMedio.Value.ToString("C2"))</small>
+                                    <strong class="@(diffMedio >= 0 ? "text-danger" : "text-success")">
+                                        @(diffMedio >= 0 ? "+" : "")@percMedio.ToString("F1")%
+                                    </strong>
+                                </div>
+                            }
+                            @if (importoBaseAsta.HasValue && Model.PrezzoRealeUscita.HasValue)
+                            {
+                                var percBase = (Model.PrezzoRealeUscita.Value / importoBaseAsta.Value) * 100;
+                                <div class="col-md-4">
+                                    <small class="text-muted d-block">% su Base Asta</small>
+                                    <strong class="text-primary">@percBase.ToString("F1")%</strong>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Card 3: Motivazione e Note -->
+            @if (!string.IsNullOrWhiteSpace(Model.MotivazioneAdattamento) || !string.IsNullOrWhiteSpace(Model.Note))
+            {
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-chat-left-text me-2"></i>
+                            Motivazione e Note
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrWhiteSpace(Model.MotivazioneAdattamento))
+                        {
+                            <h6 class="text-muted">Motivazione Adattamento:</h6>
+                            <p class="mb-3">@Model.MotivazioneAdattamento</p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Note))
+                        {
+                            @if (!string.IsNullOrWhiteSpace(Model.MotivazioneAdattamento))
+                            {
+                                <hr />
+                            }
+                            <h6 class="text-muted">Note:</h6>
+                            <p class="mb-0">@Model.Note</p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Card 4: Preventivi Selezionati -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-star-fill me-2"></i>
+                        Preventivi Selezionati
+                        <span class="badge bg-light text-dark ms-2">@numeroPreventiviSelezionati</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (numeroPreventiviSelezionati > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Fornitore</th>
+                                        <th class="text-end">Importo</th>
+                                        <th class="text-center">Tempi</th>
+                                        <th class="text-center">Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var preventivo in preventiviSelezionati)
+                                    {
+                                        <tr>
+                                            <td><strong>@preventivo.NomeFornitore</strong></td>
+                                            <td class="text-end">
+                                                @if (preventivo.ImportoOfferto.HasValue)
+                                                {
+                                                    <strong class="text-primary">@preventivo.ImportoOfferto.Value.ToString("C2")</strong>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/D</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (preventivo.GiorniRimanenti.HasValue)
+                                                {
+                                                    <span class="badge bg-info">@preventivo.GiorniRimanenti gg</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <a asp-controller="Preventivi" asp-action="Details" asp-route-id="@preventivo.Id" 
+                                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Statistiche -->
+                        <div class="alert alert-light border mt-3 mb-0">
+                            <div class="row text-center">
+                                @if (importoMinimo.HasValue)
+                                {
+                                    <div class="col-md-4">
+                                        <small class="text-muted d-block">Minimo</small>
+                                        <strong class="text-success">@importoMinimo.Value.ToString("C2")</strong>
+                                    </div>
+                                }
+                                @if (importoMedio.HasValue)
+                                {
+                                    <div class="col-md-4">
+                                        <small class="text-muted d-block">Medio</small>
+                                        <strong class="text-primary">@importoMedio.Value.ToString("C2")</strong>
+                                    </div>
+                                }
+                                @if (importoMassimo.HasValue)
+                                {
+                                    <div class="col-md-4">
+                                        <small class="text-muted d-block">Massimo</small>
+                                        <strong class="text-danger">@importoMassimo.Value.ToString("C2")</strong>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0"><em>Nessun preventivo selezionato</em></p>
+                    }
+                </div>
+            </div>
+
+            <!-- Card 5: Documenti -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>
+                        Documenti Caricati
+                        <span class="badge bg-light text-dark ms-2">@numeroDocumenti</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (numeroDocumenti > 0)
+                    {
+                        <div class="list-group">
+                            @foreach (var doc in documentiList.Take(10))
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
+                                        <strong>@doc.NomeFile</strong>
+                                        <br />
+                                        <small class="text-muted">
+                                            @doc.TipoDocumentoNome • @doc.DataCaricamento.ToString("dd/MM/yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a asp-controller="DocumentiGara" asp-action="Details" asp-route-id="@doc.Id" 
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-controller="DocumentiGara" asp-action="Download" asp-route-id="@doc.Id" 
+                                           class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (numeroDocumenti > 10)
+                        {
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    Mostrati 10 di @numeroDocumenti documenti.
+                                    <a asp-controller="DocumentiGara" asp-action="Index" asp-route-lottoId="@lottoId">Vedi tutti</a>
+                                </small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0"><em>Nessun documento caricato</em></p>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Colonna Destra -->
+        <div class="col-lg-4">
+            
+            <!-- Card: Audit Trail -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Audit Trail
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0">
+                        <dt><i class="bi bi-person-plus me-1"></i> Creato:</dt>
+                        <dd>
+                            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            @if (!string.IsNullOrWhiteSpace(Model.CreatedBy))
+                            {
+                                <br />
+                                <small class="text-muted">da @Model.CreatedBy</small>
+                            }
+                        </dd>
+
+                        @if (Model.ModifiedAt.HasValue)
+                        {
+                            <hr />
+                            <dt><i class="bi bi-pencil me-1"></i> Ultima Modifica:</dt>
+                            <dd class="mb-0">
+                                @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                @if (!string.IsNullOrWhiteSpace(Model.ModifiedBy))
+                                {
+                                    <br />
+                                    <small class="text-muted">da @Model.ModifiedBy</small>
+                                }
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Card: Azioni -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <!-- Modifica (solo se InElaborazione) -->
+                        @if (Model.StatoLotto.HasValue && Model.StatoLotto.Value.ToString() == "InElaborazione")
+                        {
+                            <a asp-action="Edit" asp-route-lottoId="@lottoId" class="btn btn-primary">
+                                <i class="bi bi-pencil me-2"></i>
+                                Modifica Elaborazione
+                            </a>
+                        }
+
+                        <!-- Torna al Lotto -->
+                        <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Torna al Lotto
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

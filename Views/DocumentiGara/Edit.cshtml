@@ -1,0 +1,180 @@
+@model Trasformazioni.Models.ViewModels.DocumentoGara.DocumentoGaraEditViewModel
+
+@{
+    ViewData["Title"] = "Modifica Documento";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Documenti</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Dettaglio</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Modifica</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-pencil text-warning me-2"></i>
+                Modifica Metadati Documento
+            </h2>
+            <p class="text-muted mb-0">
+                Modifica tipo e descrizione del documento. Per sostituire il file, elimina questo documento e caricane uno nuovo.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna Form -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Modifica Informazioni
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="NomeFile" />
+                        <input type="hidden" asp-for="DimensioneBytes" />
+                        <input type="hidden" asp-for="DimensioneFormatted" />
+                        <input type="hidden" asp-for="DataCaricamento" />
+                        <input type="hidden" asp-for="CaricatoDaNome" />
+
+                        <div class="row g-3">
+                            <!-- Tipo Documento -->
+                            <div class="col-md-12">
+                                <label asp-for="TipoDocumentoId" class="form-label">Tipo Documento *</label>
+                                <select asp-for="TipoDocumentoId" class="form-select" required>
+                                    <option value="">-- Seleziona Tipo --</option>
+                                    @if (ViewBag.TipiDocumento != null)
+                                    {
+                                        var items = (List<SelectListItem>)ViewBag.TipiDocumento;
+                                        string currentGroupName = null;
+                                        
+                                        foreach (var item in items)
+                                        {
+                                            var itemGroupName = item.Group?.Name;
+                                            
+                                            if (itemGroupName != currentGroupName)
+                                            {
+                                                if (currentGroupName != null)
+                                                {
+                                                    @Html.Raw("</optgroup>")
+                                                }
+                                                
+                                                if (itemGroupName != null)
+                                                {
+                                                    @Html.Raw($"<optgroup label=\"{itemGroupName}\">")
+                                                }
+                                                
+                                                currentGroupName = itemGroupName;
+                                            }
+                                            
+                                            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                        }
+                                        
+                                        if (currentGroupName != null)
+                                        {
+                                            @Html.Raw("</optgroup>")
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="TipoDocumentoId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Descrizione -->
+                            <div class="col-md-12">
+                                <label asp-for="Descrizione" class="form-label">Descrizione (opzionale)</label>
+                                <textarea asp-for="Descrizione" class="form-control" rows="4" 
+                                          placeholder="Aggiungi o modifica la descrizione del documento..."></textarea>
+                                <span asp-validation-for="Descrizione" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    Massimo 500 caratteri
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Salva Modifiche
+                                </button>
+                                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Annulla
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna Info File (Read-Only) -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informazioni File
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Nome File:</dt>
+                        <dd class="col-sm-7">
+                            <strong>@Model.NomeFile</strong>
+                        </dd>
+
+                        <dt class="col-sm-5">Dimensione:</dt>
+                        <dd class="col-sm-7">
+                            @Model.DimensioneFormatted
+                        </dd>
+
+                        <dt class="col-sm-5">Caricato il:</dt>
+                        <dd class="col-sm-7">
+                            @Model.DataCaricamento.ToString("dd/MM/yyyy HH:mm")
+                        </dd>
+
+                        <dt class="col-sm-5">Caricato da:</dt>
+                        <dd class="col-sm-7">
+                            @Model.CaricatoDaNome
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="alert alert-warning mt-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Nota:</strong>
+                <p class="mb-0 small">
+                    Non è possibile modificare il file fisico. 
+                    Per sostituire il file, elimina questo documento e carica quello nuovo.
+                </p>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i>
+                    Visualizza Dettagli Completi
+                </a>
+                <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-outline-success">
+                    <i class="bi bi-download me-1"></i>
+                    Scarica Documento
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

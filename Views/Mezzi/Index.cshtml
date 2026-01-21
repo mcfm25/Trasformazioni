@@ -1,0 +1,323 @@
+﻿@model IEnumerable<Trasformazioni.Models.ViewModels.MezzoListViewModel>
+@using Trasformazioni.Models.Entities
+@using Trasformazioni.Authorization
+@using Trasformazioni.Models.Enums
+
+@{
+    ViewData["Title"] = "Gestione Mezzi";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-car-front text-primary me-2" viewBox="0 0 16 16">
+                    <path d="M4 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0m10 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M6 8a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2zM4.862 4.276 3.906 6.19a.51.51 0 0 0 .497.731c.91-.073 2.35-.17 3.597-.17s2.688.097 3.597.17a.51.51 0 0 0 .497-.731l-.956-1.913A.5.5 0 0 0 10.691 4H5.309a.5.5 0 0 0-.447.276" />
+                    <path d="M2.52 3.515A2.5 2.5 0 0 1 4.82 2h6.362c1 0 1.904.596 2.298 1.515l.792 1.848c.075.175.21.319.38.404.5.25.855.715.965 1.262l.335 1.679q.05.242.049.49v.413c0 .814-.39 1.543-1 1.997V13.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1.338c-1.292.048-2.745.088-4 .088s-2.708-.04-4-.088V13.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1.892c-.61-.454-1-1.183-1-1.997v-.413a2.5 2.5 0 0 1 .049-.49l.335-1.68c.11-.546.465-1.012.964-1.261a.8.8 0 0 0 .381-.404l.792-1.848ZM4.82 3a1.5 1.5 0 0 0-1.379.91l-.792 1.847a1.8 1.8 0 0 1-.853.904.8.8 0 0 0-.43.564L1.03 8.904a1.5 1.5 0 0 0-.03.294v.413c0 .796.62 1.448 1.408 1.484 1.555.07 3.786.155 5.592.155s4.037-.084 5.592-.155A1.48 1.48 0 0 0 15 9.611v-.413q0-.148-.03-.294l-.335-1.68a.8.8 0 0 0-.43-.563 1.8 1.8 0 0 1-.853-.904l-.792-1.848A1.5 1.5 0 0 0 11.18 3z" />
+                </svg>
+                @ViewData["Title"]</h1>
+            <p class="text-muted mb-0">Visualizza e gestisci tutti i mezzi</p>
+        </div>
+        <div class="col-auto">
+            @if (User.IsInRole(RoleNames.Amministrazione))
+            {
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nuovo Mezzo
+                </a>
+            }
+        </div>
+    </div>
+
+    @* Messaggi Success/Error da TempData *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* Filtri e Ricerca *@
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Index" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="statoFilter" class="form-label">Filtra per Stato</label>
+                        <select name="stato" id="statoFilter" class="form-select">
+                            <option value="">Tutti gli stati</option>
+                            @foreach (StatoMezzo stato in Enum.GetValues(typeof(StatoMezzo)))
+                            {
+                                <option value="@((int)stato)" selected="@(ViewBag.StatoFiltro == stato)">
+                                    @stato.ToString()
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="proprietaFilter" class="form-label">Filtra per Proprietà</label>
+                        <select name="tipoProprieta" id="proprietaFilter" class="form-select">
+                            <option value="">Tutte</option>
+                            @foreach (TipoProprietaMezzo tipo in Enum.GetValues(typeof(TipoProprietaMezzo)))
+                            {
+                                <option value="@((int)tipo)" selected="@(ViewBag.TipoProprietaFiltro == tipo)">
+                                    @tipo.ToString()
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="searchInput" class="form-label">Cerca per Targa</label>
+                        <input type="text" name="search" id="searchInput" class="form-control"
+                               placeholder="Es: AB123CD" value="@ViewBag.Search">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="bi bi-search"></i> Cerca
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* Tabella Mezzi *@
+    <div class="card">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Targa</th>
+                                <th>Veicolo</th>
+                                <th>Tipo</th>
+                                <th>Stato</th>
+                                <th>Proprietà</th>
+                                <th>Assegnato a</th>
+                                <th>Chilometraggio</th>
+                                <th>Alert</th>
+                                <th class="text-end pe-4">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var mezzo in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@mezzo.Targa</strong>
+                                    </td>
+                                    <td>
+                                        @mezzo.Marca @mezzo.Modello
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">@mezzo.TipoDescrizione</span>
+                                    </td>
+                                    @* COLONNA STATO - Con badge prenotazioni *@
+                                    <td>
+                                        @* Badge Stato Principale *@
+                                        @switch (mezzo.Stato)
+                                        {
+                                            case StatoMezzo.Disponibile:
+                                                <span class="badge bg-success">@mezzo.StatoDescrizione</span>
+                                                break;
+                                            case StatoMezzo.InUso:
+                                                <span class="badge bg-primary">@mezzo.StatoDescrizione</span>
+                                                break;
+                                            case StatoMezzo.InManutenzione:
+                                                <span class="badge bg-warning text-dark">@mezzo.StatoDescrizione</span>
+                                                break;
+                                            case StatoMezzo.Dismesso:
+                                                <span class="badge bg-dark">@mezzo.StatoDescrizione</span>
+                                                break;
+                                            case StatoMezzo.Prenotato:
+                                                <span class="badge bg-info">@mezzo.StatoDescrizione</span>
+                                                break;
+                                        }
+
+                                        @* NUOVO: Badge Prenotazioni Future *@
+                                        @if (mezzo.HasPrenotazioniInCoda)
+                                        {
+                                            <br />
+                                            <span class="badge bg-warning text-dark mt-1"
+                                                  title="@mezzo.NumeroPrenotazioniFuture prenotazione/i futura/e"
+                                                  data-bs-toggle="tooltip">
+                                                <i class="bi bi-calendar-event"></i> @mezzo.NumeroPrenotazioniFuture
+                                            </span>
+                                        }
+
+                                        @* NUOVO: Badge Assegnazioni Multiple (se > 1) *@
+                                        @if (mezzo.HasAssegnazioniMultiple)
+                                        {
+                                            <br />
+                                            <span class="badge bg-secondary mt-1"
+                                                  title="@mezzo.NumeroAssegnazioniTotali assegnazioni attive totali"
+                                                  data-bs-toggle="tooltip">
+                                                <i class="bi bi-stack"></i> @mezzo.NumeroAssegnazioniTotali
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (mezzo.TipoProprieta == TipoProprietaMezzo.Proprieta)
+                                        {
+                                            <span class="badge bg-info">Proprietà</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Noleggio</span>
+                                        }
+                                    </td>
+                                    @* COLONNA ASSEGNATO A - Mostra solo assegnazione in corso *@
+                                    <td>
+                                        @if (mezzo.AssegnazioneAttiva != null)
+                                        {
+                                            <div>
+                                                <span class="badge bg-primary"
+                                                      title="Assegnato dal @mezzo.AssegnazioneAttiva.DataInizio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">
+                                                    <i class="bi bi-person-fill"></i> @mezzo.AssegnazioneAttiva.UtenteNomeCompleto
+                                                </span>
+
+                                                @* Info addizionale se è una prenotazione *@
+                                                @if (mezzo.AssegnazioneAttiva.IsPrenotazione)
+                                                {
+                                                    <br />
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-clock"></i> Inizia il @mezzo.AssegnazioneAttiva.DataInizio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    </small>
+                                                }
+                                                @* Info addizionale se ha DataFine *@
+                                                else if (mezzo.AssegnazioneAttiva.DataFine.HasValue)
+                                                {
+                                                    <br />
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-clock-history"></i> Fino al @mezzo.AssegnazioneAttiva.DataFine.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    </small>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                <i class="bi bi-dash-circle"></i> Nessuno
+                                            </span>
+
+                                            @* Se ha prenotazioni future ma nessuna in corso *@
+                                            @if (mezzo.HasPrenotazioniInCoda)
+                                            {
+                                                <br />
+                                                <small class="text-info">
+                                                    <i class="bi bi-calendar-check"></i> Con prenotazioni future
+                                                </small>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (mezzo.Chilometraggio.HasValue)
+                                        {
+                                            <span>@mezzo.Chilometraggio.Value.ToString("N0") km</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/D</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (mezzo.IsAssicurazioneInScadenza)
+                                        {
+                                            <i class="bi bi-exclamation-triangle text-warning"
+                                               title="Assicurazione in scadenza"></i>
+                                        }
+                                        @if (mezzo.IsRevisioneInScadenza)
+                                        {
+                                            <i class="bi bi-exclamation-triangle text-danger"
+                                               title="Revisione in scadenza"></i>
+                                        }
+                                    </td>
+                                    <td class="align-middle text-end pe-4">
+                                        <div class="btn-group" role="group">
+                                            <a asp-controller="Assegnazioni" asp-action="Assegna" asp-route-mezzoId="@mezzo.Id"
+                                               class="btn btn-sm btn-outline-success" title="Assegna">
+                                                <i class="bi bi-calendar-check"></i>
+                                            </a>
+                                            <a asp-action="Details" asp-route-id="@mezzo.Id"
+                                               class="btn btn-sm btn-outline-primary" title="Dettagli">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            @if (User.IsInRole(RoleNames.Amministrazione))
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@mezzo.Id"
+                                                   class="btn btn-sm btn-outline-secondary" title="Modifica">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a asp-action="Delete" asp-route-id="@mezzo.Id"
+                                                   class="btn btn-sm btn-outline-danger" title="Elimina">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="lead text-muted mt-3">Nessun mezzo trovato</p>
+                    @if (User.IsInRole(RoleNames.Amministrazione))
+                    {
+                        <a asp-action="Create" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Aggiungi il primo mezzo
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* Script per abilitare i tooltip di Bootstrap *@
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Abilita tutti i tooltip
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+
+@section Scripts {
+    <script>
+        // Auto-submit form quando cambiano i filtri
+        document.addEventListener('DOMContentLoaded', function() {
+            const statoFilter = document.getElementById('statoFilter');
+            const proprietaFilter = document.getElementById('proprietaFilter');
+
+            if (statoFilter) {
+                statoFilter.addEventListener('change', function() {
+                    document.getElementById('filterForm').submit();
+                });
+            }
+
+            if (proprietaFilter) {
+                proprietaFilter.addEventListener('change', function() {
+                    document.getElementById('filterForm').submit();
+                });
+            }
+        });
+    </script>
+}

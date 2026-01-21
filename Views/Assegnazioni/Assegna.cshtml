@@ -1,0 +1,401 @@
+﻿@model Trasformazioni.Models.ViewModels.AssegnazioneMezzoCreateViewModel
+@using Trasformazioni.Models.Enums
+
+@{
+    ViewData["Title"] = "Assegna Mezzo";
+    var isDataEntry = ViewBag.IsDataEntry ?? false;
+    var periodiOccupati = ViewBag.PeriodiOccupati as IEnumerable<Trasformazioni.Models.ViewModels.PeriodoOccupatoViewModel> ?? Enumerable.Empty<Trasformazioni.Models.ViewModels.PeriodoOccupatoViewModel>();
+}
+
+@section Styles {
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+
+    <style>
+        #calendario {
+            max-height: 500px;
+            margin-bottom: 1rem;
+        }
+
+        .fc-event {
+            cursor: pointer;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 1rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+
+        .alert-periodo-indeterminato {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+    </style>
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="bi bi-calendar-check"></i> Assegna Mezzo
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Mezzi" asp-action="Index">Mezzi</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Mezzi" asp-action="Details" asp-route-id="@Model.MezzoId">Dettagli</a></li>
+                    <li class="breadcrumb-item active">Assegna</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Info Mezzo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-truck"></i> Mezzo Selezionato
+                    </h5>
+                    <p class="card-text mb-0">
+                        <strong>@Model.MezzoDescrizioneCompleta</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna Sinistra: Calendario -->
+        <div class="col-lg-7 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar3"></i> Calendario Occupazione Mezzo</h5>
+                </div>
+                <div class="card-body">
+                    @if (periodiOccupati.Any())
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Attenzione:</strong> Questo mezzo ha <strong>@periodiOccupati.Count()</strong> periodo/i già occupato/i.
+                            Seleziona un intervallo di date/ore che non si sovrapponga.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i>
+                            Il mezzo è completamente disponibile. Puoi prenotarlo liberamente.
+                        </div>
+                    }
+
+                    <!-- Calendario -->
+                    <div id="calendario"></div>
+
+                    <!-- Legenda -->
+                    <div class="mt-3 pt-3 border-top">
+                        <small class="text-muted"><strong>Legenda:</strong></small>
+                        <div class="d-flex flex-wrap mt-2">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #dc3545;"></div>
+                                <small>In Corso</small>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #ffc107;"></div>
+                                <small>Prenotazione Futura</small>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #28a745;"></div>
+                                <small>Nuova Assegnazione</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna Destra: Form -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Dati Assegnazione</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Assegna" method="post" id="assegnaForm" novalidate>
+                        <input type="hidden" asp-for="MezzoId" />
+                        <input type="hidden" asp-for="MezzoTarga" />
+                        <input type="hidden" asp-for="MezzoDescrizioneCompleta" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        @if (isDataEntry)
+                        {
+                            @* DataEntry: Utente fisso (readonly) *@
+                            <input type="hidden" asp-for="UtenteId" />
+                            <div class="mb-3">
+                                <label class="form-label">Utente</label>
+                                <input type="text" class="form-control" value="@ViewBag.CurrentUserName" readonly />
+                                <small class="form-text text-muted">Puoi assegnare solo a te stesso</small>
+                            </div>
+                        }
+                        else
+                        {
+                            @* Admin: Dropdown utenti *@
+                            <div class="mb-3">
+                                <label asp-for="UtenteId" class="form-label"></label>
+                                <select asp-for="UtenteId" asp-items="ViewBag.Utenti" class="form-select" required>
+                                    <option value="">-- Seleziona utente --</option>
+                                </select>
+                                <span asp-validation-for="UtenteId" class="text-danger"></span>
+                            </div>
+                        }
+
+                        @* Data e Ora Inizio *@
+                        <div class="mb-3">
+                            <label asp-for="DataInizio" class="form-label"></label>
+                            <input asp-for="DataInizio" type="datetime-local" step="60" class="form-control" required id="dataInizioInput" />
+                            <span asp-validation-for="DataInizio" class="text-danger"></span>
+                            @if (isDataEntry)
+                            {
+                                <small class="form-text text-warning">
+                                    ⚠️ Puoi creare solo <strong>prenotazioni future</strong>. Per assegnazioni immediate contatta un amministratore.
+                                </small>
+                            }
+                        </div>
+
+                        @* Data e Ora Fine (OPZIONALE) *@
+                        <div class="mb-3">
+                            <label asp-for="DataFine" class="form-label"></label>
+                            <input asp-for="DataFine" type="datetime-local" step="60" class="form-control" id="dataFineInput" />
+                            <span asp-validation-for="DataFine" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Lascia vuota</strong> per assegnazione a tempo indeterminato (fino a riconsegna manuale).
+                                <br />
+                                <strong>Compila</strong> per prenotazione temporanea (permette altre prenotazioni successive).
+                            </small>
+                        </div>
+
+                        @* Alert Tipo Assegnazione *@
+                        <div id="tipoAssegnazioneAlert" class="alert d-none mb-3">
+                            <i class="bi bi-info-circle"></i> <span id="tipoAssegnazioneText"></span>
+                        </div>
+
+                        @* Motivo Assegnazione *@
+                        <div class="mb-3">
+                            <label asp-for="MotivoAssegnazione" class="form-label"></label>
+                            <select asp-for="MotivoAssegnazione" asp-items="Html.GetEnumSelectList<Trasformazioni.Models.Enums.MotivoAssegnazione>()"
+                                    class="form-select" required>
+                                <option value="">-- Seleziona motivo --</option>
+                            </select>
+                            <span asp-validation-for="MotivoAssegnazione" class="text-danger"></span>
+                        </div>
+
+                        @* Chilometraggio Iniziale *@
+                        <div class="mb-3">
+                            <label asp-for="ChilometraggioInizio" class="form-label"></label>
+                            <input asp-for="ChilometraggioInizio" type="number" step="0.01" class="form-control" placeholder="Opzionale" />
+                            <span asp-validation-for="ChilometraggioInizio" class="text-danger"></span>
+                        </div>
+
+                        @* Note *@
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label"></label>
+                            <textarea asp-for="Note" class="form-control" rows="3" placeholder="Note aggiuntive (opzionale)"></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+
+                        @* Pulsanti *@
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="bi bi-check-circle"></i> <span id="submitText">Conferma Assegnazione</span>
+                            </button>
+                            <a asp-controller="Mezzi" asp-action="Details" asp-route-id="@Model.MezzoId" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/it.global.min.js'></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dataInizioInput = document.getElementById('dataInizioInput');
+            const dataFineInput = document.getElementById('dataFineInput');
+            const tipoAssegnazioneAlert = document.getElementById('tipoAssegnazioneAlert');
+            const tipoAssegnazioneText = document.getElementById('tipoAssegnazioneText');
+            const submitText = document.getElementById('submitText');
+            const isDataEntry = @(isDataEntry ? "true" : "false");
+
+            // Tronca secondi dal valore iniziale (dal server)
+            if (dataInizioInput.value) {
+                // Es: "2025-10-20T15:30:47" → "2025-10-20T15:30"
+                dataInizioInput.value = dataInizioInput.value.substring(0, 16);
+            }
+
+            // Dati periodi occupati dal server
+            const periodiOccupati = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(periodiOccupati));
+
+            // Inizializza FullCalendar
+            const calendarEl = document.getElementById('calendario');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                locale: 'it',
+                slotMinTime: '06:00:00',
+                slotMaxTime: '22:00:00',
+                slotDuration: '01:00:00',
+                allDaySlot: false,
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'timeGridWeek,timeGridDay'
+                },
+                nowIndicator: true,
+                selectable: true,
+                selectMirror: true,
+
+                // Eventi esistenti (periodi occupati)
+                events: periodiOccupati.map(p => ({
+                    title: p.UtenteNomeCompleto,
+                    start: p.Start,
+                    end: p.End || undefined,
+                    backgroundColor: p.Color,
+                    borderColor: p.Color,
+                    extendedProps: {
+                        isInCorso: p.IsInCorso,
+                        isPrenotazione: p.IsPrenotazione,
+                        id: p.Id
+                    }
+                })),
+
+                // Click su evento esistente
+                eventClick: function(info) {
+                    const props = info.event.extendedProps;
+                    let stato = props.isInCorso ? 'In Corso' : 'Prenotazione';
+                    alert(`${stato}\nUtente: ${info.event.title}\nInizio: ${info.event.start.toLocaleString('it-IT')}\nFine: ${info.event.end ? info.event.end.toLocaleString('it-IT') : 'Non definita'}`);
+                },
+
+                // Selezione periodo (evidenzia periodo scelto dall'utente)
+                select: function(info) {
+                    // Aggiorna form con le date selezionate
+                    dataInizioInput.value = formatDateTimeLocal(info.start);
+                    dataFineInput.value = formatDateTimeLocal(info.end);
+                    updateTipoAssegnazione();
+                }
+            });
+
+            calendar.render();
+
+            // Funzione per formattare DateTime in formato datetime-local
+            function formatDateTimeLocal(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+
+            // Funzione per aggiornare alert tipo assegnazione
+            function updateTipoAssegnazione() {
+                const dataInizio = new Date(dataInizioInput.value);
+                const dataFine = dataFineInput.value ? new Date(dataFineInput.value) : null;
+                const ora = new Date();
+
+                if (!dataInizioInput.value) {
+                    tipoAssegnazioneAlert.classList.add('d-none');
+                    return;
+                }
+
+                tipoAssegnazioneAlert.classList.remove('d-none', 'alert-info', 'alert-warning', 'alert-periodo-indeterminato');
+
+                if (!dataFine) {
+                    // Assegnazione a tempo indeterminato
+                    tipoAssegnazioneAlert.classList.add('alert-periodo-indeterminato');
+                    tipoAssegnazioneText.textContent = 'Assegnazione a tempo indeterminato: il mezzo sarà bloccato fino a riconsegna manuale.';
+                    submitText.textContent = dataInizio > ora ? 'Crea Prenotazione' : 'Assegna Mezzo';
+                } else {
+                    // Assegnazione temporanea
+                    const durataOre = Math.round((dataFine - dataInizio) / (1000 * 60 * 60));
+                    tipoAssegnazioneAlert.classList.add('alert-info');
+                    tipoAssegnazioneText.textContent = `Assegnazione temporanea di ${durataOre} ore. Il mezzo potrà essere prenotato anche per altri periodi.`;
+                    submitText.textContent = dataInizio > ora ? 'Crea Prenotazione Temporanea' : 'Assegna Temporaneamente';
+                }
+            }
+
+            // Event listeners per aggiornare tipo assegnazione
+            dataInizioInput.addEventListener('change', updateTipoAssegnazione);
+            dataFineInput.addEventListener('change', updateTipoAssegnazione);
+
+            // Validazione form client-side
+            const form = document.getElementById('assegnaForm');
+            form.addEventListener('submit', function(event) {
+                let isValid = true;
+
+                // Validazione DataEntry: solo date future
+                if (isDataEntry) {
+                    const dataInizio = new Date(dataInizioInput.value);
+                    const ora = new Date();
+
+                    if (dataInizio <= ora) {
+                        event.preventDefault();
+                        alert('Puoi creare solo prenotazioni con data futura. Per assegnazioni immediate contatta un amministratore.');
+                        dataInizioInput.focus();
+                        isValid = false;
+                    }
+                }
+
+                // Validazione DataFine > DataInizio
+                if (dataFineInput.value) {
+                    const dataInizio = new Date(dataInizioInput.value);
+                    const dataFine = new Date(dataFineInput.value);
+
+                    if (dataFine <= dataInizio) {
+                        event.preventDefault();
+                        alert('La data di fine deve essere successiva alla data di inizio.');
+                        dataFineInput.focus();
+                        isValid = false;
+                    }
+
+                    // Validazione durata minima 1 ora
+                    const durataMs = dataFine - dataInizio;
+                    const durataOre = durataMs / (1000 * 60 * 60);
+                    if (durataOre < 1) {
+                        event.preventDefault();
+                        alert('L\'assegnazione deve durare almeno 1 ora.');
+                        dataFineInput.focus();
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+
+            // Esegui check iniziale al caricamento
+            updateTipoAssegnazione();
+        });
+    </script>
+}

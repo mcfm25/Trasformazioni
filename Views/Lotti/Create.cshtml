@@ -1,0 +1,393 @@
+@using Trasformazioni.Models.Entities
+@using Trasformazioni.Models.ViewModels
+@model LottoCreateViewModel
+
+@{
+    ViewData["Title"] = "Crea Nuovo Lotto";
+    var garaSelezionata = ViewBag.GaraSelezionata as GaraDetailsViewModel;// Gara;
+    var isGaraPreimpostata = (bool)(ViewBag.IsGaraPreimpostata ?? false);
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Gare" asp-action="Index">Gare</a>
+        </li>
+        @if (garaSelezionata != null)
+        {
+            <li class="breadcrumb-item">
+                <a asp-controller="Gare" asp-action="Details" asp-route-id="@garaSelezionata.Id">
+                    @garaSelezionata.CodiceGara
+                </a>
+            </li>
+        }
+        <li class="breadcrumb-item active" aria-current="page">Crea Lotto</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="mb-4">
+    <h1 class="h3">
+        <i class="bi bi-plus-circle"></i> Crea Nuovo Lotto
+    </h1>
+    <p class="text-muted">Compila i campi obbligatori (*) per creare un nuovo lotto.</p>
+</div>
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form asp-action="Create" method="post" id="createLottoForm">
+    <div class="row">
+        <!-- Colonna Form (8 col) -->
+        <div class="col-lg-8">
+
+            <!-- Card Gara Associata -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-link-45deg"></i> Gara Associata
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (isGaraPreimpostata && garaSelezionata != null)
+                    {
+                        <!-- Gara preimpostata (readonly) -->
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Gara selezionata:</strong><br>
+                            <span class="fs-5">@garaSelezionata.CodiceGara - @garaSelezionata.Titolo</span>
+                        </div>
+                        <input type="hidden" asp-for="GaraId" />
+                    }
+                    else
+                    {
+                        <!-- Dropdown gare disponibili -->
+                        <div class="mb-3">
+                            <label asp-for="GaraId" class="form-label">
+                                Seleziona Gara <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="GaraId" class="form-select" asp-items="ViewBag.Gare">
+                                <option value="">-- Seleziona una gara --</option>
+                            </select>
+                            <span asp-validation-for="GaraId" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Seleziona la gara a cui associare questo lotto.
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Card Dati Lotto -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text"></i> Informazioni Lotto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Codice Lotto -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CodiceLotto" class="form-label">
+                                Codice Lotto <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="CodiceLotto" class="form-control" placeholder="Es: LOT-001" />
+                            <span asp-validation-for="CodiceLotto" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Codice univoco del lotto all'interno della gara.
+                            </small>
+                        </div>
+
+                        <!-- Tipologia -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Tipologia" class="form-label">
+                                Tipologia <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="Tipologia" class="form-select" asp-items="ViewBag.Tipologie">
+                                <option value="">-- Seleziona tipologia --</option>
+                            </select>
+                            <span asp-validation-for="Tipologia" class="text-danger"></span>
+                        </div>
+
+                        <!-- Descrizione -->
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="Descrizione" class="form-label">
+                                Descrizione <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="Descrizione" class="form-control" rows="4"
+                                      placeholder="Descrizione dettagliata del lotto..."></textarea>
+                            <span asp-validation-for="Descrizione" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Minimo 10 caratteri, massimo 1000.
+                            </small>
+                        </div>
+
+                        <!-- Importo Base Asta -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ImportoBaseAsta" class="form-label">
+                                Importo Base Asta (€) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">€</span>
+                                <input asp-for="ImportoBaseAsta" type="number" step="0.01" min="0"
+                                       class="form-control" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="ImportoBaseAsta" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Importo a base d'asta del lotto.
+                            </small>
+                        </div>
+
+                        <!-- Quotazione -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Quotazione" class="form-label">
+                                Quotazione (€)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">€</span>
+                                <input asp-for="Quotazione" type="number" step="0.01" min="0"
+                                       class="form-control" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="Quotazione" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Quotazione stimata per il lotto.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Info Aggiuntive -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informazioni Aggiuntive <small class="text-muted">(opzionali)</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Link Piattaforma -->
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="LinkPiattaforma" class="form-label">Link Piattaforma</label>
+                            <input asp-for="LinkPiattaforma" class="form-control"
+                                   placeholder="https://piattaforma-gare.it/lotto/123" />
+                            <span asp-validation-for="LinkPiattaforma" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                URL della piattaforma dove è pubblicato il lotto.
+                            </small>
+                        </div>
+
+                        <!-- Giorni Fornitura -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="GiorniFornitura" class="form-label">Giorni Fornitura</label>
+                            <input asp-for="GiorniFornitura" type="number" min="1"
+                                   class="form-control" placeholder="30" />
+                            <span asp-validation-for="GiorniFornitura" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Numero di giorni previsti per la fornitura.
+                            </small>
+                        </div>
+
+                        <!-- Durata Contratto -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DurataContratto" class="form-label">Durata Contratto</label>
+                            <input asp-for="DurataContratto" class="form-control"
+                                   placeholder="Es: 12 mesi, 2 anni" />
+                            <span asp-validation-for="DurataContratto" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Durata prevista del contratto.
+                            </small>
+                        </div>
+
+                        <!-- Richiede Fideiussione -->
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input asp-for="RichiedeFideiussione" class="form-check-input" type="checkbox" />
+                                <label asp-for="RichiedeFideiussione" class="form-check-label">
+                                    Richiede Fideiussione
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Indica se il lotto richiede una garanzia fideiussoria.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Checklist Documenti Richiesti -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check"></i> Checklist Documenti Richiesti
+                        <small class="text-muted">(opzionale)</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        Seleziona i tipi di documento che dovranno essere caricati per questo lotto
+                        prima del passaggio allo stato "Presentato".
+                    </p>
+
+                    @if (ViewBag.TipiDocumentoChecklist != null)
+                    {
+                        <div class="row">
+                            @foreach (var tipo in (List<SelectListItem>)ViewBag.TipiDocumentoChecklist)
+                            {
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="DocumentiRichiestiIds"
+                                               value="@tipo.Value"
+                                               id="docRichiesto_@tipo.Value"
+                                               @(tipo.Selected ? "checked" : "") />
+                                        <label class="form-check-label" for="docRichiesto_@tipo.Value">
+                                            @tipo.Text
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            <i class="bi bi-exclamation-circle"></i>
+                            Nessun tipo documento disponibile.
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar Destra (4 col) -->
+        <div class="col-lg-4">
+
+            <!-- Card Azioni -->
+            <div class="card mb-3 sticky-top">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Azioni
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Crea Lotto
+                        </button>
+                        @if (garaSelezionata != null)
+                        {
+                            <a asp-controller="Gare" asp-action="Details" asp-route-id="@garaSelezionata.Id"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Info -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informazioni
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            <strong>Stato iniziale:</strong> Bozza
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-pencil text-primary"></i>
+                            Potrai modificare tutti i dati dopo la creazione
+                        </li>
+                        <li class="mb-0">
+                            <i class="bi bi-arrow-repeat text-info"></i>
+                            Il workflow del lotto parte dallo stato "Bozza"
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Card Campi Obbligatori -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-asterisk text-danger"></i> Campi Obbligatori
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li><i class="bi bi-check"></i> Gara Associata</li>
+                        <li><i class="bi bi-check"></i> Codice Lotto</li>
+                        <li><i class="bi bi-check"></i> Descrizione (min 10 caratteri)</li>
+                        <li><i class="bi bi-check"></i> Tipologia</li>
+                        <li><i class="bi bi-check"></i> Importo Base Asta</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function() {
+            // Warning before unload
+            var formChanged = false;
+            $("#createLottoForm input, #createLottoForm textarea, #createLottoForm select").on("change", function() {
+                formChanged = true;
+            });
+
+            $(window).on("beforeunload", function() {
+                if (formChanged) {
+                    return "Hai modifiche non salvate. Sei sicuro di voler uscire?";
+                }
+            });
+
+            // Rimuovi warning al submit
+            $("#createLottoForm").on("submit", function() {
+                formChanged = false;
+            });
+        });
+    </script>
+}

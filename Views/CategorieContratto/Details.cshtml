@@ -1,0 +1,320 @@
+﻿@model Trasformazioni.Models.ViewModels.CategoriaContrattoDetailsViewModel
+@{
+    ViewData["Title"] = "Dettaglio Categoria";
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>@Model.Nome</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="breadcrumb-item"><a asp-action="Index">Categorie Contratto</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">@Model.Nome</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex gap-2">
+                    @if (Model.CanEdit)
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                            <i class="bi bi-pencil me-1"></i> Modifica
+                        </a>
+                    }
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Torna alla lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Informazioni Principali -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informazioni Categoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Nome</label>
+                            <p class="mb-0 fw-semibold">@Model.Nome</p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted small mb-1">Ordine</label>
+                            <p class="mb-0">
+                                <span class="badge bg-light text-dark fs-6">@Model.Ordine</span>
+                            </p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted small mb-1">Stato</label>
+                            <p class="mb-0">
+                                <span class="badge @Model.StatoBadgeClass">@Model.StatoDescrizione</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Descrizione))
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-1">Descrizione</label>
+                                <p class="mb-0">@Model.Descrizione</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Informazioni Audit -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Informazioni di Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Creato il</label>
+                            <p class="mb-0">
+                                <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                @if (!string.IsNullOrWhiteSpace(Model.CreatedBy))
+                                {
+                                    <span class="text-muted">da @Model.CreatedBy</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Ultima modifica</label>
+                            <p class="mb-0">
+                                @if (Model.ModifiedAt.HasValue)
+                                {
+                                    <span>@Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    @if (!string.IsNullOrWhiteSpace(Model.ModifiedBy))
+                                    {
+                                        <span class="text-muted">da @Model.ModifiedBy</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Mai modificato</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Statistiche Utilizzo -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>Utilizzo
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="display-4 fw-bold text-primary">@Model.NumeroUtilizzi</div>
+                    <p class="text-muted mb-0">
+                        @(Model.NumeroUtilizzi == 1 ? "registro associato" : "registri associati")
+                    </p>
+                </div>
+                @if (Model.NumeroUtilizzi > 0)
+                {
+                    <div class="card-footer bg-transparent border-top-0 text-center">
+                        <a asp-controller="RegistroContratti" asp-action="Index"
+                           asp-route-CategoriaContrattoId="@Model.Id"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i> Visualizza registri
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <!-- Azioni Rapide -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>Azioni
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (Model.CanEdit)
+                        {
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                                <i class="bi bi-pencil me-2"></i>Modifica categoria
+                            </a>
+                        }
+
+                        @if (Model.IsAttivo)
+                        {
+                            <button type="button" class="btn btn-outline-warning btn-toggle-stato"
+                                    data-action="Disattiva">
+                                <i class="bi bi-pause me-2"></i>Disattiva categoria
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-outline-success btn-toggle-stato"
+                                    data-action="Attiva">
+                                <i class="bi bi-play me-2"></i>Attiva categoria
+                            </button>
+                        }
+
+                        @if (Model.CanDelete)
+                        {
+                            <button type="button" class="btn btn-outline-danger" id="btnDelete">
+                                <i class="bi bi-trash me-2"></i>Elimina categoria
+                            </button>
+                        }
+                        else if (Model.NumeroUtilizzi > 0)
+                        {
+                            <button type="button" class="btn btn-outline-secondary" disabled
+                                    title="Non è possibile eliminare una categoria in uso">
+                                <i class="bi bi-trash me-2"></i>Elimina categoria
+                            </button>
+                            <small class="text-muted text-center">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Non eliminabile: categoria in uso
+                            </small>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conferma Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Conferma Eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare la categoria <strong>@Model.Nome</strong>?</p>
+                <p class="text-muted small mb-0">Questa azione non può essere annullata.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-1"></i> Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const categoriaId = '@Model.Id';
+
+            // Gestione eliminazione
+            $('#btnDelete').on('click', function () {
+                deleteModal.show();
+            });
+
+            $('#confirmDelete').on('click', function () {
+                const btn = $(this);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Eliminazione...');
+
+                $.ajax({
+                    url: '@Url.Action("Delete")/' + categoriaId,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        deleteModal.hide();
+                        if (response.success) {
+                            window.location.href = '@Url.Action("Index")?message=' + encodeURIComponent(response.message);
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        deleteModal.hide();
+                        showAlert('danger', 'Errore durante l\'eliminazione. Riprova.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-trash me-1"></i> Elimina');
+                    }
+                });
+            });
+
+            // Gestione attiva/disattiva
+            $('.btn-toggle-stato').on('click', function () {
+                const btn = $(this);
+                const action = btn.data('action');
+
+                btn.prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("Index")/' + action + '/' + categoriaId,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            showAlert('danger', response.message);
+                            btn.prop('disabled', false);
+                        }
+                    },
+                    error: function () {
+                        showAlert('danger', 'Errore durante l\'operazione. Riprova.');
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+
+            // Helper per mostrare alert
+            function showAlert(type, message) {
+                const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+                const alert = $(`
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-${icon} me-2"></i>${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+                    </div>
+                `);
+                $('.container.py-4').find('.alert').remove();
+                $('.container.py-4 h2').closest('.row').after(alert);
+            }
+        });
+    </script>
+    @Html.AntiForgeryToken()
+}

@@ -1,0 +1,307 @@
+﻿@model IEnumerable<Trasformazioni.Models.ViewModels.CategoriaContrattoListViewModel>
+@{
+    ViewData["Title"] = "Categorie Contratto";
+    var statistiche = ViewBag.Statistiche as (int Totale, int Attive, int Inattive)?;
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>@ViewData["Title"]</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Categorie Contratto</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Nuova Categoria
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <!-- Statistiche -->
+    @if (statistiche.HasValue)
+    {
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Totale</h6>
+                                <h3 class="mb-0">@statistiche.Value.Totale</h3>
+                            </div>
+                            <i class="bi bi-folder fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Attive</h6>
+                                <h3 class="mb-0">@statistiche.Value.Attive</h3>
+                            </div>
+                            <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-secondary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Inattive</h6>
+                                <h3 class="mb-0">@statistiche.Value.Inattive</h3>
+                            </div>
+                            <i class="bi bi-pause-circle fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Tabella -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">Ordine</th>
+                                <th>Nome</th>
+                                <th>Descrizione</th>
+                                <th class="text-center" style="width: 100px;">Utilizzi</th>
+                                <th class="text-center" style="width: 100px;">Stato</th>
+                                <th class="text-end" style="width: 150px;">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderBy(c => c.Ordine))
+                            {
+                                <tr id="row-@item.Id">
+                                    <td>
+                                        <span class="badge bg-light text-dark">@item.Ordine</span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none fw-semibold">
+                                            @item.Nome
+                                        </a>
+                                    </td>
+                                    <td class="text-muted">
+                                        @(item.Descrizione?.Length > 80 ? item.Descrizione.Substring(0, 80) + "..." : item.Descrizione)
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.NumeroUtilizzi > 0)
+                                        {
+                                            <span class="badge bg-info">@item.NumeroUtilizzi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @item.StatoBadgeClass" id="stato-badge-@item.Id">
+                                            @item.StatoDescrizione
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Edit" asp-route-id="@item.Id"
+                                               class="btn btn-outline-primary" title="Modifica">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+
+                                            @if (item.IsAttivo)
+                                            {
+                                                <button type="button" class="btn btn-outline-warning btn-toggle-stato"
+                                                        data-id="@item.Id" data-action="Disattiva"
+                                                        title="Disattiva">
+                                                    <i class="bi bi-pause"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-outline-success btn-toggle-stato"
+                                                        data-id="@item.Id" data-action="Attiva"
+                                                        title="Attiva">
+                                                    <i class="bi bi-play"></i>
+                                                </button>
+                                            }
+
+                                            @if (item.CanDelete)
+                                            {
+                                                <button type="button" class="btn btn-outline-danger btn-delete"
+                                                        data-id="@item.Id" data-nome="@item.Nome"
+                                                        title="Elimina">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-folder2-open display-1 text-muted"></i>
+                    <p class="text-muted mt-3 mb-0">Nessuna categoria trovata</p>
+                    <a asp-action="Create" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-lg me-1"></i> Crea la prima categoria
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conferma Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Conferma Eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare la categoria <strong id="deleteNome"></strong>?</p>
+                <p class="text-muted small mb-0">Questa azione non può essere annullata.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-1"></i> Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            let deleteId = null;
+
+            // Gestione eliminazione
+            $('.btn-delete').on('click', function () {
+                deleteId = $(this).data('id');
+                const nome = $(this).data('nome');
+                $('#deleteNome').text(nome);
+                deleteModal.show();
+            });
+
+            $('#confirmDelete').on('click', function () {
+                if (!deleteId) return;
+
+                const btn = $(this);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Eliminazione...');
+
+                $.ajax({
+                    url: '@Url.Action("Delete")/' + deleteId,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        deleteModal.hide();
+                        if (response.success) {
+                            $('#row-' + deleteId).fadeOut(300, function () {
+                                $(this).remove();
+                            });
+                            showAlert('success', response.message);
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        deleteModal.hide();
+                        showAlert('danger', 'Errore durante l\'eliminazione. Riprova.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-trash me-1"></i> Elimina');
+                        deleteId = null;
+                    }
+                });
+            });
+
+            // Gestione attiva/disattiva
+            $('.btn-toggle-stato').on('click', function () {
+                const btn = $(this);
+                const id = btn.data('id');
+                const action = btn.data('action');
+
+                btn.prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("Index")/' + action + '/' + id,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            showAlert('danger', response.message);
+                            btn.prop('disabled', false);
+                        }
+                    },
+                    error: function () {
+                        showAlert('danger', 'Errore durante l\'operazione. Riprova.');
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+
+            // Helper per mostrare alert
+            function showAlert(type, message) {
+                const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+                const alert = $(`
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-${icon} me-2"></i>${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+                    </div>
+                `);
+                $('.container.py-4').find('.alert').remove();
+                $('.container.py-4 h2').closest('.row').after(alert);
+            }
+        });
+    </script>
+    @Html.AntiForgeryToken()
+}

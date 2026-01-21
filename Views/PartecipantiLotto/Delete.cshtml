@@ -1,0 +1,251 @@
+@model Trasformazioni.Models.ViewModels.PartecipanteLottoDetailsViewModel
+
+@{
+    ViewData["Title"] = "Elimina Partecipante";
+}
+
+<div class="container-fluid">
+    <!-- Header con breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">Lotto @Model.CodiceLotto</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@Model.LottoId">Partecipanti</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Elimina</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Alert Pericolo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Attenzione!
+                </h4>
+                <p class="mb-0">
+                    Stai per eliminare questo partecipante. Questa operazione <strong>non può essere annullata</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Titolo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-danger">
+                <i class="bi bi-trash"></i>
+                Conferma Eliminazione Partecipante
+            </h2>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Dati da Eliminare -->
+        <div class="col-lg-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-badge"></i>
+                        Dati Partecipante
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Ragione Sociale:</dt>
+                        <dd class="col-sm-8">
+                            <strong>@Model.RagioneSociale</strong>
+                        </dd>
+
+                        <dt class="col-sm-4">Da Anagrafica:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.SoggettoId.HasValue)
+                            {
+                                <span class="badge bg-info">
+                                    <i class="bi bi-building"></i> Sì
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-dash-circle"></i> No
+                                </span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Offerta Economica:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.OffertaEconomica.HasValue)
+                            {
+                                <span class="text-success fw-bold">@Model.OffertaEconomica.Value.ToString("C2")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Non specificata</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.IsAggiudicatario)
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="bi bi-trophy-fill"></i> Aggiudicatario
+                                </span>
+                            }
+                            @if (Model.IsScartatoDallEnte)
+                            {
+                                <span class="badge bg-danger fs-6">
+                                    <i class="bi bi-x-circle-fill"></i> Scartato
+                                </span>
+                            }
+                            @if (!Model.IsAggiudicatario && !Model.IsScartatoDallEnte)
+                            {
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="bi bi-circle"></i> Partecipante
+                                </span>
+                            }
+                        </dd>
+
+                        @if (!string.IsNullOrEmpty(Model.Note))
+                        {
+                            <dt class="col-sm-4">Note:</dt>
+                            <dd class="col-sm-8">@Model.Note</dd>
+                        }
+                    </dl>
+
+                    <hr />
+
+                    <h6 class="text-muted">Lotto Associato</h6>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Codice Lotto:</dt>
+                        <dd class="col-sm-8">@Model.CodiceLotto</dd>
+
+                        <dt class="col-sm-4">Titolo:</dt>
+                        <dd class="col-sm-8">@Model.DescrizioneLotto</dd>
+
+                        <dt class="col-sm-4">Gara CIG:</dt>
+                        <dd class="col-sm-8">@Model.CodiceGara</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Form Conferma -->
+            <div class="card border-danger mt-4">
+                <div class="card-body">
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="alert alert-warning mb-4">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Nota:</strong> L'eliminazione è un'operazione di <em>soft delete</em>. 
+                            Il record verrà marcato come eliminato ma rimarrà nel database per scopi di audit.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" asp-route-lottoId="@Model.LottoId" class="btn btn-secondary btn-lg">
+                                <i class="bi bi-arrow-left"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-trash"></i> Conferma Eliminazione
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Laterale -->
+        <div class="col-lg-4">
+            <!-- Warning Box -->
+            <div class="card bg-warning text-dark mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Conseguenze dell'Eliminazione
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li>Il partecipante verrà rimosso dalla lista</li>
+                        <li>I dati rimarranno nel database (soft delete)</li>
+                        <li>L'operazione è irreversibile dal punto di vista utente</li>
+                        <li>Se era aggiudicatario, sarà possibile assegnare un nuovo aggiudicatario</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Info Audit -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i>
+                        Informazioni Record
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Creato il:</strong><br />
+                        <small>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Creato da:</strong><br />
+                        <small>@Model.CreatedBy</small>
+                    </p>
+                    @if (Model.ModifiedAt.HasValue)
+                    {
+                        <hr />
+                        <p class="mb-2">
+                            <strong>Ultima modifica:</strong><br />
+                            <small>@Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                        </p>
+                        @if (!string.IsNullOrEmpty(Model.ModifiedBy))
+                        {
+                            <p class="mb-0">
+                                <strong>Modificato da:</strong><br />
+                                <small>@Model.ModifiedBy</small>
+                            </p>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Azioni Alternative -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb"></i>
+                        Alternative
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-3">
+                        Non sei sicuro di voler eliminare? Puoi invece:
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-pencil"></i> Modifica i dati
+                        </a>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye"></i> Rivedi i dettagli
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

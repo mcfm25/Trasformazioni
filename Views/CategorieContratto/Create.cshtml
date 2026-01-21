@@ -1,0 +1,165 @@
+﻿@model Trasformazioni.Models.ViewModels.CategoriaContrattoCreateViewModel
+@{
+    ViewData["Title"] = "Nuova Categoria";
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>@ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Categorie Contratto</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Nuova</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-folder-plus me-2"></i>Dati Categoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" id="categoriaForm">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- Nome -->
+                        <div class="mb-3">
+                            <label asp-for="Nome" class="form-label">Nome <span class="text-danger">*</span></label>
+                            <input asp-for="Nome" class="form-control" placeholder="Es: Assistenza e Manutenzione"
+                                   maxlength="100" required />
+                            <span asp-validation-for="Nome" class="text-danger"></span>
+                            <small id="nome-validation-message" class="form-text"></small>
+                        </div>
+
+                        <!-- Descrizione -->
+                        <div class="mb-3">
+                            <label asp-for="Descrizione" class="form-label">Descrizione</label>
+                            <textarea asp-for="Descrizione" class="form-control" rows="3"
+                                      placeholder="Descrizione opzionale della categoria" maxlength="500"></textarea>
+                            <span asp-validation-for="Descrizione" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                <span id="descrizione-count">0</span>/500 caratteri
+                            </small>
+                        </div>
+
+                        <!-- Ordine e Stato -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Ordine" class="form-label">Ordine di visualizzazione</label>
+                                <input asp-for="Ordine" type="number" class="form-control"
+                                       min="0" max="9999" />
+                                <span asp-validation-for="Ordine" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    Numero più basso = categoria mostrata prima
+                                </small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IsAttivo" class="form-label">Stato</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="IsAttivo" class="form-check-input" type="checkbox"
+                                           role="switch" id="isAttivoSwitch" />
+                                    <label class="form-check-label" for="isAttivoSwitch" id="isAttivoLabel">
+                                        @(Model.IsAttivo ? "Attiva" : "Non attiva")
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Solo le categorie attive sono selezionabili
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i> Salva Categoria
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            const nomeInput = $('#Nome');
+            const nomeValidationMessage = $('#nome-validation-message');
+            const descrizioneTextarea = $('#Descrizione');
+            const descrizioneCount = $('#descrizione-count');
+            const isAttivoSwitch = $('#isAttivoSwitch');
+            const isAttivoLabel = $('#isAttivoLabel');
+
+            // Contatore caratteri descrizione
+            function updateDescrizioneCount() {
+                const count = descrizioneTextarea.val().length;
+                descrizioneCount.text(count);
+                if (count > 450) {
+                    descrizioneCount.addClass('text-warning');
+                } else {
+                    descrizioneCount.removeClass('text-warning');
+                }
+            }
+            descrizioneTextarea.on('input', updateDescrizioneCount);
+            updateDescrizioneCount();
+
+            // Aggiorna label switch
+            isAttivoSwitch.on('change', function () {
+                isAttivoLabel.text(this.checked ? 'Attiva' : 'Non attiva');
+            });
+
+            // Validazione nome univoco
+            let nomeTimeout;
+            nomeInput.on('blur', function () {
+                const nome = $(this).val().trim();
+                if (!nome) {
+                    nomeValidationMessage.text('').removeClass('text-success text-danger');
+                    return;
+                }
+
+                clearTimeout(nomeTimeout);
+                nomeTimeout = setTimeout(function () {
+                    $.ajax({
+                        url: '@Url.Action("CheckNome")',
+                        data: { nome: nome },
+                        success: function (response) {
+                            if (response === true) {
+                                nomeValidationMessage
+                                    .text('✓ Nome disponibile')
+                                    .removeClass('text-danger')
+                                    .addClass('text-success');
+                            } else {
+                                nomeValidationMessage
+                                    .text('✗ ' + response)
+                                    .removeClass('text-success')
+                                    .addClass('text-danger');
+                            }
+                        },
+                        error: function () {
+                            nomeValidationMessage.text('').removeClass('text-success text-danger');
+                        }
+                    });
+                }, 300);
+            });
+
+            // Clear validation message on input
+            nomeInput.on('input', function () {
+                nomeValidationMessage.text('').removeClass('text-success text-danger');
+            });
+        });
+    </script>
+}

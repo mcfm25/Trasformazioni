@@ -1,0 +1,335 @@
+@using Trasformazioni.Helpers
+@model Trasformazioni.Models.ViewModels.PartecipanteLottoDetailsViewModel
+
+@{
+    ViewData["Title"] = "Dettaglio Partecipante";
+}
+
+<div class="container-fluid">
+    <!-- Header con breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">Lotto @Model.CodiceLotto</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@Model.LottoId">Partecipanti</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Dettaglio</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Titolo con Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2>
+                        <i class="bi bi-person-badge text-primary"></i>
+                        @Model.RagioneSociale
+                    </h2>
+                    <div class="mt-2">
+                        @if (Model.IsAggiudicatario)
+                        {
+                            <span class="badge bg-success fs-5">
+                                <i class="bi bi-trophy-fill"></i> Aggiudicatario
+                            </span>
+                        }
+                        @if (Model.IsScartatoDallEnte)
+                        {
+                            <span class="badge bg-danger fs-5">
+                                <i class="bi bi-x-circle-fill"></i> Scartato dall'Ente
+                            </span>
+                        }
+                        @if (!Model.IsAggiudicatario && !Model.IsScartatoDallEnte)
+                        {
+                            <span class="badge bg-secondary fs-5">
+                                <i class="bi bi-circle"></i> Partecipante
+                            </span>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Modifica
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Elimina
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna Principale -->
+        <div class="col-lg-8">
+            <!-- Dati Partecipante -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Informazioni Partecipante
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Ragione Sociale:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.RagioneSociale
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Da Anagrafica Soggetti:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.SoggettoId.HasValue)
+                            {
+                                <a asp-controller="Soggetti" asp-action="Details" asp-route-id="@Model.SoggettoId" 
+                                   class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-building"></i> Vedi Anagrafica Soggetto
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">
+                                    <i class="bi bi-dash-circle"></i> Soggetto non censito
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Offerta Economica:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.OffertaEconomica.HasValue)
+                            {
+                                <h4 class="text-success mb-0">
+                                    @Model.OffertaEconomica.Value.ToString("C2")
+                                </h4>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Non specificata</span>
+                            }
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>È Aggiudicatario:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.IsAggiudicatario)
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="bi bi-check-circle-fill"></i> Sì
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="bi bi-x-circle"></i> No
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>È Scartato dall'Ente:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.IsScartatoDallEnte)
+                            {
+                                <span class="badge bg-danger fs-6">
+                                    <i class="bi bi-check-circle-fill"></i> Sì
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="bi bi-x-circle"></i> No
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Note))
+                    {
+                        <hr />
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Note:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="alert alert-info">
+                                    @Model.Note
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Informazioni Lotto -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-folder2-open"></i>
+                        Lotto Associato
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Codice Lotto:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.CodiceLotto
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Titolo Lotto:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.DescrizioneLotto
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Stato Lotto:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <span class="badge bg-info">@EnumHelper.GetDisplayName(Model.StatoLotto)</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Gara CIG:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.CodiceGara
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-box-arrow-up-right"></i> Vedi Dettaglio Lotto
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna Laterale -->
+        <div class="col-lg-4">
+            <!-- Info Audit -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i>
+                        Informazioni di Sistema
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>ID:</strong><br />
+                        <small class="text-muted font-monospace">@Model.Id</small>
+                    </p>
+                    <hr />
+                    <p class="mb-2">
+                        <strong>Creato il:</strong><br />
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                    <p class="mb-2">
+                        <strong>Creato da:</strong><br />
+                        @Model.CreatedBy
+                    </p>
+                    @if (Model.ModifiedAt.HasValue)
+                    {
+                        <hr />
+                        <p class="mb-2">
+                            <strong>Modificato il:</strong><br />
+                            @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                        </p>
+                        @if (!string.IsNullOrEmpty(Model.ModifiedBy))
+                        {
+                            <p class="mb-0">
+                                <strong>Modificato da:</strong><br />
+                                @Model.ModifiedBy
+                            </p>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Azioni Rapide -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning-fill"></i>
+                        Azioni Rapide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Modifica Partecipante
+                        </a>
+                        <a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-folder2-open"></i> Vai al Lotto
+                        </a>
+                        @if (Model.SoggettoId.HasValue)
+                        {
+                            <a asp-controller="Soggetti" asp-action="Details" asp-route-id="@Model.SoggettoId" 
+                               class="btn btn-outline-info">
+                                <i class="bi bi-building"></i> Vai al Soggetto
+                            </a>
+                        }
+                        <hr class="my-2" />
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Elimina Partecipante
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pulsante Torna alla Lista -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a asp-action="Index" asp-route-lottoId="@Model.LottoId" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Torna alla Lista Partecipanti
+            </a>
+        </div>
+    </div>
+</div>

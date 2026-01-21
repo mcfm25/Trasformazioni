@@ -1,0 +1,521 @@
+﻿@{
+    ViewData["Title"] = "Mappa Mezzi";
+}
+
+@section Styles {
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+
+    <style>
+        /* Layout full height */
+        #map-container {
+            position: relative;
+            height: calc(100vh - 150px);
+            min-height: 500px;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 350px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(100%);
+        }
+
+        #sidebar-toggle {
+            position: absolute;
+            top: 10px;
+            left: -40px;
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            box-shadow: -2px 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        /* Control panel */
+        #control-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Stats badges */
+        .stat-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Vehicle list */
+        .vehicle-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .vehicle-item:hover {
+            background-color: #f8f9fa;
+            border-left-color: #0d6efd;
+        }
+
+        .vehicle-item.no-position {
+            opacity: 0.6;
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-moving { background-color: #28a745; }
+        .status-stopped { background-color: #ffc107; }
+        .status-offline { background-color: #6c757d; }
+        .status-no-gps { background-color: #dc3545; }
+
+        /* Legend */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Leaflet custom styles */
+        .leaflet-popup-content {
+            margin: 10px;
+            line-height: 1.6;
+        }
+
+        .leaflet-popup-content h6 {
+            margin-bottom: 8px;
+            color: #0d6efd;
+        }
+
+        /* Loading overlay */
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        #loading-overlay.hidden {
+            display: none;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            #sidebar {
+                width: 100%;
+            }
+
+            #map-container {
+                height: calc(100vh - 200px);
+            }
+        }
+    </style>
+}
+
+<div class="container-fluid py-4">
+
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-geo-alt text-primary me-2" viewBox="0 0 16 16">
+                    <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10" />
+                    <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />
+                </svg>
+                Mappa Mezzi GPS
+            </h1>
+            <p class="text-muted mb-0">Visualizza e gestisci tutte le gare d'appalto</p>
+        </div>
+        <div class="col-auto">
+            <button id="refresh-btn" class="btn btn-primary">
+                <i class="bi bi-arrow-clockwise"></i>
+                Aggiorna
+            </button>
+            <small class="text-muted ms-3" id="last-update">
+                Ultimo aggiornamento: mai
+            </small>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div id="control-panel">
+        
+        <!-- Stats -->
+        <div class="mt-3">
+            <span class="stat-badge bg-primary text-white">
+                <i class="bi bi-car-front"></i>
+                Totale: <strong id="stat-total">0</strong>
+            </span>
+            <span class="stat-badge bg-info text-white">
+                <i class="bi bi-wifi"></i>
+                Con GPS: <strong id="stat-gps">0</strong>
+            </span>
+            <span class="stat-badge bg-success text-white">
+                <i class="bi bi-geo-alt"></i>
+                Con posizione: <strong id="stat-position">0</strong>
+            </span>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-3">
+            <strong>Legenda:</strong>
+            <div class="d-flex flex-wrap gap-3 mt-2">
+                <div class="legend-item">
+                    <span class="status-indicator status-moving"></span>
+                    <span>In movimento</span>
+                </div>
+                <div class="legend-item">
+                    <span class="status-indicator status-stopped"></span>
+                    <span>Fermo</span>
+                </div>
+                <div class="legend-item">
+                    <span class="status-indicator status-offline"></span>
+                    <span>Offline</span>
+                </div>
+                <div class="legend-item">
+                    <span class="status-indicator status-no-gps"></span>
+                    <span>Senza GPS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map-container">
+        <!-- Loading Overlay -->
+        <div id="loading-overlay">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Caricamento...</span>
+                </div>
+                <p class="mt-3">Caricamento posizioni GPS...</p>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div id="map"></div>
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <button id="sidebar-toggle" title="Mostra/Nascondi lista mezzi">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <div class="p-3">
+                <h5 class="border-bottom pb-2">
+                    <i class="bi bi-list-ul"></i>
+                    Lista Mezzi
+                </h5>
+
+                <!-- Search -->
+                <div class="mb-3">
+                    <input type="text"
+                           id="vehicle-search"
+                           class="form-control"
+                           placeholder="Cerca per targa o marca...">
+                </div>
+
+                <!-- Vehicle List -->
+                <div id="vehicle-list">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script>
+        // Global variables
+        let map;
+        let markers = {};
+        let vehiclesData = [];
+        let autoRefreshInterval;
+
+        // Initialize map
+        function initMap() {
+            // Create map centered on Italy
+            map = L.map('map').setView([41.9028, 12.4964], 6);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+        }
+
+        // Get marker color based on status
+        function getMarkerIcon(vehicle) {
+            let color;
+
+            if (!vehicle.hasGpsDevice) {
+                color = '#dc3545'; // red - no GPS
+            } else if (!vehicle.hasCurrentPosition) {
+                color = '#6c757d'; // gray - offline
+            } else {
+                const status = vehicle.position.status;
+                if (status === 'moving') {
+                    color = '#28a745'; // green
+                } else if (status === 'stopped') {
+                    color = '#ffc107'; // yellow
+                } else {
+                    color = '#6c757d'; // gray
+                }
+            }
+
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+        }
+
+        // Create popup content
+        function createPopupContent(vehicle) {
+            let html = `
+                <h6><strong>${vehicle.targa}</strong></h6>
+                <p class="mb-1"><strong>${vehicle.marca} ${vehicle.modello}</strong></p>
+                <hr class="my-2">
+                <p class="mb-1"><small><strong>Tipo:</strong> ${vehicle.tipo}</small></p>
+                <p class="mb-1"><small><strong>Stato:</strong> ${vehicle.stato}</small></p>
+            `;
+
+            if (vehicle.isAssegnato) {
+                html += `<p class="mb-1"><small><strong>Assegnato a:</strong> ${vehicle.assegnatoA}</small></p>`;
+            }
+
+            if (vehicle.hasCurrentPosition) {
+                const pos = vehicle.position;
+                html += `
+                    <hr class="my-2">
+                    <p class="mb-1"><small><strong>Velocità:</strong> ${pos.speedKmh.toFixed(1)} km/h</small></p>
+                    <p class="mb-1"><small><strong>Ultimo aggiornamento:</strong><br>${formatDateTime(pos.timestamp)}</small></p>
+                `;
+
+                if (pos.address) {
+                    html += `<p class="mb-1"><small><strong>Posizione:</strong><br>${pos.address}</small></p>`;
+                }
+            } else if (vehicle.hasGpsDevice) {
+                html += `<hr class="my-2"><p class="text-warning mb-0"><small><i class="bi bi-exclamation-triangle"></i> Nessuna posizione GPS disponibile</small></p>`;
+            } else {
+                html += `<hr class="my-2"><p class="text-danger mb-0"><small><i class="bi bi-x-circle"></i> GPS non configurato</small></p>`;
+            }
+
+            return html;
+        }
+
+        // Update markers on map
+        function updateMarkers(vehicles) {
+            // Remove old markers
+            Object.values(markers).forEach(marker => map.removeLayer(marker));
+            markers = {};
+
+            // Add new markers
+            const bounds = [];
+
+            vehicles.forEach(vehicle => {
+                if (vehicle.hasCurrentPosition) {
+                    const lat = vehicle.position.latitude;
+                    const lng = vehicle.position.longitude;
+
+                    const marker = L.marker([lat, lng], {
+                        icon: getMarkerIcon(vehicle)
+                    })
+                    .bindPopup(createPopupContent(vehicle))
+                    .addTo(map);
+
+                    markers[vehicle.mezzoId] = marker;
+                    bounds.push([lat, lng]);
+                }
+            });
+
+            // Fit map to show all markers
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        // Update vehicle list in sidebar
+        function updateVehicleList(vehicles) {
+            const listContainer = document.getElementById('vehicle-list');
+            listContainer.innerHTML = '';
+
+            vehicles.forEach(vehicle => {
+                const statusClass = !vehicle.hasGpsDevice ? 'status-no-gps' :
+                                   !vehicle.hasCurrentPosition ? 'status-offline' :
+                                   vehicle.position.status === 'moving' ? 'status-moving' :
+                                   vehicle.position.status === 'stopped' ? 'status-stopped' : 'status-offline';
+
+                const itemClass = vehicle.hasCurrentPosition ? 'vehicle-item' : 'vehicle-item no-position';
+
+                const item = document.createElement('div');
+                item.className = `${itemClass} border-bottom p-2`;
+                item.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator ${statusClass}"></span>
+                        <div class="flex-grow-1">
+                            <strong>${vehicle.targa}</strong>
+                            <br>
+                            <small class="text-muted">${vehicle.marca} ${vehicle.modello}</small>
+                        </div>
+                        ${vehicle.hasCurrentPosition ? '<i class="bi bi-geo-alt text-primary"></i>' : ''}
+                    </div>
+                `;
+
+                // Click handler to center map on vehicle
+                if (vehicle.hasCurrentPosition) {
+                    item.style.cursor = 'pointer';
+                    item.addEventListener('click', () => {
+                        const marker = markers[vehicle.mezzoId];
+                        if (marker) {
+                            map.setView(marker.getLatLng(), 15);
+                            marker.openPopup();
+                        }
+                    });
+                }
+
+                listContainer.appendChild(item);
+            });
+        }
+
+        // Update statistics
+        function updateStats(data) {
+            document.getElementById('stat-total').textContent = data.totalVehicles;
+            document.getElementById('stat-gps').textContent = data.vehiclesWithGps;
+            document.getElementById('stat-position').textContent = data.vehiclesWithPosition;
+            document.getElementById('last-update').textContent = `Ultimo aggiornamento: ${formatDateTime(data.timestamp)}`;
+        }
+
+        // Load positions from API
+        async function loadPositions() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/Mezzi/Map/Positions');
+                if (!response.ok) throw new Error('Errore nel caricamento dati');
+
+                const data = await response.json();
+                vehiclesData = data.vehicles;
+
+                updateMarkers(vehiclesData);
+                updateVehicleList(vehiclesData);
+                updateStats(data);
+
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('Errore nel caricamento delle posizioni GPS');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        // Search vehicles
+        function searchVehicles(query) {
+            const filtered = vehiclesData.filter(v =>
+                v.targa.toLowerCase().includes(query.toLowerCase()) ||
+                v.marca.toLowerCase().includes(query.toLowerCase()) ||
+                v.modello.toLowerCase().includes(query.toLowerCase())
+            );
+            updateVehicleList(filtered);
+        }
+
+        // Format datetime
+        function formatDateTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('it-IT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebar-toggle');
+            sidebar.classList.toggle('collapsed');
+
+            const icon = toggle.querySelector('i');
+            icon.className = sidebar.classList.contains('collapsed') ? 'bi bi-list' : 'bi bi-x-lg';
+        }
+
+        // Start auto-refresh
+        function startAutoRefresh() {
+            // Refresh every 60 seconds
+            autoRefreshInterval = setInterval(loadPositions, 60000);
+        }
+
+        // Stop auto-refresh
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            loadPositions();
+            startAutoRefresh();
+
+            // Event listeners
+            document.getElementById('refresh-btn').addEventListener('click', loadPositions);
+            document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+            document.getElementById('vehicle-search').addEventListener('input', (e) => searchVehicles(e.target.value));
+
+            // Stop auto-refresh when leaving page
+            window.addEventListener('beforeunload', stopAutoRefresh);
+        });
+    </script>
+}
