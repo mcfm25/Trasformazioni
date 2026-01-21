@@ -1,0 +1,266 @@
+@model Trasformazioni.Models.ViewModels.RichiestaIntegrazioneCreateViewModel
+
+@{
+    ViewData["Title"] = "Registra Richiesta Integrazione";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">@Model.CodiceLotto</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@Model.LottoId">Richieste Integrazione</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Registra Richiesta</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-plus-circle text-primary me-2"></i>
+                Registra Richiesta Integrazione
+            </h2>
+            <p class="text-muted mb-0">
+                Registra una nuova richiesta di integrazione ricevuta dall'ente
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna Sinistra: Info Lotto -->
+        <div class="col-lg-4">
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informazioni Lotto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0">
+                        <dt>Codice Lotto:</dt>
+                        <dd><strong>@Model.CodiceLotto</strong></dd>
+
+                        <dt>Descrizione:</dt>
+                        <dd>@Model.DescrizioneLotto</dd>
+
+                        <dt>Gara:</dt>
+                        <dd>@Model.CodiceGara - @Model.TitoloGara</dd>
+
+                        <dt>Numero Progressivo:</dt>
+                        <dd>
+                            <span class="badge bg-primary">#@Model.NumeroProgressivoSuggerito</span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Card Info -->
+            <div class="alert alert-info">
+                <h6 class="alert-heading">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Informazioni
+                </h6>
+                <ul class="mb-0 small">
+                    <li>Il <strong>numero progressivo</strong> è assegnato automaticamente</li>
+                    <li>La <strong>data ricezione</strong> indica quando l'ente ha inviato la richiesta</li>
+                    <li>Il <strong>documento</strong> è opzionale (formato PDF)</li>
+                    <li>Se è la <strong>prima richiesta</strong>, il lotto passerà in stato "Richiesta Integrazione"</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Colonna Destra: Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        Dati Richiesta Ente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" asp-route-lottoId="@Model.LottoId" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        
+                        <!-- Hidden fields -->
+                        <input type="hidden" asp-for="LottoId" />
+                        <input type="hidden" asp-for="NumeroProgressivoSuggerito" />
+
+                        <!-- Validation Summary -->
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Data Ricezione Richiesta -->
+                        <div class="mb-3">
+                            <label asp-for="DataRichiestaEnte" class="form-label">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                Data Ricezione Richiesta <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="DataRichiestaEnte" 
+                                   class="form-control" 
+                                   type="date" 
+                                   max="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="DataRichiestaEnte" class="text-danger small"></span>
+                            <div class="form-text">
+                                Data in cui l'ente ha inviato la richiesta di integrazione
+                            </div>
+                        </div>
+
+                        <!-- Testo Richiesta Ente -->
+                        <div class="mb-3">
+                            <label asp-for="TestoRichiestaEnte" class="form-label">
+                                <i class="bi bi-chat-left-text me-1"></i>
+                                Testo Richiesta Ente <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="TestoRichiestaEnte" 
+                                      class="form-control" 
+                                      rows="8" 
+                                      placeholder="Inserisci il testo completo della richiesta di integrazione ricevuta dall'ente..."></textarea>
+                            <span asp-validation-for="TestoRichiestaEnte" class="text-danger small"></span>
+                            <div class="form-text">
+                                Copia/incolla o trascrivi il testo della richiesta ricevuta
+                            </div>
+                        </div>
+
+                        <!-- Upload Documento Richiesta -->
+                        <div class="mb-3">
+                            <label asp-for="DocumentoRichiestaFile" class="form-label">
+                                <i class="bi bi-file-earmark-pdf me-1"></i>
+                                Documento Richiesta (opzionale)
+                            </label>
+                            <input asp-for="DocumentoRichiestaFile"
+                                   type="file" 
+                                   class="form-control" 
+                                   accept="application/pdf" />
+                            <span asp-validation-for="DocumentoRichiestaFile" class="text-danger small"></span>
+                            <div class="form-text">
+                                Carica il documento PDF della richiesta, se disponibile (max 10 MB)
+                            </div>
+                        </div>
+
+                     @*    <!-- Note Interne --> NON PRESENTE NEL MODELLO
+                        <div class="mb-4">
+                            <label asp-for="NoteInterne" class="form-label">
+                                <i class="bi bi-sticky me-1"></i>
+                                Note Interne (opzionale)
+                            </label>
+                            <textarea asp-for="NoteInterne" 
+                                      class="form-control" 
+                                      rows="3" 
+                                      placeholder="Note interne per uso aziendale (non visibili all'ente)..."></textarea>
+                            <span asp-validation-for="NoteInterne" class="text-danger small"></span>
+                            <div class="form-text">
+                                Eventuali annotazioni per uso interno (es: urgenza, priorità, ecc.)
+                            </div>
+                        </div> *@
+
+                        <!-- Riepilogo -->
+                        <div class="alert alert-light border">
+                            <h6 class="mb-2">
+                                <i class="bi bi-check2-square me-2"></i>
+                                Riepilogo Registrazione
+                            </h6>
+                            <ul class="mb-0 small">
+                                <li>Verrà creata la richiesta <strong>#@Model.NumeroProgressivoSuggerito</strong> per il lotto <strong>@Model.CodiceLotto</strong></li>
+                                <li>Lo stato iniziale sarà <span class="badge bg-warning text-dark">Aperta</span></li>
+                                <li>La richiesta potrà essere risposta dalla sezione "Richieste Integrazione"</li>
+                            </ul>
+                        </div>
+
+                        <!-- Bottoni -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" asp-route-lottoId="@Model.LottoId" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Registra Richiesta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Validazione dimensione file upload
+        document.querySelector('input[type="file"]')?.addEventListener('change', function() {
+            const maxSize = 10 * 1024 * 1024; // 10 MB
+            const file = this.files[0];
+            
+            if (file && file.size > maxSize) {
+                alert('Il file è troppo grande. La dimensione massima consentita è 10 MB.');
+                this.value = '';
+            }
+            
+            // Verifica estensione PDF
+            if (file && !file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Solo file PDF sono accettati.');
+                this.value = '';
+            }
+        });
+
+        // Auto-resize textarea testo richiesta
+        const textarea = document.querySelector('textarea[name="TestoRichiestaEnte"]');
+        if (textarea) {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+
+        // Conferma prima di uscire se ci sono modifiche
+        let formModified = false;
+        const form = document.querySelector('form');
+        
+        if (form) {
+            // Marca form come modificato quando si scrive
+            form.addEventListener('input', function() {
+                formModified = true;
+            });
+            
+            // Alert se si cerca di uscire con modifiche non salvate
+            window.addEventListener('beforeunload', function(e) {
+                if (formModified) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+            
+            // Non mostrare alert se si invia il form
+            form.addEventListener('submit', function() {
+                formModified = false;
+            });
+        }
+
+        // Caratteri rimanenti per note interne (se necessario)
+        const noteTextarea = document.querySelector('textarea[name="NoteInterne"]');
+        if (noteTextarea && noteTextarea.hasAttribute('maxlength')) {
+            const maxLength = parseInt(noteTextarea.getAttribute('maxlength'));
+            const counter = document.createElement('div');
+            counter.className = 'form-text text-end';
+            counter.innerHTML = `<span id="noteCounter">${maxLength}</span> caratteri rimanenti`;
+            noteTextarea.parentNode.insertBefore(counter, noteTextarea.nextSibling.nextSibling);
+            
+            noteTextarea.addEventListener('input', function() {
+                const remaining = maxLength - this.value.length;
+                document.getElementById('noteCounter').textContent = remaining;
+                
+                if (remaining < 50) {
+                    counter.classList.add('text-danger');
+                } else {
+                    counter.classList.remove('text-danger');
+                }
+            });
+        }
+    </script>
+}

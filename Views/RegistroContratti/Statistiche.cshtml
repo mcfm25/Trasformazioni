@@ -1,0 +1,401 @@
+﻿@model Trasformazioni.Models.ViewModels.RegistroContrattiStatisticheViewModel
+@{
+    ViewData["Title"] = "Statistiche Registro Contratti";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>@ViewData["Title"]</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="breadcrumb-item"><a asp-action="Index">Registro Contratti</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Statistiche</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Torna alla lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards - Riga Principale -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl-2">
+            <a asp-action="Index" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted small mb-1">Totale Registri</p>
+                                <h3 class="mb-0">@Model.TotaleRegistri</h3>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 rounded p-2">
+                                <i class="bi bi-files text-primary fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a asp-action="Preventivi" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted small mb-1">Preventivi</p>
+                                <h3 class="mb-0">@Model.TotalePreventivi</h3>
+                            </div>
+                            <div class="bg-info bg-opacity-10 rounded p-2">
+                                <i class="bi bi-file-earmark-text text-info fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a asp-action="Contratti" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted small mb-1">Contratti</p>
+                                <h3 class="mb-0">@Model.TotaleContratti</h3>
+                                <small class="text-success">@Model.ContrattiAttivi attivi</small>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 rounded p-2">
+                                <i class="bi bi-file-earmark-check text-primary fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a asp-action="InScadenza" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 border-start border-warning border-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted small mb-1">In Scadenza</p>
+                                <h3 class="mb-0 text-warning">@Model.ContrattiInScadenza</h3>
+                                <small class="text-muted">richiede attenzione</small>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 rounded p-2">
+                                <i class="bi bi-clock text-warning fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a asp-action="Scaduti" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted small mb-1">Scaduti</p>
+                                <h3 class="mb-0 text-danger">@Model.ContrattiScaduti</h3>
+                                <small class="text-muted">da gestire</small>
+                            </div>
+                            <div class="bg-danger bg-opacity-10 rounded p-2">
+                                <i class="bi bi-exclamation-triangle text-danger fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card border-0 shadow-sm h-100 border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Canone Attivi</p>
+                            <h4 class="mb-0 text-success">
+                                @Model.TotaleCanoneAnnuoAttivi.ToString("C", new System.Globalization.CultureInfo("it-IT"))
+                            </h4>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded p-2">
+                            <i class="bi bi-currency-euro text-success fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Dettaglio Preventivi -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>Dettaglio Preventivi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <div class="display-6 fw-bold text-secondary">@Model.PreventiviInBozza</div>
+                                <div class="text-muted">In Bozza</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <div class="display-6 fw-bold text-info">@Model.PreventiviInviati</div>
+                                <div class="text-muted">Inviati</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Totale Preventivi</span>
+                        <span class="fs-4 fw-bold">@Model.TotalePreventivi</span>
+                    </div>
+
+                    <div class="progress mt-3" style="height: 25px;">
+                        @{
+                            var percBozza = Model.TotalePreventivi > 0
+                            ? (Model.PreventiviInBozza * 100.0 / Model.TotalePreventivi)
+                            : 0;
+                            var percInviati = Model.TotalePreventivi > 0
+                            ? (Model.PreventiviInviati * 100.0 / Model.TotalePreventivi)
+                            : 0;
+                        }
+                        <div class="progress-bar bg-secondary" role="progressbar"
+                             style="width: @percBozza.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"
+                             title="Bozza: @Model.PreventiviInBozza">
+                            @if (percBozza > 15)
+                            {
+                                <span>Bozza</span>
+                            }
+                        </div>
+                        <div class="progress-bar bg-info" role="progressbar"
+                             style="width: @percInviati.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"
+                             title="Inviati: @Model.PreventiviInviati">
+                            @if (percInviati > 15)
+                            {
+                                <span>Inviati</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dettaglio Contratti -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-check me-2"></i>Dettaglio Contratti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="border rounded p-3 border-success">
+                                <div class="display-6 fw-bold text-success">@Model.ContrattiAttivi</div>
+                                <div class="text-muted small">Attivi</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-3 border-warning">
+                                <div class="display-6 fw-bold text-warning">@Model.ContrattiInScadenza</div>
+                                <div class="text-muted small">In Scadenza</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-3 border-danger">
+                                <div class="display-6 fw-bold text-danger">@Model.ContrattiScaduti</div>
+                                <div class="text-muted small">Scaduti</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Totale Contratti</span>
+                        <span class="fs-4 fw-bold">@Model.TotaleContratti</span>
+                    </div>
+
+                    <div class="progress mt-3" style="height: 25px;">
+                        @{
+                            var percAttivi = Model.TotaleContratti > 0
+                            ? (Model.ContrattiAttivi * 100.0 / Model.TotaleContratti)
+                            : 0;
+                            var percInScadenza = Model.TotaleContratti > 0
+                            ? (Model.ContrattiInScadenza * 100.0 / Model.TotaleContratti)
+                            : 0;
+                            var percScaduti = Model.TotaleContratti > 0
+                            ? (Model.ContrattiScaduti * 100.0 / Model.TotaleContratti)
+                            : 0;
+                        }
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: @percAttivi.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"
+                             title="Attivi: @Model.ContrattiAttivi">
+                            @if (percAttivi > 10)
+                            {
+                                <span>Attivi</span>
+                            }
+                        </div>
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             style="width: @percInScadenza.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"
+                             title="In Scadenza: @Model.ContrattiInScadenza">
+                            @if (percInScadenza > 10)
+                            {
+                                <span>In Scad.</span>
+                            }
+                        </div>
+                        <div class="progress-bar bg-danger" role="progressbar"
+                             style="width: @percScaduti.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"
+                             title="Scaduti: @Model.ContrattiScaduti">
+                            @if (percScaduti > 10)
+                            {
+                                <span>Scaduti</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Riepilogo Economico -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash-stack me-2"></i>Riepilogo Economico
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        Canone Annuo Contratti Attivi
+                                    </td>
+                                    <td class="text-end fw-bold text-success fs-5">
+                                        @Model.TotaleCanoneAnnuoAttivi.ToString("C", new System.Globalization.CultureInfo("it-IT"))
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <i class="bi bi-clock text-warning me-2"></i>
+                                        Canone Annuo In Scadenza
+                                    </td>
+                                    <td class="text-end fw-bold text-warning fs-5">
+                                        @Model.TotaleCanoneAnnuoInScadenza.ToString("C", new System.Globalization.CultureInfo("it-IT"))
+                                    </td>
+                                </tr>
+                                <tr class="border-top">
+                                    <td class="text-muted">
+                                        <strong>Totale a Rischio Perdita</strong>
+                                    </td>
+                                    <td class="text-end fw-bold text-danger fs-5">
+                                        @Model.TotaleCanoneAnnuoInScadenza.ToString("C", new System.Globalization.CultureInfo("it-IT"))
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <p class="text-muted small mb-1">Canone Mensile Attivi</p>
+                            <div class="fs-4 fw-bold text-success">
+                                @((Model.TotaleCanoneAnnuoAttivi / 12).ToString("C", new System.Globalization.CultureInfo("it-IT")))
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted small mb-1">Canone Mensile In Scadenza</p>
+                            <div class="fs-4 fw-bold text-warning">
+                                @((Model.TotaleCanoneAnnuoInScadenza / 12).ToString("C", new System.Globalization.CultureInfo("it-IT")))
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Azioni Rapide -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>Azioni Rapide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a asp-action="Create" asp-route-tipo="Contratto"
+                               class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-plus-lg d-block fs-3 mb-1"></i>
+                                Nuovo Contratto
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-action="Create" asp-route-tipo="Preventivo"
+                               class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-file-earmark-plus d-block fs-3 mb-1"></i>
+                                Nuovo Preventivo
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-action="InScadenza" class="btn btn-outline-warning w-100 py-3">
+                                <i class="bi bi-clock d-block fs-3 mb-1"></i>
+                                In Scadenza
+                                @if (Model.ContrattiInScadenza > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">@Model.ContrattiInScadenza</span>
+                                }
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-action="Scaduti" class="btn btn-outline-danger w-100 py-3">
+                                <i class="bi bi-exclamation-triangle d-block fs-3 mb-1"></i>
+                                Scaduti
+                                @if (Model.ContrattiScaduti > 0)
+                                {
+                                    <span class="badge bg-danger">@Model.ContrattiScaduti</span>
+                                }
+                            </a>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-list-ul me-2"></i>Visualizza Tutti i Registri
+                        </a>
+                        <a asp-controller="CategorieContratto" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-folder me-2"></i>Gestisci Categorie
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

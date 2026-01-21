@@ -1,0 +1,335 @@
+@model Trasformazioni.Models.ViewModels.PreventivoCreateViewModel
+
+@{
+    ViewData["Title"] = "Nuovo Preventivo";
+    var lottoPreimpostato = ViewBag.LottoPreimpostato as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            @if (lottoPreimpostato && Model.LottoId != Guid.Empty)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">@Model.CodiceLotto</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@Model.LottoId">Preventivi</a></li>
+            }
+            else
+            {
+                <li class="breadcrumb-item"><a asp-action="Index">Preventivi</a></li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">Nuovo Preventivo</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-plus-circle text-success me-2"></i>
+                Nuovo Preventivo
+            </h2>
+            <p class="text-muted">Compila i campi per richiedere un nuovo preventivo</p>
+        </div>
+    </div>
+
+    <!-- Info Lotto (se preimpostato) -->
+    @if (lottoPreimpostato && Model.LottoId != Guid.Empty)
+    {
+        <div class="card mb-4 bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Lotto di Riferimento
+                </h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Codice Lotto:</strong> @Model.CodiceLotto
+                    </div>
+                    <div class="col-md-9">
+                        <strong>Descrizione:</strong> @Model.DescrizioneLotto
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Form Creazione -->
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        @if (lottoPreimpostato)
+        {
+            <input type="hidden" asp-for="LottoId" />
+        }
+        <input type="hidden" asp-for="CodiceLotto" />
+        <input type="hidden" asp-for="DescrizioneLotto" />
+
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Dati Preventivo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Info Lotto (se preimpostato) -->
+                @if (!lottoPreimpostato)
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Gara <span class="text-danger">*</span></label>
+                            <select class="form-select" id="singleGaraSelect" required>
+                                <option value="">-- Seleziona Gara --</option>
+                                @if (ViewBag.Gare != null)
+                                {
+                                    @foreach (var item in (List<SelectListItem>)ViewBag.Gare)
+                                    {
+                                        <option value="@item.Value" selected="@item.Selected">
+                                            @item.Text
+                                        </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Lotto -->
+                        <div class="col-md-6">
+                            <label asp-for="LottoId" class="form-label">Lotto <span class="text-danger">*</span></label>
+                            <select asp-for="LottoId" class="form-select" id="singleLottoSelect">
+                                <option value="">-- Nessun Lotto --</option>
+                               @* Popolato via Ajax *@
+                               @*  @if (ViewBag.Lotti != null)
+                                {
+                                    @foreach (var item in (List<SelectListItem>)ViewBag.Lotti)
+                                    {
+                                        <option value="@item.Value" selected="@item.Selected">
+                                            @item.Text
+                                        </option>
+                                    }
+                                } *@
+                            </select>
+                            <span asp-validation-for="LottoId" class="text-danger"></span>
+                        </div>
+                    </div>
+                }
+
+                <!-- Fornitore -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="SoggettoId" class="form-label">
+                            Fornitore <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="SoggettoId" class="form-select" asp-items="@ViewBag.Fornitori">
+                            <option value="">-- Seleziona Fornitore --</option>
+                        </select>
+                        <span asp-validation-for="SoggettoId" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Solo fornitori censiti nel sistema
+                        </small>
+                    </div>
+
+                    <!-- Stato -->
+                    <div class="col-md-6">
+                        <label asp-for="Stato" class="form-label">Stato</label>
+                        <select asp-for="Stato" class="form-select" asp-items="@ViewBag.Stati">
+                        </select>
+                        <span asp-validation-for="Stato" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Default: In Attesa
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Descrizione -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label asp-for="Descrizione" class="form-label">
+                            Descrizione <span class="text-danger">*</span>
+                        </label>
+                        <textarea asp-for="Descrizione" class="form-control" rows="3"
+                                  placeholder="Descrivi cosa deve essere preventivato..."></textarea>
+                        <span asp-validation-for="Descrizione" class="text-danger"></span>
+                        <small class="form-text text-muted">Massimo 1000 caratteri</small>
+                    </div>
+                </div>
+
+                <!-- Importo Offerto -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="ImportoOfferto" class="form-label">Importo Offerto</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input asp-for="ImportoOfferto" type="number" step="0.01" class="form-control" 
+                                   placeholder="0.00" />
+                        </div>
+                        <span asp-validation-for="ImportoOfferto" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Lascia vuoto se non ancora noto
+                        </small>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Date -->
+                <h6 class="mb-3">
+                    <i class="bi bi-calendar me-2"></i>
+                    Date
+                </h6>
+
+                <div class="row mb-3">
+                    <!-- Data Richiesta -->
+                    <div class="col-md-4">
+                        <label asp-for="DataRichiesta" class="form-label">
+                            Data Richiesta <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="DataRichiesta" type="date" class="form-control" />
+                        <span asp-validation-for="DataRichiesta" class="text-danger"></span>
+                    </div>
+
+                    <!-- Data Ricezione -->
+                    <div class="col-md-4">
+                        <label asp-for="DataRicezione" class="form-label">Data Ricezione</label>
+                        <input asp-for="DataRicezione" type="date" class="form-control" />
+                        <span asp-validation-for="DataRicezione" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Lascia vuoto se non ancora ricevuto
+                        </small>
+                    </div>
+
+                    <!-- Data Scadenza -->
+                    <div class="col-md-4">
+                        <label asp-for="DataScadenza" class="form-label">
+                            Data Scadenza <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="DataScadenza" type="date" class="form-control" />
+                        <span asp-validation-for="DataScadenza" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Auto-Rinnovo -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="GiorniAutoRinnovo" class="form-label">
+                            Giorni Auto-Rinnovo
+                        </label>
+                        <input asp-for="GiorniAutoRinnovo" type="number" class="form-control" 
+                               placeholder="Es: 30, 60, 90..." />
+                        <span asp-validation-for="GiorniAutoRinnovo" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Se impostato, il preventivo si rinnova automaticamente
+                        </small>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Upload Documento -->
+                <h6 class="mb-3">
+                    <i class="bi bi-file-earmark-arrow-up me-2"></i>
+                    Documento Preventivo
+                </h6>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="DocumentoFile" class="form-label">
+                            Carica Documento (opzionale)
+                        </label>
+                        <input asp-for="DocumentoFile" type="file" class="form-control" 
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" />
+                        <span asp-validation-for="DocumentoFile" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Formati accettati: PDF, Word, Excel, Immagini
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Checkbox IsSelezionato -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-check">
+                            <input asp-for="IsSelezionato" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsSelezionato" class="form-check-label">
+                                <i class="bi bi-star-fill text-warning me-1"></i>
+                                Marca come selezionato
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            Indica se questo è un preventivo scelto/preferito
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Note -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label asp-for="Note" class="form-label">Note</label>
+                        <textarea asp-for="Note" class="form-control" rows="3"
+                                  placeholder="Eventuali note o osservazioni..."></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                        <small class="form-text text-muted">Massimo 2000 caratteri</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer text-end">
+                @if (lottoPreimpostato && Model.LottoId != Guid.Empty)
+                {
+                    <a asp-action="Index" asp-route-lottoId="@Model.LottoId" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Annulla
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Annulla
+                    </a>
+                }
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Crea Preventivo
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function ()
+        {
+
+            // ==========================================
+            // SELECT CASCADE GARA - LOTTI
+            // ==========================================
+            $('#singleGaraSelect').change(function() {
+                var garaId = $(this).val();
+                if (!garaId) {
+                    $('#singleLottoSelect').html('<option value="">-- Nessun Lotto --</option>');
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("GetLottiByGara", "DocumentiGara")',
+                    type: 'GET',
+                    data: { garaId: garaId },
+                    success: function(lotti) {
+                        var options = '<option value="">-- Nessun Lotto --</option>';
+                        lotti.forEach(function(lotto) {
+                            options += '<option value="' + lotto.id + '">' + lotto.codiceLotto + ' - ' + lotto.descrizione + '</option>';
+                        });
+                        $('#singleLottoSelect').html(options);
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,141 @@
+@model Trasformazioni.Models.ViewModels.TipoDocumentoCreateViewModel
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Mappings
+
+@{
+    ViewData["Title"] = "Nuovo Tipo Documento";
+    var aree = ViewBag.Aree as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Index">
+                <i class="bi bi-file-earmark-text"></i> Tipi Documento
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Nuovo</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-plus-circle"></i> Nuovo Tipo Documento
+    </h1>
+</div>
+
+<div class="row">
+    <!-- Form (8 col) -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-plus"></i> Dati Tipo Documento</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Area -->
+                    <div class="mb-3">
+                        <label asp-for="Area" class="form-label">
+                            <i class="bi bi-grid"></i> Area <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Area" asp-items="@aree" class="form-select">
+                            <option value="">-- Seleziona Area --</option>
+                        </select>
+                        <span asp-validation-for="Area" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Seleziona l'area dell'applicativo dove questo tipo documento sarà disponibile.
+                        </small>
+                    </div>
+
+                    <!-- Nome -->
+                    <div class="mb-3">
+                        <label asp-for="Nome" class="form-label">
+                            <i class="bi bi-type"></i> Nome <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Nome" class="form-control" placeholder="Es. Offerta Tecnica" />
+                        <span asp-validation-for="Nome" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Nome univoco per l'area selezionata. Max 100 caratteri.
+                        </small>
+                    </div>
+
+                    <!-- Descrizione -->
+                    <div class="mb-3">
+                        <label asp-for="Descrizione" class="form-label">
+                            <i class="bi bi-text-paragraph"></i> Descrizione
+                        </label>
+                        <textarea asp-for="Descrizione" class="form-control" rows="3" 
+                                  placeholder="Descrizione opzionale del tipo documento..."></textarea>
+                        <span asp-validation-for="Descrizione" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Descrizione opzionale per aiutare gli utenti a capire quando usare questo tipo.
+                        </small>
+                    </div>
+
+                    <hr />
+
+                    <!-- Bottoni -->
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Annulla
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Crea Tipo Documento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Info (4 col) -->
+    <div class="col-lg-4">
+        <!-- Info Box -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informazioni</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">
+                    <strong>Tipo Documento</strong> definisce una categoria per classificare 
+                    i documenti caricati nelle diverse aree dell'applicativo.
+                </p>
+                <p class="small mb-0">
+                    Il nome deve essere univoco per ogni area. Puoi avere lo stesso nome 
+                    in aree diverse (es. "Altro" in Gare e "Altro" in Mezzi).
+                </p>
+            </div>
+        </div>
+
+        <!-- Aree disponibili -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-grid"></i> Aree Disponibili</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                @foreach (AreaDocumento area in Enum.GetValues(typeof(AreaDocumento)))
+                {
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center">
+                            <i class="bi @TipoDocumentoMappingExtensions.GetAreaIcon(area) me-2 text-primary"></i>
+                            <span>@TipoDocumentoMappingExtensions.GetAreaDisplayName(area)</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

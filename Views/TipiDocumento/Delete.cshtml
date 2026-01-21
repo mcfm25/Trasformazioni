@@ -1,0 +1,210 @@
+@model Trasformazioni.Models.ViewModels.TipoDocumentoDetailsViewModel
+@using Trasformazioni.Mappings
+
+@{
+    ViewData["Title"] = $"Elimina: {Model.Nome}";
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Index">
+                <i class="bi bi-file-earmark-text"></i> Tipi Documento
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Details" asp-route-id="@Model.Id">@Model.Nome</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Elimina</li>
+    </ol>
+</nav>
+
+<!-- Error Message -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-danger">
+        <i class="bi bi-trash"></i> Elimina Tipo Documento
+    </h1>
+</div>
+
+<div class="row">
+    <!-- Contenuto Principale (8 col) -->
+    <div class="col-lg-8">
+        <!-- Alert Blocco se non eliminabile -->
+        @if (!Model.CanDelete)
+        {
+            <div class="alert alert-danger">
+                <h5 class="alert-heading">
+                    <i class="bi bi-x-circle"></i> Eliminazione non consentita
+                </h5>
+                <hr />
+                @if (Model.IsSystem)
+                {
+                    <p class="mb-0">
+                        <strong>Motivo:</strong> Questo è un tipo di sistema e non può essere eliminato.
+                        I tipi di sistema sono necessari per il corretto funzionamento dell'applicativo.
+                    </p>
+                }
+                else if (Model.NumeroDocumenti > 0)
+                {
+                    <p class="mb-0">
+                        <strong>Motivo:</strong> Ci sono <strong>@Model.NumeroDocumenti</strong> documenti 
+                        associati a questo tipo. Per eliminarlo, è necessario prima riassegnare o 
+                        eliminare tutti i documenti associati.
+                    </p>
+                }
+            </div>
+
+            <div class="d-flex gap-2">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Torna al Dettaglio
+                </a>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-list"></i> Torna alla Lista
+                </a>
+            </div>
+        }
+        else
+        {
+            <!-- Card Conferma Eliminazione -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Conferma Eliminazione
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Attenzione!</strong> Stai per eliminare il tipo documento:
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width: 150px;">Nome:</th>
+                                <td><strong>@Model.Nome</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Area:</th>
+                                <td>
+                                    <span class="badge @TipoDocumentoMappingExtensions.GetAreaBadgeClass(Model.Area)">
+                                        <i class="bi @TipoDocumentoMappingExtensions.GetAreaIcon(Model.Area)"></i>
+                                        @Model.AreaDisplayName
+                                    </span>
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(Model.Descrizione))
+                            {
+                                <tr>
+                                    <th>Descrizione:</th>
+                                    <td>@Model.Descrizione</td>
+                                </tr>
+                            }
+                            <tr>
+                                <th>Tipo:</th>
+                                <td>
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-person"></i> Personalizzato
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Creato il:</th>
+                                <td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <p class="text-danger mb-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Questa azione è irreversibile.</strong>
+                        Il tipo documento verrà rimosso definitivamente dal sistema.
+                    </p>
+
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" value="@Model.Id" name="id" />
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Conferma Eliminazione
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Sidebar (4 col) -->
+    <div class="col-lg-4">
+        <!-- Conseguenze -->
+        <div class="card mb-3 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="bi bi-exclamation-circle"></i> Conseguenze</h6>
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0">
+                    <li>Il tipo documento non sarà più disponibile per nuovi documenti</li>
+                    <li>Non sarà più visibile nelle liste e dropdown</li>
+                    <li>L'eliminazione è definitiva (soft delete)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Alternative -->
+        @if (!Model.CanDelete)
+        {
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Alternative</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2">
+                        Se non vuoi più utilizzare questo tipo documento, puoi:
+                    </p>
+                    <ul class="small mb-0">
+                        <li>Modificare la descrizione per indicare che è obsoleto</li>
+                        @if (Model.NumeroDocumenti > 0)
+                        {
+                            <li>Riassegnare i @Model.NumeroDocumenti documenti ad un altro tipo</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+
+        <!-- Azioni -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning"></i> Altre Azioni</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning">
+                        <i class="bi bi-pencil"></i> Modifica invece
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-list"></i> Torna alla Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

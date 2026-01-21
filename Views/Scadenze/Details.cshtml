@@ -1,0 +1,489 @@
+@model Trasformazioni.Models.ViewModels.ScadenzaDetailsViewModel
+
+@{
+    ViewData["Title"] = "Dettaglio Scadenza";
+    
+    var oggi = DateTime.Today;
+    var dataScadenza = Model.DataScadenza.Date;
+    var giorniRimanenti = (dataScadenza - oggi).Days;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Scadenzario</a></li>
+                    <li class="breadcrumb-item active">Dettaglio</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Header con Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div>
+                    <h2>
+                        <i class="bi bi-calendar-event text-primary"></i>
+                        @Model.Descrizione
+                    </h2>
+                    <div class="mt-2">
+                        <!-- Badge Stato -->
+                        @if (Model.IsCompletata)
+                        {
+                            <span class="badge bg-success fs-6">
+                                <i class="bi bi-check-circle-fill"></i> Completata
+                            </span>
+                        }
+                        else if (dataScadenza < oggi)
+                        {
+                            <span class="badge bg-danger fs-6">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Scaduta
+                            </span>
+                        }
+                        else if (dataScadenza == oggi)
+                        {
+                            <span class="badge bg-warning text-dark fs-6">
+                                <i class="bi bi-exclamation-circle-fill"></i> Scade Oggi
+                            </span>
+                        }
+                        else if (giorniRimanenti <= Model.GiorniPreavviso)
+                        {
+                            <span class="badge bg-warning text-dark fs-6">
+                                <i class="bi bi-clock-fill"></i> In Scadenza
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary fs-6">
+                                <i class="bi bi-calendar-check"></i> Attiva
+                            </span>
+                        }
+
+                        <!-- Badge Tipo -->
+                        <span class="badge bg-secondary fs-6 ms-2">
+                            @Model.Tipo.ToString()
+                        </span>
+
+                        <!-- Badge Automatica -->
+                        @if (Model.IsAutomatica)
+                        {
+                            <span class="badge bg-info fs-6 ms-2">
+                                <i class="bi bi-robot"></i> Automatica
+                            </span>
+                        }
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    @if (!Model.IsCompletata)
+                    {
+                        <button class="btn btn-success me-2" onclick="completaScadenza('@Model.Id')">
+                            <i class="bi bi-check-circle"></i> Completa
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-outline-warning me-2" onclick="riapriScadenza('@Model.Id')">
+                            <i class="bi bi-arrow-counterclockwise"></i> Riapri
+                        </button>
+                    }
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning me-2">
+                        <i class="bi bi-pencil"></i> Modifica
+                    </a>
+                    @if (!Model.IsAutomatica)
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Elimina
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna Principale -->
+        <div class="col-lg-8">
+            <!-- Dettagli Scadenza -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Dettagli Scadenza
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Tipo:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <span class="badge bg-secondary">@Model.Tipo.ToString()</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Data Scadenza:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <h5 class="mb-0 @(Model.IsCompletata ? "text-success" : (dataScadenza < oggi ? "text-danger" : (dataScadenza == oggi ? "text-warning" : "")))">
+                                <i class="bi bi-calendar"></i>
+                                @Model.DataScadenza.ToString("dddd dd MMMM yyyy")
+                            </h5>
+                            @if (!Model.IsCompletata)
+                            {
+                                if (dataScadenza < oggi)
+                                {
+                                    <small class="text-danger">Scaduta da @Math.Abs(giorniRimanenti) giorni</small>
+                                }
+                                else if (dataScadenza == oggi)
+                                {
+                                    <small class="text-warning fw-bold">SCADE OGGI!</small>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">Mancano @giorniRimanenti giorni</small>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Giorni Preavviso:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.GiorniPreavviso giorni
+                            <small class="text-muted">(notifica anticipata)</small>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Descrizione:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.Descrizione
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Note))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Note:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="alert alert-info mb-0">
+                                    @Model.Note
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <hr />
+
+                    <!-- Stato Completamento -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Completata:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.IsCompletata)
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="bi bi-check-circle-fill"></i> Sì
+                                </span>
+                                @if (Model.DataCompletamento.HasValue)
+                                {
+                                    <span class="ms-2">il @Model.DataCompletamento.Value.ToString("dd/MM/yyyy")</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="bi bi-x-circle"></i> No
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Automatica:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.IsAutomatica)
+                            {
+                                <span class="badge bg-info fs-6">
+                                    <i class="bi bi-robot"></i> Sì (generata dal sistema)
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="bi bi-person"></i> No (manuale)
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entità Correlate -->
+            @if (Model.GaraId.HasValue || Model.LottoId.HasValue || Model.PreventivoId.HasValue)
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-link-45deg"></i> Entità Correlate
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.GaraId.HasValue)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                                <div>
+                                    <strong><i class="bi bi-folder2"></i> Gara</strong><br />
+                                    <span>@Model.CodiceGara - @Model.TitoloGara</span><br />
+                                    <small class="text-muted">@Model.EnteAppaltante</small>
+                                </div>
+                                <a asp-controller="Gare" asp-action="Details" asp-route-id="@Model.GaraId" 
+                                   class="btn btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Vai
+                                </a>
+                            </div>
+                        }
+
+                        @if (Model.LottoId.HasValue)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                                <div>
+                                    <strong><i class="bi bi-folder2-open"></i> Lotto</strong><br />
+                                    <span>@Model.CodiceLotto - @Model.DescrizioneLotto</span>
+                                </div>
+                                <a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId" 
+                                   class="btn btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Vai
+                                </a>
+                            </div>
+                        }
+
+                        @if (Model.PreventivoId.HasValue)
+                        {
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <strong><i class="bi bi-file-earmark-text"></i> Preventivo</strong><br />
+                                    <span>@Model.FornitorePreventivo</span>
+                                </div>
+                                <a asp-controller="Preventivi" asp-action="Details" asp-route-id="@Model.PreventivoId" 
+                                   class="btn btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Vai
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Colonna Laterale -->
+        <div class="col-lg-4">
+            <!-- Countdown / Status Card -->
+            <div class="card mb-4 @(Model.IsCompletata ? "border-success" : (dataScadenza < oggi ? "border-danger" : (giorniRimanenti <= Model.GiorniPreavviso ? "border-warning" : "border-primary")))">
+                <div class="card-header @(Model.IsCompletata ? "bg-success" : (dataScadenza < oggi ? "bg-danger" : (giorniRimanenti <= Model.GiorniPreavviso ? "bg-warning text-dark" : "bg-primary"))) text-white">
+                    <h6 class="mb-0">
+                        @if (Model.IsCompletata)
+                        {
+                            <i class="bi bi-check-circle-fill"></i>
+                            <text> Completata</text>
+                        }
+                        else if (dataScadenza < oggi)
+                        {
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <text> Scaduta</text>
+                        }
+                        else
+                        {
+                            <i class="bi bi-clock"></i>
+                            <text> Countdown</text>
+                        }
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    @if (Model.IsCompletata)
+                    {
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-success">Completata</h4>
+                        @if (Model.DataCompletamento.HasValue)
+                        {
+                            <p class="text-muted">il @Model.DataCompletamento.Value.ToString("dd/MM/yyyy")</p>
+                        }
+                    }
+                    else if (dataScadenza < oggi)
+                    {
+                        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-danger">Scaduta</h4>
+                        <h2 class="text-danger">@Math.Abs(giorniRimanenti)</h2>
+                        <p class="text-muted">giorni fa</p>
+                    }
+                    else if (dataScadenza == oggi)
+                    {
+                        <i class="bi bi-alarm-fill text-warning" style="font-size: 4rem;"></i>
+                        <h3 class="mt-3 text-warning">OGGI!</h3>
+                    }
+                    else
+                    {
+                        <h1 class="display-3 fw-bold @(giorniRimanenti <= Model.GiorniPreavviso ? "text-warning" : "text-primary")">
+                            @giorniRimanenti
+                        </h1>
+                        <p class="text-muted">giorni rimanenti</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Azioni Rapide -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning-fill"></i> Azioni Rapide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (!Model.IsCompletata)
+                        {
+                            <button class="btn btn-success" onclick="completaScadenza('@Model.Id')">
+                                <i class="bi bi-check-circle"></i> Completa Scadenza
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-warning" onclick="riapriScadenza('@Model.Id')">
+                                <i class="bi bi-arrow-counterclockwise"></i> Riapri Scadenza
+                            </button>
+                        }
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Modifica
+                        </a>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-calendar3"></i> Vai allo Scadenzario
+                        </a>
+                        @if (!Model.IsAutomatica)
+                        {
+                            <hr />
+                            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                                <i class="bi bi-trash"></i> Elimina
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Audit -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Informazioni di Sistema
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>ID:</strong><br />
+                        <small class="text-muted font-monospace">@Model.Id</small>
+                    </p>
+                    <hr />
+                    <p class="mb-2">
+                        <strong>Creata il:</strong><br />
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                    @if (Model.ModifiedAt.HasValue)
+                    {
+                        <p class="mb-0">
+                            <strong>Ultima modifica:</strong><br />
+                            @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pulsante Torna -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Torna allo Scadenzario
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function completaScadenza(id) {
+            if (!confirm('Confermi di voler completare questa scadenza?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Completa")',
+                type: 'POST',
+                data: { id: id },
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Errore: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Errore durante il completamento della scadenza');
+                }
+            });
+        }
+
+        function riapriScadenza(id) {
+            if (!confirm('Confermi di voler riaprire questa scadenza?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Riapri")',
+                type: 'POST',
+                data: { id: id },
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Errore: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Errore durante la riapertura della scadenza');
+                }
+            });
+        }
+    </script>
+}

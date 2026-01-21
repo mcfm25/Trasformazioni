@@ -1,0 +1,303 @@
+@model Trasformazioni.Models.ViewModels.PreventivoEditViewModel
+
+@{
+    ViewData["Title"] = "Modifica Preventivo";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">@Model.CodiceLotto</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@Model.LottoId">Preventivi</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Dettaglio</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Modifica</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-pencil-square text-warning me-2"></i>
+                Modifica Preventivo
+            </h2>
+            <p class="text-muted">Aggiorna i dati del preventivo</p>
+        </div>
+    </div>
+
+    <!-- Info Lotto -->
+    <div class="card mb-4 bg-light">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="bi bi-info-circle me-2"></i>
+                Lotto di Riferimento
+            </h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Codice Lotto:</strong> @Model.CodiceLotto
+                </div>
+                <div class="col-md-9">
+                    <strong>Descrizione:</strong> @Model.DescrizioneLotto
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Modifica -->
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="LottoId" />
+        <input type="hidden" asp-for="CodiceLotto" />
+        <input type="hidden" asp-for="DescrizioneLotto" />
+        <input type="hidden" asp-for="DocumentPathCorrente" />
+        <input type="hidden" asp-for="NomeFileCorrente" />
+
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Dati Preventivo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Fornitore -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="SoggettoId" class="form-label">
+                            Fornitore <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="SoggettoId" class="form-select" asp-items="@ViewBag.Fornitori">
+                            <option value="">-- Seleziona Fornitore --</option>
+                        </select>
+                        <span asp-validation-for="SoggettoId" class="text-danger"></span>
+                    </div>
+
+                    <!-- Stato -->
+                    <div class="col-md-6">
+                        <label asp-for="Stato" class="form-label">
+                            Stato <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Stato" class="form-select" asp-items="@ViewBag.Stati">
+                        </select>
+                        <span asp-validation-for="Stato" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Descrizione -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label asp-for="Descrizione" class="form-label">
+                            Descrizione <span class="text-danger">*</span>
+                        </label>
+                        <textarea asp-for="Descrizione" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Descrizione" class="text-danger"></span>
+                        <small class="form-text text-muted">Massimo 1000 caratteri</small>
+                    </div>
+                </div>
+
+                <!-- Importo Offerto -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="ImportoOfferto" class="form-label">Importo Offerto</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input asp-for="ImportoOfferto" type="number" step="0.01" class="form-control" />
+                        </div>
+                        <span asp-validation-for="ImportoOfferto" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Date -->
+                <h6 class="mb-3">
+                    <i class="bi bi-calendar me-2"></i>
+                    Date
+                </h6>
+
+                <div class="row mb-3">
+                    <!-- Data Richiesta -->
+                    <div class="col-md-4">
+                        <label asp-for="DataRichiesta" class="form-label">
+                            Data Richiesta <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="DataRichiesta" type="date" class="form-control" />
+                        <span asp-validation-for="DataRichiesta" class="text-danger"></span>
+                    </div>
+
+                    <!-- Data Ricezione -->
+                    <div class="col-md-4">
+                        <label asp-for="DataRicezione" class="form-label">Data Ricezione</label>
+                        <input asp-for="DataRicezione" type="date" class="form-control" />
+                        <span asp-validation-for="DataRicezione" class="text-danger"></span>
+                    </div>
+
+                    <!-- Data Scadenza -->
+                    <div class="col-md-4">
+                        <label asp-for="DataScadenza" class="form-label">
+                            Data Scadenza <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="DataScadenza" type="date" class="form-control" />
+                        <span asp-validation-for="DataScadenza" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Auto-Rinnovo -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="GiorniAutoRinnovo" class="form-label">
+                            Giorni Auto-Rinnovo
+                        </label>
+                        <input asp-for="GiorniAutoRinnovo" type="number" class="form-control" />
+                        <span asp-validation-for="GiorniAutoRinnovo" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Se impostato, il preventivo si rinnova automaticamente
+                        </small>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Gestione Documento -->
+                <h6 class="mb-3">
+                    <i class="bi bi-file-earmark me-2"></i>
+                    Gestione Documento
+                </h6>
+
+                <!-- Documento Corrente -->
+                @if (!string.IsNullOrEmpty(Model.DocumentPathCorrente))
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="bi bi-file-earmark-check me-3" style="font-size: 2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Documento Corrente:</strong> @Model.NomeFileCorrente
+                                    <br />
+                                    <a asp-action="DownloadDocumento" asp-route-id="@Model.Id" 
+                                       class="btn btn-sm btn-primary mt-2">
+                                        <i class="bi bi-download me-1"></i>
+                                        Scarica
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Opzioni Documento -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input asp-for="MantieniFIleEsistente" class="form-check-input" type="checkbox" id="mantieniDoc"/>
+                                <label class="form-check-label text-success" for="mantieniDoc">
+                                    <i class="bi bi-hand-thumbs-up me-1" id="mantieniDocIcon"></i>
+                                    Mantieni documento corrente
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Nuovo Documento -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="NuovoDocumentoFile" class="form-label">
+                                @(!string.IsNullOrEmpty(Model.DocumentPathCorrente) ? "Sostituisci con Nuovo Documento" : "Carica Documento")
+                            </label>
+                            <input asp-for="NuovoDocumentoFile" type="file" class="form-control"
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" disabled="true"/>
+                            <span asp-validation-for="NuovoDocumentoFile" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Formati accettati: PDF, Word, Excel, Immagini
+                            </small>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Nessun documento allegato
+                    </div>
+
+                    <!-- Upload Nuovo Documento -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="NuovoDocumentoFile" class="form-label">
+                                @(!string.IsNullOrEmpty(Model.DocumentPathCorrente) ? "Sostituisci con Nuovo Documento" : "Carica Documento")
+                            </label>
+                            <input asp-for="NuovoDocumentoFile" type="file" class="form-control"
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" />
+                            <span asp-validation-for="NuovoDocumentoFile" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Formati accettati: PDF, Word, Excel, Immagini
+                            </small>
+                        </div>
+                    </div>
+                }
+
+                <hr class="my-4" />
+
+                <!-- Checkbox IsSelezionato -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-check">
+                            <input asp-for="IsSelezionato" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsSelezionato" class="form-check-label">
+                                <i class="bi bi-star-fill text-warning me-1"></i>
+                                Marca come selezionato
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            Indica se questo è un preventivo scelto/preferito
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Note -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label asp-for="Note" class="form-label">Note</label>
+                        <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                        <small class="form-text text-muted">Massimo 2000 caratteri</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer text-end">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Annulla
+                </a>
+                <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Salva Modifiche
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function () {
+            // Se checkbox "Elimina Documento" è selezionato, disabilita upload
+            $('#mantieniDoc').change(function () {
+                if ($(this).is(':checked')) {
+                    $('input[type="file"]').prop('disabled', true);
+                    $('#mantieniDocIcon').removeClass("bi-trash").addClass("bi-hand-thumbs-up");
+                } else {
+                    $('input[type="file"]').prop('disabled', false);
+                    $('#mantieniDocIcon').removeClass("bi-hand-thumbs-up").addClass("bi-trash");
+                }
+            });
+        });
+    </script>
+}

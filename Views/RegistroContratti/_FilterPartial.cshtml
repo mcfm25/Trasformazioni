@@ -1,0 +1,232 @@
+﻿@model Trasformazioni.Models.ViewModels.RegistroContrattiFilterViewModel
+@{
+    var hasFilters = Model.HasActiveFilters;
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-funnel me-2"></i>Filtri
+            @if (hasFilters)
+            {
+                <span class="badge bg-primary ms-2">@Model.ActiveFiltersCount</span>
+            }
+        </h5>
+        <button class="btn btn-sm btn-link text-decoration-none" type="button"
+                data-bs-toggle="collapse" data-bs-target="#filterCollapse"
+                aria-expanded="@(hasFilters ? "true" : "false")" aria-controls="filterCollapse">
+            <i class="bi bi-chevron-down" id="filterCollapseIcon"></i>
+        </button>
+    </div>
+    <div class="collapse @(hasFilters ? "show" : "")" id="filterCollapse">
+        <div class="card-body">
+            <form asp-action="Index" method="get" id="filterForm">
+                <div class="row g-3">
+                    <!-- Ricerca Testuale -->
+                    <div class="col-md-6 col-lg-4">
+                        <label asp-for="SearchTerm" class="form-label small">Ricerca</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input asp-for="SearchTerm" class="form-control"
+                                   placeholder="Oggetto, protocollo, cliente..." />
+                        </div>
+                    </div>
+
+                    <!-- Tipo Registro -->
+                    <div class="col-md-6 col-lg-2">
+                        <label asp-for="TipoRegistro" class="form-label small">Tipo</label>
+                        <select asp-for="TipoRegistro" asp-items="Model.TipiRegistroSelectList"
+                                class="form-select">
+                            <option value="">-- Tutti --</option>
+                        </select>
+                    </div>
+
+                    <!-- Stato -->
+                    <div class="col-md-6 col-lg-3">
+                        <label asp-for="Stato" class="form-label small">Stato</label>
+                        <select asp-for="Stato" asp-items="Model.StatiSelectList"
+                                class="form-select">
+                            <option value="">-- Tutti --</option>
+                        </select>
+                    </div>
+
+                    <!-- Categoria -->
+                    <div class="col-md-6 col-lg-3">
+                        <label asp-for="CategoriaContrattoId" class="form-label small">Categoria</label>
+                        <select asp-for="CategoriaContrattoId" asp-items="Model.CategorieSelectList"
+                                class="form-select">
+                            <option value="">-- Tutte --</option>
+                        </select>
+                    </div>
+
+                    <!-- Cliente -->
+                    <div class="col-md-6 col-lg-4">
+                        <label asp-for="ClienteId" class="form-label small">Cliente</label>
+                        <select asp-for="ClienteId" asp-items="Model.ClientiSelectList"
+                                class="form-select">
+                            <option value="">-- Tutti --</option>
+                        </select>
+                    </div>
+
+                    <!-- Responsabile -->
+                    <div class="col-md-6 col-lg-4">
+                        <label asp-for="UtenteId" class="form-label small">Responsabile</label>
+                        <select asp-for="UtenteId" asp-items="Model.UtentiSelectList"
+                                class="form-select">
+                            <option value="">-- Tutti --</option>
+                        </select>
+                    </div>
+
+                    <!-- Ordinamento -->
+                    <div class="col-md-6 col-lg-2">
+                        <label asp-for="OrderBy" class="form-label small">Ordina per</label>
+                        <select asp-for="OrderBy" asp-items="Model.OrderBySelectList"
+                                class="form-select">
+                        </select>
+                    </div>
+
+                    <!-- Direzione Ordinamento -->
+                    <div class="col-md-6 col-lg-2">
+                        <label asp-for="OrderDirection" class="form-label small">Direzione</label>
+                        <select asp-for="OrderDirection" class="form-select">
+                            <option value="desc" selected="@(Model.OrderDirection == "desc")">Decrescente</option>
+                            <option value="asc" selected="@(Model.OrderDirection == "asc")">Crescente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Filtri Rapidi -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap gap-3 align-items-center">
+                            <span class="text-muted small me-2">Filtri rapidi:</span>
+
+                            <div class="form-check form-check-inline">
+                                <input asp-for="SoloInScadenza" class="form-check-input" type="checkbox"
+                                       id="soloInScadenza" />
+                                <label class="form-check-label small" for="soloInScadenza">
+                                    <i class="bi bi-clock text-warning me-1"></i>In scadenza
+                                </label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input asp-for="SoloScaduti" class="form-check-input" type="checkbox"
+                                       id="soloScaduti" />
+                                <label class="form-check-label small" for="soloScaduti">
+                                    <i class="bi bi-x-circle text-danger me-1"></i>Scaduti
+                                </label>
+                            </div>
+
+                            <span class="border-start ps-3 ms-2"></span>
+
+                            <div class="form-check form-check-inline">
+                                <input asp-for="SoloRoot" class="form-check-input" type="checkbox"
+                                       id="soloRoot" />
+                                <label class="form-check-label small" for="soloRoot">
+                                    <i class="bi bi-file-earmark text-primary me-1"></i>Solo originali
+                                </label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input asp-for="SoloConVersioni" class="form-check-input" type="checkbox"
+                                       id="soloConVersioni" />
+                                <label class="form-check-label small" for="soloConVersioni">
+                                    <i class="bi bi-diagram-3 text-info me-1"></i>Con versioni
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range (collapsible) -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <a class="btn btn-sm btn-link text-decoration-none p-0"
+                           data-bs-toggle="collapse" href="#dateFilters" role="button">
+                            <i class="bi bi-calendar3 me-1"></i>Filtri per data
+                            <i class="bi bi-chevron-down ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="collapse @(Model.DataDocumentoDa.HasValue || Model.DataDocumentoA.HasValue || Model.DataScadenzaDa.HasValue || Model.DataScadenzaA.HasValue ? "show" : "")"
+                     id="dateFilters">
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-3">
+                            <label asp-for="DataDocumentoDa" class="form-label small">Data documento da</label>
+                            <input asp-for="DataDocumentoDa" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="DataDocumentoA" class="form-label small">Data documento a</label>
+                            <input asp-for="DataDocumentoA" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="DataScadenzaDa" class="form-label small">Scadenza da</label>
+                            <input asp-for="DataScadenzaDa" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="DataScadenzaA" class="form-label small">Scadenza a</label>
+                            <input asp-for="DataScadenzaA" type="date" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pulsanti Azione -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                @if (hasFilters)
+                                {
+                                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-x-lg me-1"></i>Rimuovi filtri
+                                    </a>
+                                }
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-search me-1"></i>Applica Filtri
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden per paginazione -->
+                <input type="hidden" asp-for="PageSize" />
+                <input type="hidden" name="PageNumber" value="1" />
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle icona collapse
+    document.getElementById('filterCollapse')?.addEventListener('show.bs.collapse', function () {
+        document.getElementById('filterCollapseIcon')?.classList.replace('bi-chevron-down', 'bi-chevron-up');
+    });
+    document.getElementById('filterCollapse')?.addEventListener('hide.bs.collapse', function () {
+        document.getElementById('filterCollapseIcon')?.classList.replace('bi-chevron-up', 'bi-chevron-down');
+    });
+
+    // Checkbox mutualmente esclusivi
+    document.getElementById('soloInScadenza')?.addEventListener('change', function () {
+        if (this.checked) {
+            document.getElementById('soloScaduti').checked = false;
+        }
+    });
+    document.getElementById('soloScaduti')?.addEventListener('change', function () {
+        if (this.checked) {
+            document.getElementById('soloInScadenza').checked = false;
+        }
+    });
+
+    // Checkbox SoloRoot e SoloConVersioni mutualmente esclusivi
+    document.getElementById('soloRoot')?.addEventListener('change', function () {
+        if (this.checked) {
+            document.getElementById('soloConVersioni').checked = false;
+        }
+    });
+    document.getElementById('soloConVersioni')?.addEventListener('change', function () {
+        if (this.checked) {
+            document.getElementById('soloRoot').checked = false;
+        }
+    });
+</script>

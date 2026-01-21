@@ -1,0 +1,490 @@
+@using Trasformazioni.Models.ViewModels
+@model PagedResult<Trasformazioni.Models.ViewModels.PreventivoListViewModel>
+
+@{
+    ViewData["Title"] = "Preventivi";
+    var lotto = ViewBag.Lotto as Trasformazioni.Models.ViewModels.LottoDetailsViewModel;
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            @if (lotto != null)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@lotto.Id">@lotto.CodiceLotto</a></li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">Preventivi</li>
+        </ol>
+    </nav>
+
+    <!-- Container per Alert Validazione -->
+    <div id="validationAlertContainer"></div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h2>
+                <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                Gestione Preventivi
+            </h2>
+            @if (lotto != null)
+            {
+                <p class="text-muted">Lotto: <strong>@lotto.CodiceLotto</strong> - @lotto.Descrizione</p>
+            }
+        </div>
+        <div class="col-md-2 text-end">
+            @if (lotto != null)
+            {
+                <a asp-action="Create" asp-route-lottoId="@lotto.Id" class="btn btn-success">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Nuovo Preventivo
+                </a>
+            }
+            else
+            {
+                <a asp-action="Create" class="btn btn-success">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Nuovo Preventivo
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-funnel me-2"></i>
+                Filtri di Ricerca
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get">
+                <input type="hidden" name="LottoId" value="@Context.Request.Query["LottoId"]" />
+                
+                <div class="row g-3">
+                    <!-- Ricerca Libera -->
+                    <div class="col-md-4">
+                        <label class="form-label">Ricerca Libera</label>
+                        <input type="text" name="SearchTerm" class="form-control" 
+                               value="@Context.Request.Query["SearchTerm"]"
+                               placeholder="Descrizione, fornitore..." />
+                    </div>
+
+                    <!-- Stato -->
+                    <div class="col-md-3">
+                        <label class="form-label">Stato</label>
+                        <select name="Stato" class="form-select">
+                            <option value="">Tutti gli stati</option>
+                            @if (ViewBag.StatiFilter != null)
+                            {
+                                @foreach (var item in (List<SelectListItem>)ViewBag.StatiFilter)
+                                {
+                                    <option value="@item.Value" selected="@(Context.Request.Query["Stato"] == item.Value)">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Fornitore -->
+                    @if (ViewBag.Fornitori != null)
+                    {
+                        <div class="col-md-5">
+                            <label class="form-label">Fornitore</label>
+                            <select name="SoggettoId" class="form-select">
+                                <option value="">Tutti i fornitori</option>
+                                @foreach (var item in (List<SelectListItem>)ViewBag.Fornitori)
+                                {
+                                    <option value="@item.Value" selected="@(Context.Request.Query["SoggettoId"] == item.Value)">
+                                        @item.Text
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    <!-- Checkbox Filtri -->
+                    <div class="col-md-12">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="SoloSelezionati" 
+                                   value="true" id="soloSelezionati"
+                                   checked="@(Context.Request.Query["SoloSelezionati"] == "true")" />
+                            <label class="form-check-label" for="soloSelezionati">
+                                <i class="bi bi-star-fill text-warning me-1"></i>
+                                Solo Selezionati
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="SoloInScadenza" 
+                                   value="true" id="soloInScadenza"
+                                   checked="@(Context.Request.Query["SoloInScadenza"] == "true")" />
+                            <label class="form-check-label" for="soloInScadenza">
+                                <i class="bi bi-clock text-warning me-1"></i>
+                                In Scadenza (7gg)
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="SoloScaduti" 
+                                   value="true" id="soloScaduti"
+                                   checked="@(Context.Request.Query["SoloScaduti"] == "true")" />
+                            <label class="form-check-label" for="soloScaduti">
+                                <i class="bi bi-exclamation-triangle text-danger me-1"></i>
+                                Scaduti
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>
+                            Cerca
+                        </button>
+                        <a asp-action="Index" asp-route-lottoId="@Context.Request.Query["LottoId"]" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Reset Filtri
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabella Preventivi -->
+    @if (Model.Items.Any())
+    {
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            Risultati: <strong>@Model.TotalItems</strong> preventiv@(Model.TotalItems == 1 ? "o" : "i")
+                        </h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            Pagina @Model.PageNumber di @Model.TotalPages
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%;">Sel.</th>
+                            <th style="width: 20%;">Fornitore</th>
+                            <th style="width: 25%;">Descrizione</th>
+                            <th style="width: 10%;">Importo</th>
+                            <th style="width: 10%;">Data Scad.</th>
+                            <th style="width: 12%;">Stato</th>
+                            <th style="width: 8%;">Doc.</th>
+                            <th style="width: 10%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr class="@(item.IsSelezionato ? "table-warning" : "")">
+                                <!-- Checkbox Selezionato -->
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input checkbox-seleziona" 
+                                           data-id="@item.Id"
+                                           @(item.IsSelezionato ? "checked" : "")
+                                           title="Marca come selezionato" />
+                                </td>
+
+                                <!-- Fornitore -->
+                                <td>
+                                    <strong>@item.NomeFornitore</strong>
+                                    <br />
+                                    <span class="badge bg-warning text-dark badge-selezionato"
+                                          data-preventivo-id="@item.Id"
+                                          style="display: @(item.IsSelezionato ? "inline-block" : "none")">
+                                        <i class="bi bi-star-fill me-1"></i>Selezionato
+                                    </span>
+                                    @* @if (item.IsSelezionato)
+                                    {
+                                        <br /><span class="badge bg-warning text-dark">
+                                            <i class="bi bi-star-fill me-1"></i>Selezionato
+                                        </span>
+                                    } *@
+                                </td>
+
+                                <!-- Descrizione -->
+                                <td>
+                                    @if (item.Descrizione.Length > 80)
+                                    {
+                                        @item.Descrizione.Substring(0, 80)<text>...</text>
+                                    }
+                                    else
+                                    {
+                                        @item.Descrizione
+                                    }
+                                </td>
+
+                                <!-- Importo -->
+                                <td>
+                                    @if (item.ImportoOfferto.HasValue)
+                                    {
+                                        <strong class="text-primary">@item.ImportoOfferto.Value.ToString("C2")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+
+                                <!-- Data Scadenza -->
+                                <td>
+                                    @item.DataScadenza.ToString("dd/MM/yyyy")
+                                    @{
+                                        var giorniAllaScadenza = (item.DataScadenza - DateTime.Today).Days;
+                                        if (giorniAllaScadenza < 0)
+                                        {
+                                            <br /><span class="badge bg-danger">Scaduto</span>
+                                        }
+                                        else if (giorniAllaScadenza <= 7)
+                                        {
+                                            <br /><span class="badge bg-warning text-dark">@giorniAllaScadenza gg</span>
+                                        }
+                                    }
+                                </td>
+
+                                <!-- Stato -->
+                                <td>
+                                    @{
+                                        var badgeClass = item.Stato switch
+                                        {
+                                            Trasformazioni.Models.Enums.StatoPreventivo.InAttesa => "bg-secondary",
+                                            Trasformazioni.Models.Enums.StatoPreventivo.Ricevuto => "bg-info",
+                                            Trasformazioni.Models.Enums.StatoPreventivo.Valido => "bg-success",
+                                            Trasformazioni.Models.Enums.StatoPreventivo.InScadenza => "bg-warning text-dark",
+                                            Trasformazioni.Models.Enums.StatoPreventivo.Scaduto => "bg-danger",
+                                            Trasformazioni.Models.Enums.StatoPreventivo.Rinnovato => "bg-primary",
+                                            Trasformazioni.Models.Enums.StatoPreventivo.Annullato => "bg-dark",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@item.Stato</span>
+                                </td>
+
+                                <!-- Documento -->
+                                <td class="text-center">
+                                    @if (!string.IsNullOrEmpty(item.DocumentPath))
+                                    {
+                                        <a asp-action="DownloadDocumento" asp-route-id="@item.Id" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Scarica documento">
+                                            <i class="bi bi-file-earmark-arrow-down"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+
+                                <!-- Azioni -->
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-info" title="Dettagli">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-warning" title="Modifica">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-delete"
+                                                data-id="@item.Id" title="Elimina">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Paginazione -->
+        @if (Model.TotalPages > 1)
+        {
+            <partial name="_PaginationPartial" model="Model" />
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Nessun preventivo trovato</strong> con i filtri selezionati.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            
+            // FUNZIONE HELPER ALERT
+            function showValidationAlert(message, type = 'danger') {
+                // Crea alert con ID univoco per stack verticale
+                const alertId = 'alert-' + Date.now();
+                const alertHtml = `
+                    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show mb-2" role="alert">
+                        <i class="bi bi-${type === 'danger' ? 'exclamation-triangle' : 'check-circle'}-fill me-2"></i>
+                        <strong>${type === 'danger' ? 'Errore!' : type === 'warning' ? 'Attenzione!' : 'Successo!'}</strong> ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+
+                $('#validationAlertContainer').append(alertHtml);
+
+                // Scroll alla top per vedere alert
+                $('html, body').animate({ scrollTop: 0 }, 300);
+
+                // Auto-hide dopo 8 secondi
+                setTimeout(function() {
+                    $('#validationAlertContainer .alert').fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 6000);
+            }
+
+            // Toggle Selezionato (AJAX)
+            $('.checkbox-seleziona').change(function () {
+                var checkbox = $(this);
+                var preventivoId = checkbox.data('id');
+                var row = checkbox.closest('tr');
+
+                $.ajax({
+                    url: '@Url.Action("ToggleSelezionato")',
+                    type: 'POST',
+                    data: {
+                        id: preventivoId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            // Aggiorna UI
+                            if (result.isSelezionato) {
+                                row.addClass('table-warning');
+                                // Mostra badge
+                                row.find('.badge-selezionato').show();
+                                
+                                setTimeout(function() {
+                                    showValidationAlert(
+                                        result.message,
+                                        'success'
+                                    );
+                                }, 300);
+                            } else {
+                                row.removeClass('table-warning');
+                                // Nascondi badge
+                                row.find('.badge-selezionato').hide();
+
+                                setTimeout(function() {
+                                    showValidationAlert(
+                                        result.message,
+                                        'success'
+                                    );
+                                }, 300);
+                            }
+                        } else {
+                            // Ripristina checkbox
+                            checkbox.prop('checked', !checkbox.is(':checked'));
+                            // toastr.error(result.message);
+                            setTimeout(function() {
+                                showValidationAlert(
+                                    result.message,
+                                    'danger'
+                                );
+                            }, 300);
+                        }
+                    },
+                    error: function () {
+                        // Ripristina checkbox
+                        checkbox.prop('checked', !checkbox.is(':checked'));
+                        // toastr.error('Errore nel toggle selezione');
+                        setTimeout(function() {
+                            showValidationAlert(
+                                result.message,
+                                'danger'
+                            );
+                        }, 300);
+                    }
+                });
+            });
+
+            // Elimina Preventivo (AJAX con conferma)
+            $('.btn-delete').click(function () {
+                var button = $(this);
+                var preventivoId = button.data('id');
+
+                if (!confirm('Sei sicuro di voler eliminare questo preventivo?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("Delete")',
+                    type: 'POST',
+                    data: {
+                        id: preventivoId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            // toastr.success('Preventivo eliminato con successo');
+                            window.location.href = result.redirectUrl;
+                        } else {
+                            // toastr.error(result.message);
+                            setTimeout(function() {
+                                showValidationAlert(
+                                    result.message,
+                                    'danger'
+                                );
+                            }, 300);
+                        }
+                    },
+                    error: function () {
+                        // toastr.error('Errore nell\'eliminazione del preventivo');
+                        setTimeout(function() {
+                            showValidationAlert(
+                                result.message,
+                                'danger'
+                            );
+                        }, 300);
+                    }
+                });
+            });
+        });
+    </script>
+}

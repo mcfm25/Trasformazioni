@@ -1,0 +1,228 @@
+﻿@model Trasformazioni.Models.ViewModels.RepartoListViewModel
+@{
+    ViewData["Title"] = "Reparti";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-building me-2"></i>Reparti
+            </h1>
+            <p class="text-muted mb-0">Gestione dei reparti aziendali</p>
+        </div>
+        <div>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Nuovo Reparto
+            </a>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <!-- Filtri -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" id="filterForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6 col-lg-4">
+                        <label asp-for="Filter.SearchTerm" class="form-label small">Ricerca</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input asp-for="Filter.SearchTerm" class="form-control"
+                                   placeholder="Nome, email, descrizione..." />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-lg-2">
+                        <label asp-for="Filter.OrderBy" class="form-label small">Ordina per</label>
+                        <select asp-for="Filter.OrderBy" class="form-select">
+                            <option value="Nome">Nome</option>
+                            <option value="Email">Email</option>
+                            <option value="CreatedAt">Data creazione</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-lg-2">
+                        <label asp-for="Filter.OrderDirection" class="form-label small">Direzione</label>
+                        <select asp-for="Filter.OrderDirection" class="form-select">
+                            <option value="asc">Crescente</option>
+                            <option value="desc">Decrescente</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>Filtra
+                        </button>
+                        @if (Model.Filter.HasActiveFilters)
+                        {
+                            <a asp-action="Index" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-x-lg me-1"></i>Reset
+                            </a>
+                        }
+                    </div>
+                </div>
+                <input type="hidden" asp-for="Filter.PageSize" />
+            </form>
+        </div>
+    </div>
+
+    <!-- Risultati -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+            <span>
+                <strong>@Model.TotalCount</strong> reparti trovati
+            </span>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Items.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Descrizione</th>
+                                <th class="text-center">Utenti</th>
+                                <th class="text-center">Creato il</th>
+                                <th class="text-end" style="width: 150px;">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@item.Id"
+                                           class="fw-semibold text-decoration-none">
+                                            @item.Nome
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="mailto:@item.Email" class="text-decoration-none">
+                                            <i class="bi bi-envelope me-1"></i>@item.Email
+                                        </a>
+                                    </td>
+                                    <td class="text-muted">
+                                        @if (!string.IsNullOrEmpty(item.Descrizione))
+                                        {
+                                            @(item.Descrizione.Length > 50
+                                                                            ? item.Descrizione.Substring(0, 50) + "..."
+                                                                            : item.Descrizione)
+                                                                }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-people me-1"></i>@item.UtentiCount
+                                        </span>
+                                    </td>
+                                    <td class="text-center text-muted small">
+                                        @item.CreatedAt.ToString("dd/MM/yyyy")
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="Details" asp-route-id="@item.Id"
+                                               class="btn btn-outline-primary" title="Dettagli">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id"
+                                               class="btn btn-outline-secondary" title="Modifica">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id"
+                                               class="btn btn-outline-danger" title="Elimina">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginazione -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="card-footer bg-transparent">
+                        <nav aria-label="Navigazione pagine">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                <li class="page-item @(Model.Filter.PageNumber == 1 ? "disabled" : "")">
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-SearchTerm="@Model.Filter.SearchTerm"
+                                       asp-route-OrderBy="@Model.Filter.OrderBy"
+                                       asp-route-OrderDirection="@Model.Filter.OrderDirection"
+                                       asp-route-PageSize="@Model.Filter.PageSize"
+                                       asp-route-PageNumber="@(Model.Filter.PageNumber - 1)">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.Filter.PageNumber ? "active" : "")">
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-SearchTerm="@Model.Filter.SearchTerm"
+                                           asp-route-OrderBy="@Model.Filter.OrderBy"
+                                           asp-route-OrderDirection="@Model.Filter.OrderDirection"
+                                           asp-route-PageSize="@Model.Filter.PageSize"
+                                           asp-route-PageNumber="@i">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.Filter.PageNumber == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-SearchTerm="@Model.Filter.SearchTerm"
+                                       asp-route-OrderBy="@Model.Filter.OrderBy"
+                                       asp-route-OrderDirection="@Model.Filter.OrderDirection"
+                                       asp-route-PageSize="@Model.Filter.PageSize"
+                                       asp-route-PageNumber="@(Model.Filter.PageNumber + 1)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-building display-4 text-muted"></i>
+                    <p class="text-muted mt-3 mb-0">Nessun reparto trovato</p>
+                    @if (Model.Filter.HasActiveFilters)
+                    {
+                        <a asp-action="Index" class="btn btn-outline-primary mt-3">
+                            <i class="bi bi-x-lg me-1"></i>Rimuovi filtri
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="Create" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-lg me-1"></i>Crea il primo reparto
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,390 @@
+@model Trasformazioni.Models.ViewModels.ScadenzaEditViewModel
+
+@{
+    ViewData["Title"] = "Modifica Scadenza";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Scadenzario</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Dettaglio</a></li>
+                    <li class="breadcrumb-item active">Modifica</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Titolo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="bi bi-pencil-square text-warning"></i>
+                Modifica Scadenza
+            </h2>
+            @if (Model.IsAutomatica)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-robot"></i>
+                    <strong>Scadenza Automatica:</strong> Questa scadenza è stata generata automaticamente dal sistema.
+                    Alcune modifiche potrebbero essere limitate.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["WarningMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="IsAutomatica" />
+
+                        <!-- Tipo Scadenza -->
+                        <div class="mb-3">
+                            <label asp-for="Tipo" class="form-label">
+                                Tipo Scadenza <span class="text-danger">*</span>
+                            </label>
+                            @if (Model.IsAutomatica)
+                            {
+                                <input type="text" class="form-control bg-light" 
+                                       value="@Model.Tipo.ToString()" readonly />
+                                <input type="hidden" asp-for="Tipo" />
+                            }
+                            else
+                            {
+                                <select asp-for="Tipo" class="form-select" asp-items="ViewBag.TipiScadenza"></select>
+                            }
+                            <span asp-validation-for="Tipo" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Relazioni (readonly) -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-link-45deg"></i> Collegamento
+                        </h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Gara</label>
+                                @if (Model.GaraId.HasValue)
+                                {
+                                    <input type="text" class="form-control bg-light" 
+                                           value="@Model.CodiceGara - @Model.TitoloGara" readonly />
+                                    <input type="hidden" asp-for="GaraId" />
+                                }
+                                else
+                                {
+                                    <select asp-for="GaraId" class="form-select" asp-items="ViewBag.Gare" 
+                                            disabled="@Model.IsAutomatica">
+                                        <option value="">-- Nessuna gara --</option>
+                                    </select>
+                                }
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Lotto</label>
+                                @if (Model.LottoId.HasValue)
+                                {
+                                    <input type="text" class="form-control bg-light" 
+                                           value="@Model.CodiceLotto - @Model.DescrizioneLotto" readonly />
+                                    <input type="hidden" asp-for="LottoId" />
+                                }
+                                else
+                                {
+                                    <select asp-for="LottoId" class="form-select" asp-items="ViewBag.Lotti"
+                                            disabled="@Model.IsAutomatica">
+                                        <option value="">-- Nessun lotto --</option>
+                                    </select>
+                                }
+                            </div>
+                        </div>
+
+                        @if (Model.PreventivoId.HasValue)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Preventivo</label>
+                                <input type="text" class="form-control bg-light" 
+                                       value="@Model.FornitorePreventivo" readonly />
+                                <input type="hidden" asp-for="PreventivoId" />
+                            </div>
+                        }
+
+                        <hr class="my-4" />
+
+                        <!-- Data e Descrizione -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-calendar-event"></i> Dettagli Scadenza
+                        </h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DataScadenza" class="form-label">
+                                    Data Scadenza <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="DataScadenza" type="date" class="form-control" />
+                                <span asp-validation-for="DataScadenza" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="GiorniPreavviso" class="form-label">
+                                    Giorni Preavviso <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="GiorniPreavviso" type="number" min="0" max="365" class="form-control" />
+                                    <span class="input-group-text">giorni</span>
+                                </div>
+                                <span asp-validation-for="GiorniPreavviso" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Descrizione" class="form-label">
+                                Descrizione <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="Descrizione" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Descrizione" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label">Note</label>
+                            <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Stato Completamento -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-check2-square"></i> Stato Completamento
+                        </h6>
+
+                        <div class="card @(Model.IsCompletata ? "border-success bg-success bg-opacity-10" : "")">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            <input asp-for="IsCompletata" class="form-check-input" type="checkbox" 
+                                                   id="isCompletataSwitch" style="transform: scale(1.3);" />
+                                            <label class="form-check-label ms-2" for="isCompletataSwitch">
+                                                <strong>Scadenza Completata</strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="DataCompletamento" class="form-label">
+                                            Data Completamento
+                                        </label>
+                                        <input asp-for="DataCompletamento" type="date" class="form-control" 
+                                               id="dataCompletamentoInput" />
+                                        <span asp-validation-for="DataCompletamento" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-save"></i> Salva Modifiche
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="col-lg-4">
+            <!-- Info Audit -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-clock-history"></i> Informazioni di Sistema
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Creata il:</strong><br />
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                    @if (Model.ModifiedAt.HasValue)
+                    {
+                        <p class="mb-2">
+                            <strong>Ultima modifica:</strong><br />
+                            @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                        </p>
+                    }
+                    @if (Model.IsAutomatica)
+                    {
+                        <hr />
+                        <p class="mb-0 text-info">
+                            <i class="bi bi-robot"></i>
+                            <strong>Scadenza Automatica</strong><br />
+                            <small>Generata dal sistema</small>
+                        </p>
+                    }
+                </div>
+            </div>
+
+            <!-- Stato Attuale -->
+            <div class="card @(Model.IsCompletata ? "border-success" : GetStatoCardClass())">
+                <div class="card-header @(Model.IsCompletata ? "bg-success text-white" : GetStatoHeaderClass())">
+                    <i class="bi @(Model.IsCompletata ? "bi-check-circle-fill" : GetStatoIcon())"></i>
+                    Stato Attuale
+                </div>
+                <div class="card-body text-center">
+                    @if (Model.IsCompletata)
+                    {
+                        <h4 class="text-success">
+                            <i class="bi bi-check-circle-fill"></i> Completata
+                        </h4>
+                        @if (Model.DataCompletamento.HasValue)
+                        {
+                            <p class="mb-0">il @Model.DataCompletamento.Value.ToString("dd/MM/yyyy")</p>
+                        }
+                    }
+                    else
+                    {
+                        var oggi = DateTime.Today;
+                        var dataScadenza = Model.DataScadenza.Date;
+                        var giorniRimanenti = (dataScadenza - oggi).Days;
+
+                        if (dataScadenza < oggi)
+                        {
+                            <h4 class="text-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Scaduta
+                            </h4>
+                            <p class="mb-0">da @Math.Abs(giorniRimanenti) giorni</p>
+                        }
+                        else if (dataScadenza == oggi)
+                        {
+                            <h4 class="text-warning">
+                                <i class="bi bi-exclamation-circle-fill"></i> Scade Oggi!
+                            </h4>
+                        }
+                        else if (giorniRimanenti <= Model.GiorniPreavviso)
+                        {
+                            <h4 class="text-warning">
+                                <i class="bi bi-clock-fill"></i> In Scadenza
+                            </h4>
+                            <p class="mb-0">mancano @giorniRimanenti giorni</p>
+                        }
+                        else
+                        {
+                            <h4 class="text-primary">
+                                <i class="bi bi-calendar-check"></i> Attiva
+                            </h4>
+                            <p class="mb-0">mancano @giorniRimanenti giorni</p>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Azioni Rapide -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <i class="bi bi-lightning-fill"></i> Azioni Rapide
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-info">
+                            <i class="bi bi-eye"></i> Vedi Dettaglio
+                        </a>
+                        @if (!Model.IsAutomatica)
+                        {
+                            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                                <i class="bi bi-trash"></i> Elimina
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatoCardClass()
+    {
+        var oggi = DateTime.Today;
+        var dataScadenza = Model.DataScadenza.Date;
+        
+        if (dataScadenza < oggi) return "border-danger";
+        if (dataScadenza == oggi) return "border-warning";
+        if ((dataScadenza - oggi).Days <= Model.GiorniPreavviso) return "border-warning";
+        return "border-primary";
+    }
+
+    string GetStatoHeaderClass()
+    {
+        var oggi = DateTime.Today;
+        var dataScadenza = Model.DataScadenza.Date;
+        
+        if (dataScadenza < oggi) return "bg-danger text-white";
+        if (dataScadenza == oggi) return "bg-warning text-dark";
+        if ((dataScadenza - oggi).Days <= Model.GiorniPreavviso) return "bg-warning text-dark";
+        return "bg-primary text-white";
+    }
+
+    string GetStatoIcon()
+    {
+        var oggi = DateTime.Today;
+        var dataScadenza = Model.DataScadenza.Date;
+        
+        if (dataScadenza < oggi) return "bi-exclamation-triangle-fill";
+        if (dataScadenza == oggi) return "bi-exclamation-circle-fill";
+        if ((dataScadenza - oggi).Days <= Model.GiorniPreavviso) return "bi-clock-fill";
+        return "bi-calendar-check";
+    }
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            const isCompletataSwitch = $('#isCompletataSwitch');
+            const dataCompletamentoInput = $('#dataCompletamentoInput');
+
+            // Gestione switch completamento
+            function updateDataCompletamento() {
+                if (isCompletataSwitch.is(':checked')) {
+                    dataCompletamentoInput.prop('disabled', false);
+                    if (!dataCompletamentoInput.val()) {
+                        // Imposta data odierna se non già impostata
+                        const oggi = new Date().toISOString().split('T')[0];
+                        dataCompletamentoInput.val(oggi);
+                    }
+                } else {
+                    dataCompletamentoInput.prop('disabled', true);
+                    dataCompletamentoInput.val('');
+                }
+            }
+
+            isCompletataSwitch.on('change', updateDataCompletamento);
+            
+            // Inizializza stato
+            updateDataCompletamento();
+        });
+    </script>
+}

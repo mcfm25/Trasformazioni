@@ -1,0 +1,625 @@
+﻿@model Trasformazioni.Models.ViewModels.AllegatoRegistroUploadMultiploViewModel
+@{
+    ViewData["Title"] = "Carica Allegati Multipli";
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>@ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Registro Contratti</a></li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId">
+                            @(Model.RegistroNumeroProtocollo ?? Model.RegistroOggetto ?? "Dettaglio")
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Carica Multipli</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+
+    <!-- Info Registro -->
+    <div class="alert alert-light border mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="mb-1">
+                    <i class="bi bi-file-earmark-text me-2"></i>@Model.RegistroOggetto
+                </h6>
+                @if (!string.IsNullOrWhiteSpace(Model.RegistroNumeroProtocollo))
+                {
+                    <small class="text-muted">Protocollo: <code>@Model.RegistroNumeroProtocollo</code></small>
+                }
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Torna ai dettagli
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Form Upload Multiplo -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cloud-upload me-2"></i>Carica Più Allegati
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UploadMultiplo" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <input type="hidden" asp-for="RegistroContrattiId" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- Tipo Documento (comune a tutti) -->
+                        <div class="mb-4">
+                            <label asp-for="TipoDocumentoId" class="form-label">
+                                Tipo Documento <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="TipoDocumentoId" asp-items="Model.TipiDocumentoSelectList"
+                                    class="form-select" required>
+                                <option value="">-- Seleziona tipo documento --</option>
+                            </select>
+                            <span asp-validation-for="TipoDocumentoId" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Il tipo selezionato verrà applicato a tutti i file caricati
+                            </small>
+                        </div>
+
+                        <!-- Dropzone Area -->
+                        <div class="mb-4">
+                            <label asp-for="Files" class="form-label">
+                                Files <span class="text-danger">*</span>
+                            </label>
+                            <div class="dropzone-container border rounded p-4 text-center" id="dropzone">
+                                <input asp-for="Files" type="file" class="d-none" id="fileInput"
+                                       multiple accept="@Model.AllowedExtensionsAccept" />
+                                <div id="dropzone-content">
+                                    <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
+                                    <p class="mb-2 mt-3">
+                                        Trascina qui i file oppure
+                                        <a href="#" class="text-primary" id="browseLink">sfoglia</a>
+                                    </p>
+                                    <small class="text-muted">
+                                        Puoi selezionare fino a <strong>@Model.MaxFiles</strong> file
+                                    </small>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Files" class="text-danger"></span>
+                        </div>
+
+                        <!-- Lista File Selezionati -->
+                        <div class="mb-4 d-none" id="files-list-container">
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span>File selezionati</span>
+                                <span class="badge bg-primary" id="files-count">0</span>
+                            </label>
+                            <div class="border rounded" id="files-list">
+                                <!-- File items verranno aggiunti qui via JS -->
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">
+                                    Totale: <span id="total-size">0 KB</span> /
+                                    <span>@((Model.MaxTotalSize / (1024 * 1024)).ToString("N0")) MB</span>
+                                </small>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="clearAll">
+                                    <i class="bi bi-trash me-1"></i>Rimuovi tutti
+                                </button>
+                            </div>
+                            <!-- Progress totale -->
+                            <div class="progress mt-3 d-none" id="total-progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" role="progressbar"
+                                     style="width: 0%;" id="total-progress-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Messaggi validazione -->
+                        <div class="alert alert-danger d-none mb-4" id="validation-errors">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span id="validation-message"></span>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                <i class="bi bi-cloud-upload me-1"></i> Carica <span id="submitCount"></span> Allegati
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Link Upload Singolo -->
+            <div class="text-center">
+                <span class="text-muted">Preferisci caricare un file alla volta?</span>
+                <a asp-action="Upload" asp-route-id="@Model.RegistroContrattiId" class="ms-2">
+                    Upload singolo
+                </a>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Allegati Esistenti -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-paperclip me-2"></i>Allegati Esistenti
+                    </h5>
+                    @if (Model.AllegatiEsistenti?.Any() == true)
+                    {
+                        <span class="badge bg-secondary">@Model.AllegatiEsistenti.Count()</span>
+                    }
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AllegatiEsistenti?.Any() == true)
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var allegato in Model.AllegatiEsistenti.Take(10))
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="text-truncate" style="max-width: 200px;">
+                                        <i class="@allegato.FileIcon @allegato.FileIconColor me-2"></i>
+                                        <span class="small" title="@allegato.NomeFile">@allegato.NomeFile</span>
+                                    </div>
+                                    <a asp-action="Download" asp-route-id="@allegato.Id"
+                                       class="btn btn-sm btn-outline-primary" title="Scarica">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        @if (Model.AllegatiEsistenti.Count() > 10)
+                        {
+                            <div class="p-2 text-center border-top">
+                                <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" class="small">
+                                    Visualizza tutti (@Model.AllegatiEsistenti.Count())
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-folder2-open display-6 text-muted"></i>
+                            <p class="text-muted small mt-2 mb-0">Nessun allegato</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            <!-- Info Limiti -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Limiti Upload
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Max file contemporanei</span>
+                            <strong>@Model.MaxFiles</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Max dimensione singolo file</span>
+                            <strong>@((Model.MaxFileSize / (1024 * 1024)).ToString("N0")) MB</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Max dimensione totale</span>
+                            <strong>@((Model.MaxTotalSize / (1024 * 1024)).ToString("N0")) MB</strong>
+                        </li>
+                        <li class="py-2">
+                            <span class="text-muted d-block mb-1">Formati accettati</span>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var ext in Model.AllowedExtensions.Take(10))
+                                {
+                                    <span class="badge bg-light text-dark">@ext</span>
+                                }
+                                @if (Model.AllowedExtensions.Length > 10)
+                                {
+                                    <span class="badge bg-secondary">+@(Model.AllowedExtensions.Length - 10)</span>
+                                }
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Suggerimenti -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>Suggerimenti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Puoi trascinare più file contemporaneamente
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Usa CTRL+click per selezionare più file
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-info me-2"></i>
+                            Tutti i file avranno lo stesso tipo documento
+                        </li>
+                        <li>
+                            <i class="bi bi-exclamation-circle text-warning me-2"></i>
+                            Verifica i file prima di confermare
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .dropzone-container {
+            border: 2px dashed #dee2e6 !important;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .dropzone-container:hover,
+            .dropzone-container.dragover {
+                border-color: #0d6efd !important;
+                background-color: #e7f1ff;
+            }
+
+            .dropzone-container.has-files {
+                border-color: #198754 !important;
+                background-color: #d1e7dd;
+            }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+            .file-item:last-child {
+                border-bottom: none;
+            }
+
+            .file-item .file-icon {
+                width: 40px;
+                text-align: center;
+            }
+
+            .file-item .file-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .file-item .file-name {
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .file-item .file-size {
+                font-size: 0.8rem;
+                color: #6c757d;
+            }
+
+            .file-item .file-status {
+                width: 100px;
+                text-align: right;
+            }
+
+            .file-item .file-actions {
+                width: 40px;
+                text-align: center;
+            }
+
+            .file-item.error {
+                background-color: #f8d7da;
+            }
+
+            .file-item .progress {
+                height: 4px;
+                margin-top: 4px;
+            }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            const dropzone = $('#dropzone');
+            const fileInput = $('#fileInput');
+            const dropzoneContent = $('#dropzone-content');
+            const filesListContainer = $('#files-list-container');
+            const filesList = $('#files-list');
+            const filesCount = $('#files-count');
+            const totalSize = $('#total-size');
+            const browseLink = $('#browseLink');
+            const clearAllBtn = $('#clearAll');
+            const submitBtn = $('#submitBtn');
+            const submitCount = $('#submitCount');
+            const validationErrors = $('#validation-errors');
+            const validationMessage = $('#validation-message');
+            const uploadForm = $('#uploadForm');
+
+            // Configurazione da ViewModel
+            const maxFiles = @Model.MaxFiles;
+            const maxFileSize = @Model.MaxFileSize;
+            const maxTotalSize = @Model.MaxTotalSize;
+            const allowedExtensions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AllowedExtensions));
+
+            // Stato file
+            let selectedFiles = [];
+
+            // Click su dropzone o link sfoglia
+            browseLink.on('click', function (e) {
+                e.preventDefault();
+                fileInput.trigger('click');
+            });
+
+            dropzone.on('click', function (e) {
+                if (e.target === dropzone[0] || $(e.target).closest('#dropzone-content').length) {
+                    fileInput.trigger('click');
+                }
+            });
+
+            // Drag & Drop
+            dropzone.on('dragover dragenter', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.addClass('dragover');
+            });
+
+            dropzone.on('dragleave dragend', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.removeClass('dragover');
+            });
+
+            dropzone.on('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.removeClass('dragover');
+
+                const files = Array.from(e.originalEvent.dataTransfer.files);
+                addFiles(files);
+            });
+
+            // Selezione file da input
+            fileInput.on('change', function () {
+                if (this.files.length > 0) {
+                    const files = Array.from(this.files);
+                    addFiles(files);
+                }
+            });
+
+            // Aggiungi file alla lista
+            function addFiles(files) {
+                hideError();
+
+                for (const file of files) {
+                    // Verifica duplicati
+                    if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        continue;
+                    }
+
+                    // Valida singolo file
+                    const validation = validateFile(file);
+                    if (!validation.valid) {
+                        showError(validation.error);
+                        continue;
+                    }
+
+                    // Verifica limite numero file
+                    if (selectedFiles.length >= maxFiles) {
+                        showError(`Puoi selezionare massimo ${maxFiles} file`);
+                        break;
+                    }
+
+                    selectedFiles.push(file);
+                }
+
+                // Verifica dimensione totale
+                const total = selectedFiles.reduce((sum, f) => sum + f.size, 0);
+                if (total > maxTotalSize) {
+                    showError(`La dimensione totale supera il limite di ${formatFileSize(maxTotalSize)}`);
+                }
+
+                updateUI();
+            }
+
+            // Valida singolo file
+            function validateFile(file) {
+                const extension = file.name.split('.').pop().toLowerCase();
+
+                if (!allowedExtensions.includes('.' + extension) && !allowedExtensions.includes(extension)) {
+                    return { valid: false, error: `"${file.name}": formato non supportato` };
+                }
+
+                if (file.size > maxFileSize) {
+                    return { valid: false, error: `"${file.name}": supera la dimensione massima di ${formatFileSize(maxFileSize)}` };
+                }
+
+                return { valid: true };
+            }
+
+            // Rimuovi singolo file
+            function removeFile(index) {
+                selectedFiles.splice(index, 1);
+                hideError();
+                updateUI();
+            }
+
+            // Rimuovi tutti
+            clearAllBtn.on('click', function () {
+                selectedFiles = [];
+                hideError();
+                updateUI();
+            });
+
+            // Aggiorna UI
+            function updateUI() {
+                // Aggiorna lista file
+                filesList.empty();
+
+                if (selectedFiles.length > 0) {
+                    filesListContainer.removeClass('d-none');
+                    dropzone.addClass('has-files');
+
+                    selectedFiles.forEach((file, index) => {
+                        const icon = getFileIcon(file.name);
+                        const item = $(`
+                            <div class="file-item" data-index="${index}">
+                                <div class="file-icon">
+                                    <i class="${icon.class} fs-4 ${icon.color}"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name" title="${file.name}">${file.name}</div>
+                                    <div class="file-size">${formatFileSize(file.size)}</div>
+                                </div>
+                                <div class="file-actions">
+                                    <button type="button" class="btn btn-sm btn-link text-danger remove-file"
+                                            data-index="${index}" title="Rimuovi">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `);
+                        filesList.append(item);
+                    });
+
+                    // Event handler per rimozione
+                    $('.remove-file').on('click', function () {
+                        const index = $(this).data('index');
+                        removeFile(index);
+                    });
+                } else {
+                    filesListContainer.addClass('d-none');
+                    dropzone.removeClass('has-files');
+                }
+
+                // Aggiorna contatori
+                filesCount.text(selectedFiles.length);
+                const total = selectedFiles.reduce((sum, f) => sum + f.size, 0);
+                totalSize.text(formatFileSize(total));
+
+                // Aggiorna pulsante submit
+                const isValid = selectedFiles.length > 0 && total <= maxTotalSize;
+                submitBtn.prop('disabled', !isValid);
+                submitCount.text(selectedFiles.length > 0 ? selectedFiles.length : '');
+
+                // Aggiorna file input
+                updateFileInput();
+            }
+
+            // Aggiorna input file con DataTransfer
+            function updateFileInput() {
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => dataTransfer.items.add(file));
+                fileInput[0].files = dataTransfer.files;
+            }
+
+            // Mostra errore
+            function showError(message) {
+                validationMessage.text(message);
+                validationErrors.removeClass('d-none');
+            }
+
+            // Nascondi errore
+            function hideError() {
+                validationErrors.addClass('d-none');
+            }
+
+            // Icona file per estensione
+            function getFileIcon(filename) {
+                const ext = filename.split('.').pop().toLowerCase();
+                const icons = {
+                    'pdf': { class: 'bi bi-file-earmark-pdf', color: 'text-danger' },
+                    'doc': { class: 'bi bi-file-earmark-word', color: 'text-primary' },
+                    'docx': { class: 'bi bi-file-earmark-word', color: 'text-primary' },
+                    'xls': { class: 'bi bi-file-earmark-excel', color: 'text-success' },
+                    'xlsx': { class: 'bi bi-file-earmark-excel', color: 'text-success' },
+                    'ppt': { class: 'bi bi-file-earmark-ppt', color: 'text-warning' },
+                    'pptx': { class: 'bi bi-file-earmark-ppt', color: 'text-warning' },
+                    'jpg': { class: 'bi bi-file-earmark-image', color: 'text-info' },
+                    'jpeg': { class: 'bi bi-file-earmark-image', color: 'text-info' },
+                    'png': { class: 'bi bi-file-earmark-image', color: 'text-info' },
+                    'gif': { class: 'bi bi-file-earmark-image', color: 'text-info' },
+                    'zip': { class: 'bi bi-file-earmark-zip', color: 'text-secondary' },
+                    'rar': { class: 'bi bi-file-earmark-zip', color: 'text-secondary' },
+                    'txt': { class: 'bi bi-file-earmark-text', color: 'text-muted' },
+                    'csv': { class: 'bi bi-file-earmark-spreadsheet', color: 'text-success' }
+                };
+                return icons[ext] || { class: 'bi bi-file-earmark', color: 'text-secondary' };
+            }
+
+            // Formatta dimensione file
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Submit
+            uploadForm.on('submit', function (e) {
+                if (selectedFiles.length === 0) {
+                    e.preventDefault();
+                    showError('Seleziona almeno un file.');
+                    return false;
+                }
+
+                // Verifica tipo documento selezionato
+                if (!$('#TipoDocumentoId').val()) {
+                    e.preventDefault();
+                    showError('Seleziona un tipo documento.');
+                    return false;
+                }
+
+                submitBtn.prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm me-1"></span>Caricamento...');
+            });
+        });
+    </script>
+}

@@ -1,0 +1,232 @@
+@model Trasformazioni.Models.ViewModels.ValutazioneTecnicaViewModel
+
+@{
+    ViewData["Title"] = "Valutazione Tecnica";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">@Model.CodiceLotto</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Valutazione Tecnica</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-clipboard-check text-primary me-2"></i>
+                Valutazione Tecnica
+            </h2>
+            <p class="text-muted">Valuta gli aspetti tecnici del lotto</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Card Info Lotto -->
+    <div class="card mb-4 bg-light">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="bi bi-info-circle me-2"></i>
+                Informazioni Lotto
+            </h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Codice Lotto:</strong> @Model.CodiceLotto
+                </div>
+                <div class="col-md-5">
+                    <strong>Descrizione:</strong> @Model.DescrizioneLotto
+                </div>
+                <div class="col-md-4">
+                    <strong>Gara:</strong> @Model.CodiceGara - @Model.TitoloGara
+                </div>
+            </div>
+            @if (Model.ImportoBaseAsta.HasValue)
+            {
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <strong>Importo Base Asta:</strong> <span class="text-primary">@Model.ImportoBaseAsta.Value.ToString("C2")</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Form Valutazione -->
+    <form asp-action="CreateTecnica" method="post">
+        <input type="hidden" asp-for="LottoId" />
+        <input type="hidden" asp-for="CodiceLotto" />
+        <input type="hidden" asp-for="DescrizioneLotto" />
+        <input type="hidden" asp-for="CodiceGara" />
+        <input type="hidden" asp-for="TitoloGara" />
+        <input type="hidden" asp-for="ImportoBaseAsta" />
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Dati Valutazione Tecnica
+                </h5>
+            </div>
+
+            <!-- Alert Doc Tecnici -->
+            @if (ViewBag.NumeroDocTecnici > 0)
+            {
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="bi bi-file-earmark-text me-3" style="font-size: 2rem;"></i>
+                    <div>
+                        <strong>Documenti Disponibili:</strong> Sono presenti <strong>@ViewBag.NumeroDocTecnici</strong> document@(ViewBag.NumeroDocTecnici == 1 ? "o" : "i") associat@(ViewBag.NumeroDocTecnici == 1 ? "o" : "i") a questo lotto.
+                        <br />
+                        <a asp-controller="DocumentiGara" asp-action="Index" asp-route-garaId="@Model.GaraId" asp-route-lottoId="@Model.LottoId" class="btn btn-sm btn-primary mt-2">
+                            <i class="bi bi-arrow-right-circle me-1"></i>
+                            Visualizza Documenti Tecnici
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Attenzione:</strong> Non ci sono documenti tecnici associati a questo lotto. Considera di caricarli prima di procedere con la valutazione tecnica.
+                    <a asp-controller="DocumentiGara" asp-action="Upload" asp-route-garaId="@Model.GaraId" asp-route-lottoId="@Model.LottoId" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Nuovo Documento Tecnico
+                    </a>
+                </div>
+            }
+
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Valutatore Tecnico -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="ValutatoreTecnicoId" class="form-label"></label>
+                        <select asp-for="ValutatoreTecnicoId" class="form-select" asp-items="@ViewBag.Valutatori">
+                            <option value="">-- Seleziona Valutatore (opzionale) --</option>
+                        </select>
+                        <span asp-validation-for="ValutatoreTecnicoId" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Se non specificato, verrà registrato l'utente corrente
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Esito Valutazione -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Esito Valutazione Tecnica <span class="text-danger">*</span></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="TecnicaApprovata" value="true" id="approvata" />
+                            <label class="form-check-label text-success fw-bold" for="approvata">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Approvata - Il lotto passa in valutazione economica
+                            </label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" asp-for="TecnicaApprovata" value="false" id="rifiutata" checked />
+                            <label class="form-check-label text-danger fw-bold" for="rifiutata">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Rifiutata - Il lotto viene rifiutato
+                            </label>
+                        </div>
+                        <span asp-validation-for="TecnicaApprovata" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Motivo Rifiuto (condizionale) -->
+                <div class="row mb-3" id="motivoRifiutoContainer">
+                    <div class="col-md-12">
+                        <label asp-for="MotivoRifiutoTecnico" class="form-label">
+                            Motivo Rifiuto <span class="text-danger" id="motivoRequired">*</span>
+                        </label>
+                        <textarea asp-for="MotivoRifiutoTecnico" class="form-control" rows="4" 
+                                  placeholder="Specifica il motivo del rifiuto tecnico..."></textarea>
+                        <span asp-validation-for="MotivoRifiutoTecnico" class="text-danger"></span>
+                        <small class="form-text text-muted">Massimo 2000 caratteri</small>
+                    </div>
+                </div>
+
+                <!-- Note Tecniche -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label asp-for="NoteTecniche" class="form-label"></label>
+                        <textarea asp-for="NoteTecniche" class="form-control" rows="4" 
+                                  placeholder="Eventuali note o osservazioni tecniche..."></textarea>
+                        <span asp-validation-for="NoteTecniche" class="text-danger"></span>
+                        <small class="form-text text-muted">Massimo 2000 caratteri</small>
+                    </div>
+                </div>
+
+                <!-- Alert Info -->
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Nota:</strong> Una volta salvata, la valutazione tecnica cambierà automaticamente lo stato del lotto.
+                </div>
+            </div>
+            <div class="card-footer text-end">
+                <a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId" class="btn btn-secondary">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Annulla
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Salva Valutazione Tecnica
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Mostra/Nascondi campo Motivo Rifiuto in base all'esito
+        $(document).ready(function () {
+            function toggleMotivoRifiuto() {
+                var isRifiutata = $('#rifiutata').is(':checked');
+                if (isRifiutata) {
+                    $('#motivoRifiutoContainer').show();
+                    $('#motivoRequired').show();
+                } else {
+                    $('#motivoRifiutoContainer').hide();
+                    $('#motivoRequired').hide();
+                    $('#MotivoRifiutoTecnico').val(''); // Pulisci campo se approvata
+                }
+            }
+
+            // Esegui al caricamento
+            toggleMotivoRifiuto();
+
+            // Esegui al cambio radio
+            $('input[name="TecnicaApprovata"]').change(function () {
+                toggleMotivoRifiuto();
+            });
+        });
+    </script>
+}

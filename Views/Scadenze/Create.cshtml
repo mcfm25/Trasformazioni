@@ -1,0 +1,367 @@
+@model Trasformazioni.Models.ViewModels.ScadenzaCreateViewModel
+
+@{
+    ViewData["Title"] = "Nuova Scadenza";
+    var entitaPreimpostata = ViewBag.EntitaPreimpostata as string;
+    var entitaCodice = ViewBag.EntitaCodice as string;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Scadenzario</a></li>
+                    <li class="breadcrumb-item active">Nuova Scadenza</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Titolo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="bi bi-calendar-plus text-primary"></i>
+                Nuova Scadenza
+            </h2>
+            @if (!string.IsNullOrEmpty(entitaPreimpostata))
+            {
+                <p class="text-muted">
+                    <strong>@entitaPreimpostata:</strong> @entitaCodice
+                </p>
+            }
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Tipo Scadenza -->
+                        <div class="mb-3">
+                            <label asp-for="Tipo" class="form-label">
+                                Tipo Scadenza <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="Tipo" class="form-select" asp-items="ViewBag.TipiScadenza">
+                                <option value="">-- Seleziona tipo --</option>
+                            </select>
+                            <span asp-validation-for="Tipo" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Relazioni -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-link-45deg"></i> Collegamento (opzionale)
+                        </h6>
+
+                        <div class="row">
+                            <!-- Gara -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="GaraId" class="form-label">Gara</label>
+                                @if (!string.IsNullOrEmpty(entitaPreimpostata) && entitaPreimpostata == "Gara")
+                                {
+                                    <input type="text" class="form-control" value="@Model.CodiceGara - @Model.TitoloGara" readonly />
+                                    <input type="hidden" asp-for="GaraId" />
+                                }
+                                else
+                                {
+                                    <select asp-for="GaraId" id="selectGara" class="form-select" asp-items="ViewBag.Gare">
+                                        <option value="">-- Nessuna gara --</option>
+                                    </select>
+                                }
+                                <span asp-validation-for="GaraId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Lotto -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LottoId" class="form-label">Lotto</label>
+                                @if (!string.IsNullOrEmpty(entitaPreimpostata) && entitaPreimpostata == "Lotto")
+                                {
+                                    <input type="text" class="form-control" value="@Model.CodiceLotto - @Model.DescrizioneLotto" readonly />
+                                    <input type="hidden" asp-for="LottoId" />
+                                    <input type="hidden" asp-for="GaraId" />
+                                }
+                                else
+                                {
+                                    <select asp-for="LottoId" id="selectLotto" class="form-select" asp-items="ViewBag.Lotti">
+                                        <option value="">-- Nessun lotto --</option>
+                                    </select>
+                                }
+                                <span asp-validation-for="LottoId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Preventivo -->
+                        <div class="mb-3">
+                            <label asp-for="PreventivoId" class="form-label">Preventivo</label>
+                            @if (!string.IsNullOrEmpty(entitaPreimpostata) && entitaPreimpostata == "Preventivo")
+                            {
+                                <input type="text" class="form-control" value="@Model.FornitorePreventivo" readonly />
+                                <input type="hidden" asp-for="PreventivoId" />
+                                <input type="hidden" asp-for="LottoId" />
+                            }
+                            else
+                            {
+                                <select asp-for="PreventivoId" id="selectPreventivo" class="form-select" asp-items="ViewBag.Preventivi">
+                                    <option value="">-- Nessun preventivo --</option>
+                                </select>
+                            }
+                            <span asp-validation-for="PreventivoId" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Data e Descrizione -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-calendar-event"></i> Dettagli Scadenza
+                        </h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DataScadenza" class="form-label">
+                                    Data Scadenza <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="DataScadenza" type="date" class="form-control" />
+                                <span asp-validation-for="DataScadenza" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="GiorniPreavviso" class="form-label">
+                                    Giorni Preavviso <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="GiorniPreavviso" type="number" min="0" max="365" class="form-control" />
+                                    <span class="input-group-text">giorni</span>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Anticipo con cui ricevere notifica
+                                </div>
+                                <span asp-validation-for="GiorniPreavviso" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Descrizione" class="form-label">
+                                Descrizione <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="Descrizione" class="form-control" rows="3" 
+                                      placeholder="Es: Scadenza presentazione offerta gara XYZ..."></textarea>
+                            <span asp-validation-for="Descrizione" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label">Note</label>
+                            <textarea asp-for="Note" class="form-control" rows="3" 
+                                      placeholder="Eventuali note aggiuntive..."></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="d-flex justify-content-between mt-4">
+                            @if (!string.IsNullOrEmpty(entitaPreimpostata))
+                            {
+                                if (entitaPreimpostata == "Lotto" && Model.LottoId.HasValue)
+                                {
+                                    <a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left"></i> Annulla
+                                    </a>
+                                }
+                                else if (entitaPreimpostata == "Gara" && Model.GaraId.HasValue)
+                                {
+                                    <a asp-controller="Gare" asp-action="Details" asp-route-id="@Model.GaraId" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left"></i> Annulla
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-action="Index" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left"></i> Annulla
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <a asp-action="Index" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Annulla
+                                </a>
+                            }
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Crea Scadenza
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> Informazioni
+                </div>
+                <div class="card-body">
+                    <h6>Tipi di Scadenza</h6>
+                    <ul class="small">
+                        <li><strong>Presentazione Offerta:</strong> Scadenza gara</li>
+                        <li><strong>Richiesta Chiarimenti:</strong> Termine per chiarimenti</li>
+                        <li><strong>Scadenza Preventivo:</strong> Validità preventivo</li>
+                        <li><strong>Integrazione Doc.:</strong> Invio documentazione</li>
+                        <li><strong>Stipula Contratto:</strong> Firma contratto</li>
+                        <li><strong>Scadenza Contratto:</strong> Fine contratto</li>
+                        <li><strong>Altro:</strong> Scadenza generica</li>
+                    </ul>
+                    <hr />
+                    <h6>Giorni Preavviso</h6>
+                    <p class="small">
+                        Indica con quanti giorni di anticipo vuoi essere avvisato della scadenza.
+                        Il sistema mostrerà la scadenza nel pannello "Imminenti" quando si avvicina.
+                    </p>
+                    <hr />
+                    <h6>Collegamento</h6>
+                    <p class="small">
+                        Puoi collegare la scadenza a una Gara, un Lotto o un Preventivo per una migliore organizzazione.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Suggerimenti dinamici basati sul tipo -->
+            <div class="card mt-3" id="suggerimentiTipo" style="display: none;">
+                <div class="card-header bg-warning text-dark">
+                    <i class="bi bi-lightbulb"></i> Suggerimento
+                </div>
+                <div class="card-body" id="suggerimentiTipoBody">
+                    <!-- Popolato via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // === CASCADING DROPDOWN ===
+            
+            // Quando cambia la Gara, aggiorna i Lotti
+            $('#selectGara').on('change', function() {
+                const garaId = $(this).val();
+                const lottoSelect = $('#selectLotto');
+                
+                // Reset lotto e preventivo
+                lottoSelect.html('<option value="">-- Nessun lotto --</option>');
+                $('#selectPreventivo').html('<option value="">-- Nessun preventivo --</option>');
+                
+                if (garaId) {
+                    // Carica lotti per la gara selezionata
+                    $.ajax({
+                        url: '/api/lotti/pergara/' + garaId,
+                        type: 'GET',
+                        success: function(data) {
+                            data.forEach(function(lotto) {
+                                lottoSelect.append(
+                                    $('<option></option>').val(lotto.id).text(lotto.codiceLotto + ' - ' + lotto.titolo)
+                                );
+                            });
+                        },
+                        error: function() {
+                            console.log('Errore caricamento lotti');
+                        }
+                    });
+                }
+            });
+            
+            // Quando cambia il Lotto, aggiorna i Preventivi
+            $('#selectLotto').on('change', function() {
+                const lottoId = $(this).val();
+                const preventivoSelect = $('#selectPreventivo');
+                
+                // Reset preventivo
+                preventivoSelect.html('<option value="">-- Nessun preventivo --</option>');
+                
+                if (lottoId) {
+                    // Carica preventivi per il lotto selezionato
+                    $.ajax({
+                        url: '/api/preventivi/perlotto/' + lottoId,
+                        type: 'GET',
+                        success: function(data) {
+                            data.forEach(function(prev) {
+                                preventivoSelect.append(
+                                    $('<option></option>').val(prev.id).text(prev.fornitore + ' - ' + prev.importo)
+                                );
+                            });
+                        },
+                        error: function() {
+                            console.log('Errore caricamento preventivi');
+                        }
+                    });
+                }
+            });
+
+            // === SUGGERIMENTI DINAMICI PER TIPO ===
+            
+            const suggerimenti = {
+                '0': { // PresentazioneOfferta
+                    titolo: 'Presentazione Offerta',
+                    testo: 'Assicurati di collegare questa scadenza alla Gara corrispondente. La data dovrebbe coincidere con il termine di presentazione delle offerte indicato nel bando.'
+                },
+                '1': { // RichiestaChiarimenti
+                    titolo: 'Richiesta Chiarimenti',
+                    testo: 'Questa scadenza indica il termine entro cui è possibile richiedere chiarimenti alla stazione appaltante. Collega alla Gara per un facile riferimento.'
+                },
+                '2': { // ScadenzaPreventivo
+                    titolo: 'Scadenza Preventivo',
+                    testo: 'Indica la validità temporale del preventivo. Collega direttamente al Preventivo interessato per un tracking preciso.'
+                },
+                '3': { // IntegrazioneDocumentazione
+                    titolo: 'Integrazione Documentazione',
+                    testo: 'Termine per l\'invio di documentazione integrativa. Collega al Lotto interessato dalla richiesta di integrazione.'
+                },
+                '4': { // StipulaContratto
+                    titolo: 'Stipula Contratto',
+                    testo: 'Data prevista per la firma del contratto. Collega al Lotto aggiudicato per mantenere il riferimento.'
+                },
+                '5': { // ScadenzaContratto
+                    titolo: 'Scadenza Contratto',
+                    testo: 'Data di scadenza del contratto attivo. Utile per pianificare eventuali rinnovi o nuove procedure.'
+                },
+                '6': { // Altro
+                    titolo: 'Altro',
+                    testo: 'Scadenza generica. Usa la descrizione per indicare chiaramente di cosa si tratta.'
+                }
+            };
+
+            $('select[name="Tipo"]').on('change', function() {
+                const tipo = $(this).val();
+                const suggerimentoCard = $('#suggerimentiTipo');
+                const suggerimentoBody = $('#suggerimentiTipoBody');
+
+                if (tipo && suggerimenti[tipo]) {
+                    suggerimentoBody.html(`
+                        <h6>${suggerimenti[tipo].titolo}</h6>
+                        <p class="small mb-0">${suggerimenti[tipo].testo}</p>
+                    `);
+                    suggerimentoCard.slideDown();
+                } else {
+                    suggerimentoCard.slideUp();
+                }
+            });
+
+            // Trigger iniziale se tipo già selezionato
+            if ($('select[name="Tipo"]').val()) {
+                $('select[name="Tipo"]').trigger('change');
+            }
+        });
+    </script>
+}

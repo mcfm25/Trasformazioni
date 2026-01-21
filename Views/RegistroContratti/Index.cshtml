@@ -1,0 +1,460 @@
+﻿@model Trasformazioni.Models.ViewModels.PagedResult<Trasformazioni.Models.ViewModels.RegistroContrattiListViewModel>
+@using Trasformazioni.Models.Enums
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Registro Contratti";
+    var filters = ViewBag.CurrentFilters as Trasformazioni.Models.ViewModels.RegistroContrattiFilterViewModel;
+    var statistiche = ViewBag.Statistiche as Trasformazioni.Models.ViewModels.RegistroContrattiStatisticheViewModel;
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h2>@ViewData["Title"]</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Registro Contratti</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="btn-group">
+                        <a asp-action="Create" asp-route-tipo="@TipoRegistro.Preventivo" class="btn btn-outline-primary">
+                            <i class="bi bi-file-earmark-plus me-1"></i> Nuovo Preventivo
+                        </a>
+                        <a asp-action="Create" asp-route-tipo="@TipoRegistro.Contratto" class="btn btn-primary">
+                            <i class="bi bi-file-earmark-plus me-1"></i> Nuovo Contratto
+                        </a>
+                        <!-- Pulsante Export CSV -->
+                        <a asp-action="ExportCsv" class="btn btn-outline-success">
+                            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Esporta Attivi (CSV)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <!-- Dashboard Statistiche -->
+    @if (statistiche != null)
+    {
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="text-primary fs-2 fw-bold">@statistiche.TotaleRegistri</div>
+                        <div class="text-muted small">Totale</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="text-info fs-2 fw-bold">@statistiche.TotalePreventivi</div>
+                        <div class="text-muted small">Preventivi</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="text-success fs-2 fw-bold">@statistiche.ContrattiAttivi</div>
+                        <div class="text-muted small">Attivi</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <a asp-action="InScadenza" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm h-100 border-warning border-2">
+                        <div class="card-body text-center py-3">
+                            <div class="text-warning fs-2 fw-bold">@statistiche.ContrattiInScadenza</div>
+                            <div class="text-muted small">In scadenza</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <a asp-action="Scaduti" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm h-100 border-danger border-2">
+                        <div class="card-body text-center py-3">
+                            <div class="text-danger fs-2 fw-bold">@statistiche.ContrattiScaduti</div>
+                            <div class="text-muted small">Scaduti</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm h-100 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-dark fs-5 fw-bold">@statistiche.TotaleCanoneAnnuoAttivi.ToString("C", new System.Globalization.CultureInfo("it-IT"))</div>
+                        <div class="text-muted small">Canone annuo attivi</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Filtri -->
+    @if (filters != null)
+    {
+        <partial name="_FilterPartial" model="filters" />
+    }
+
+    <!-- Tabella Risultati -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+            <span>
+                <i class="bi bi-list-ul me-2"></i>
+                <strong>@Model.TotalItems</strong> @(Model.TotalItems == 1 ? "registro trovato" : "registri trovati")
+            </span>
+            @if (Model.TotalPages > 1)
+            {
+                <span class="text-muted small">
+                    Pagina @Model.PageNumber di @Model.TotalPages
+                </span>
+            }
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Items.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 100px;">Tipo</th>
+                                <th style="width: 120px;">Protocollo</th>
+                                <th>Oggetto / Cliente</th>
+                                <th style="width: 60px;" class="text-center">Vers.</th>
+                                <th style="width: 120px;">Categoria</th>
+                                <th style="width: 100px;">Data Doc.</th>
+                                <th style="width: 100px;">Scadenza</th>
+                                <th style="width: 120px;" class="text-end">Canone</th>
+                                <th style="width: 140px;" class="text-center">Stato</th>
+                                <th style="width: 100px;" class="text-end">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr id="row-@item.Id" class="@(item.IsScaduto ? "table-danger" : item.IsScadenzaImminente ? "table-warning" : "")">
+                                    <td>
+                                        <span class="badge @item.TipoBadgeClass">
+                                            @item.TipoRegistroDescrizione
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(item.NumeroProtocollo))
+                                        {
+                                            <code class="small">@item.NumeroProtocollo</code>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <a asp-action="Details" asp-route-id="@item.Id"
+                                               class="text-decoration-none fw-semibold">
+                                                @item.Oggetto
+                                            </a>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(item.RagioneSociale))
+                                        {
+                                            <small class="text-muted">
+                                                <i class="bi bi-building me-1"></i>@item.RagioneSociale
+                                            </small>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.HasParent && item.HasChildren)
+                                        {
+                                            <span class="badge bg-info" title="Ha versione precedente e successive">
+                                                <i class="bi bi-diagram-3"></i>
+                                            </span>
+                                        }
+                                        else if (item.HasParent)
+                                        {
+                                            <span class="badge bg-secondary" title="Rinnovo/Revisione di un documento precedente">
+                                                <i class="bi bi-arrow-up-short"></i>
+                                            </span>
+                                        }
+                                        else if (item.HasChildren)
+                                        {
+                                            <span class="badge bg-primary" title="Ha versioni successive">
+                                                <i class="bi bi-arrow-down-short"></i>
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(item.CategoriaNome))
+                                        {
+                                            <span class="badge bg-light text-dark">@item.CategoriaNome</span>
+                                        }
+                                    </td>
+                                    <td class="small">
+                                        @item.DataDocumento.ToString("dd/MM/yyyy")
+                                    </td>
+                                    <td class="small">
+                                        @if (item.DataFineOScadenza.HasValue)
+                                        {
+                                            <div>@item.DataFineOScadenza.Value.ToString("dd/MM/yyyy")</div>
+                                            @if (item.GiorniAllaScadenza.HasValue)
+                                            {
+                                                @if (item.GiorniAllaScadenza.Value < 0)
+                                                {
+                                                    <small class="text-danger">
+                                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                                        Scaduto da @Math.Abs(item.GiorniAllaScadenza.Value) gg
+                                                    </small>
+                                                }
+                                                else if (item.GiorniAllaScadenza.Value <= 30)
+                                                {
+                                                    <small class="text-warning">
+                                                        <i class="bi bi-clock me-1"></i>
+                                                        @item.GiorniAllaScadenza.Value gg
+                                                    </small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">@item.GiorniAllaScadenza.Value gg</small>
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-end small">
+                                        @if (item.ImportoCanoneAnnuo.HasValue)
+                                        {
+                                            <span>@item.ImportoCanoneAnnuo.Value.ToString("C", new System.Globalization.CultureInfo("it-IT"))</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @item.StatoBadgeClass" title="@item.StatoDescrizione">
+                                            <i class="@item.StatoIcon me-1"></i>@item.StatoDescrizione
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@item.Id"
+                                               class="btn btn-outline-secondary" title="Dettagli">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id"
+                                               class="btn btn-outline-primary" title="Modifica">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Clona" asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               title="Clona documento">
+                                                <i class="bi bi-copy"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                <span class="visually-hidden">Altre azioni</span>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <a class="dropdown-item" asp-action="Upload" asp-route-id="@item.Id">
+                                                        <i class="bi bi-paperclip me-2"></i>Aggiungi allegato
+                                                    </a>
+                                                </li>
+                                                @if (item.Stato == StatoRegistro.Attivo ||
+                                                                                        item.Stato == StatoRegistro.InScadenza ||
+                                                                                        item.Stato == StatoRegistro.InScadenzaPropostoRinnovo)
+                                                {
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" asp-action="Rinnova" asp-route-id="@item.Id">
+                                                            <i class="bi bi-arrow-repeat me-2"></i>Rinnova
+                                                        </a>
+                                                    </li>
+                                                }
+                                                @if (item.Stato == StatoRegistro.Bozza)
+                                                {
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item text-danger btn-delete"
+                                                                data-id="@item.Id" data-oggetto="@item.Oggetto">
+                                                            <i class="bi bi-trash me-2"></i>Elimina
+                                                        </button>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-file-earmark-x display-1 text-muted"></i>
+                    <p class="text-muted mt-3 mb-0">Nessun registro trovato</p>
+                    @if (filters?.HasActiveFilters == true)
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary mt-3">
+                            <i class="bi bi-x-lg me-1"></i> Rimuovi filtri
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="mt-3">
+                            <a asp-action="Create" asp-route-tipo="@TipoRegistro.Preventivo" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-file-earmark-plus me-1"></i> Nuovo Preventivo
+                            </a>
+                            <a asp-action="Create" asp-route-tipo="@TipoRegistro.Contratto" class="btn btn-primary">
+                                <i class="bi bi-file-earmark-plus me-1"></i> Nuovo Contratto
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Paginazione -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Mostrando @(((Model.PageNumber - 1) * Model.PageSize) + 1) -
+                    @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalItems)
+                    di @Model.TotalItems
+                </div>
+                @{
+                    var routeValues = new Dictionary<string, object>();
+                    if (filters != null)
+                    {
+                        if (filters.TipoRegistro.HasValue) routeValues["TipoRegistro"] = (int)filters.TipoRegistro.Value;
+                        if (filters.Stato.HasValue) routeValues["Stato"] = (int)filters.Stato.Value;
+                        if (filters.ClienteId.HasValue) routeValues["ClienteId"] = filters.ClienteId.Value;
+                        if (filters.CategoriaContrattoId.HasValue) routeValues["CategoriaContrattoId"] = filters.CategoriaContrattoId.Value;
+                        if (!string.IsNullOrEmpty(filters.UtenteId)) routeValues["UtenteId"] = filters.UtenteId;
+                        if (!string.IsNullOrEmpty(filters.SearchTerm)) routeValues["SearchTerm"] = filters.SearchTerm;
+                        if (!string.IsNullOrEmpty(filters.OrderBy)) routeValues["OrderBy"] = filters.OrderBy;
+                        if (!string.IsNullOrEmpty(filters.OrderDirection)) routeValues["OrderDirection"] = filters.OrderDirection;
+                        routeValues["PageSize"] = filters.PageSize;
+                    }
+                    ViewData["PaginationRoute"] = routeValues;
+                }
+                <partial name="_PaginationPartial" model="Model" />
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Conferma Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Conferma Eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare il registro <strong id="deleteOggetto"></strong>?</p>
+                <p class="text-muted small mb-0">Questa azione non può essere annullata.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-1"></i> Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            let deleteId = null;
+
+            // Gestione eliminazione
+            $('.btn-delete').on('click', function () {
+                deleteId = $(this).data('id');
+                const oggetto = $(this).data('oggetto');
+                $('#deleteOggetto').text(oggetto);
+                deleteModal.show();
+            });
+
+            $('#confirmDelete').on('click', function () {
+                if (!deleteId) return;
+
+                const btn = $(this);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Eliminazione...');
+
+                $.ajax({
+                    url: '@Url.Action("Delete")/' + deleteId,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        deleteModal.hide();
+                        if (response.success) {
+                            $('#row-' + deleteId).fadeOut(300, function () {
+                                $(this).remove();
+                            });
+                            showAlert('success', response.message);
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        deleteModal.hide();
+                        showAlert('danger', 'Errore durante l\'eliminazione. Riprova.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-trash me-1"></i> Elimina');
+                        deleteId = null;
+                    }
+                });
+            });
+
+            // Helper per mostrare alert
+            function showAlert(type, message) {
+                const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+                const alert = $(`
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-${icon} me-2"></i>${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+                    </div>
+                `);
+                $('.container-fluid.py-4').find('.alert').remove();
+                $('.container-fluid.py-4 h2').closest('.row').after(alert);
+            }
+        });
+    </script>
+    @Html.AntiForgeryToken()
+}

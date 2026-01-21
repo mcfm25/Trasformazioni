@@ -1,0 +1,141 @@
+﻿@using Trasformazioni.Models.ViewModels
+@* 
+    Partial View generica per la paginazione
+    Funziona con qualsiasi PagedResult<T>
+    
+    Utilizzo:
+    @await Html.PartialAsync("_PaginationPartial", Model)
+    
+    Requisiti:
+    - Model deve essere di tipo PagedResult<T>
+    - ViewData["PaginationRoute"] deve contenere i parametri della query string corrente
+*@
+
+@{
+    // Cast dinamico del model
+    var pagedResult = Model as dynamic;
+
+    if (pagedResult == null || pagedResult.TotalPages <= 1)
+    {
+        // Non mostrare paginazione se c'è solo una pagina o meno
+        return;
+    }
+
+    // Recupera i parametri di routing dal ViewData
+    var routeValues = ViewData["PaginationRoute"] as Dictionary<string, object> ?? new Dictionary<string, object>();
+
+    // Helper per creare route values con PageNumber
+    Dictionary<string, object> GetRouteValuesForPage(int pageNumber)
+    {
+        var values = new Dictionary<string, object>(routeValues)
+        {
+            ["PageNumber"] = pageNumber
+        };
+        return values;
+    }
+
+    // Calcola il range di pagine da mostrare
+    int maxPagesToShow = 5;
+    int startPage = Math.Max(1, pagedResult.PageNumber - maxPagesToShow / 2);
+    int endPage = Math.Min(pagedResult.TotalPages, startPage + maxPagesToShow - 1);
+
+    // Aggiusta startPage se siamo vicini alla fine
+    if (endPage - startPage < maxPagesToShow - 1)
+    {
+        startPage = Math.Max(1, endPage - maxPagesToShow + 1);
+    }
+}
+
+<nav aria-label="Navigazione pagine">
+    <ul class="pagination mb-0">
+
+        <!-- Pulsante Prima Pagina -->
+        <li class="page-item @(pagedResult.HasPreviousPage ? "" : "disabled")">
+            <a class="page-link"
+               href="@Url.Action("Index", GetRouteValuesForPage(1))"
+               aria-label="Prima pagina"
+               title="Prima pagina">
+                <span aria-hidden="true">&laquo;&laquo;</span>
+            </a>
+        </li>
+
+        <!-- Pulsante Pagina Precedente -->
+        <li class="page-item @(pagedResult.HasPreviousPage ? "" : "disabled")">
+            <a class="page-link"
+               href="@Url.Action("Index", GetRouteValuesForPage(pagedResult.PageNumber - 1))"
+               aria-label="Pagina precedente"
+               title="Pagina precedente">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+
+        <!-- Numeri di Pagina -->
+        @if (startPage > 1)
+        {
+            <li class="page-item">
+                <a class="page-link" href="@Url.Action("Index", GetRouteValuesForPage(1))">1</a>
+            </li>
+
+            @if (startPage > 2)
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            }
+        }
+
+        @for (int i = startPage; i <= endPage; i++)
+        {
+            <li class="page-item @(i == pagedResult.PageNumber ? "active" : "")">
+                <a class="page-link"
+                   href="@Url.Action("Index", GetRouteValuesForPage(i))"
+                   title="Pagina @i">
+                    @i
+                    @if (i == pagedResult.PageNumber)
+                    {
+                        <span class="visually-hidden">(corrente)</span>
+                    }
+                </a>
+            </li>
+        }
+
+        @if (endPage < pagedResult.TotalPages)
+        {
+            @if (endPage < pagedResult.TotalPages - 1)
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            }
+
+            <li class="page-item">
+                <a class="page-link"
+                   href="@Url.Action("Index", GetRouteValuesForPage(pagedResult.TotalPages))"
+                   title="Ultima pagina">
+                    @pagedResult.TotalPages
+                </a>
+            </li>
+        }
+
+        <!-- Pulsante Pagina Successiva -->
+        <li class="page-item @(pagedResult.HasNextPage ? "" : "disabled")">
+            <a class="page-link"
+               href="@Url.Action("Index", GetRouteValuesForPage(pagedResult.PageNumber + 1))"
+               aria-label="Pagina successiva"
+               title="Pagina successiva">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+
+        <!-- Pulsante Ultima Pagina -->
+        <li class="page-item @(pagedResult.HasNextPage ? "" : "disabled")">
+            <a class="page-link"
+               href="@Url.Action("Index", GetRouteValuesForPage(pagedResult.TotalPages))"
+               aria-label="Ultima pagina"
+               title="Ultima pagina">
+                <span aria-hidden="true">&raquo;&raquo;</span>
+            </a>
+        </li>
+
+    </ul>
+</nav>

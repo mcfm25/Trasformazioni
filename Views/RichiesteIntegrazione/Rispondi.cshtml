@@ -1,0 +1,412 @@
+@model Trasformazioni.Models.ViewModels.RichiestaIntegrazioneEditViewModel
+
+@{
+    ViewData["Title"] = "Rispondi a Richiesta";
+    
+    // Recupera dati ViewBag (richiesta ente - read only)
+    var richiestaId = ViewBag.RichiestaId as Guid?;
+    var numeroProgressivo = ViewBag.NumeroProgressivo as int? ?? 0;
+    var dataRichiestaEnte = ViewBag.DataRichiestaEnte as DateTime?;
+    var testoRichiestaEnte = ViewBag.TestoRichiestaEnte as string ?? "";
+    var nomeFileRichiesta = ViewBag.NomeFileRichiesta as string;
+    var documentoRichiestaPath = ViewBag.DocumentoRichiestaPath as string;
+    
+    // Info lotto
+    var lottoId = ViewBag.LottoId as Guid?;
+    var codiceLotto = ViewBag.CodiceLotto as string ?? "";
+    var descrizioneLotto = ViewBag.DescrizioneLotto as string ?? "";
+    var codiceGara = ViewBag.CodiceGara as string ?? "";
+    var titoloGara = ViewBag.TitoloGara as string ?? "";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId">@codiceLotto</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@lottoId">Richieste Integrazione</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Rispondi</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>
+                <i class="bi bi-reply text-success me-2"></i>
+                Rispondi a Richiesta #@numeroProgressivo
+            </h2>
+            <p class="text-muted mb-0">
+                Compila la risposta alla richiesta di integrazione dell'ente per il lotto <strong>@codiceLotto</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Info Lotto (barra contestuale) -->
+    <div class="alert alert-light border mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <strong>Lotto:</strong> @codiceLotto - @descrizioneLotto
+            </div>
+            <div class="col-md-6 text-end">
+                <strong>Gara:</strong> @codiceGara - @titoloGara
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- COLONNA SINISTRA: Richiesta Ente (Read-Only) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-envelope-open me-2"></i>
+                        Richiesta Ente #@numeroProgressivo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Data Richiesta -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            Data Ricezione
+                        </label>
+                        <div class="form-control-plaintext bg-light p-2 rounded">
+                            @if (dataRichiestaEnte.HasValue)
+                            {
+                                @dataRichiestaEnte.Value.ToString("dd/MM/yyyy")
+                                <small class="text-muted ms-2">
+                                    (@((DateTime.Now - dataRichiestaEnte.Value).Days) giorni fa)
+                                </small>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Testo Richiesta -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-chat-left-text me-1"></i>
+                            Testo Richiesta
+                        </label>
+                        <div class="form-control-plaintext bg-light p-3 rounded" style="white-space: pre-wrap; min-height: 150px;">
+                            @testoRichiestaEnte
+                        </div>
+                    </div>
+
+                    <!-- Documento Richiesta -->
+                    @if (!string.IsNullOrWhiteSpace(nomeFileRichiesta))
+                    {
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-paperclip me-1"></i>
+                                Documento Allegato
+                            </label>
+                            <div>
+                                <a href="@documentoRichiestaPath" 
+                                   target="_blank" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-file-earmark-pdf me-2"></i>
+                                    @nomeFileRichiesta
+                                    <i class="bi bi-box-arrow-up-right ms-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">
+                            <small>
+                                <i class="bi bi-info-circle me-1"></i>
+                                Nessun documento allegato alla richiesta
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Alert Istruzioni -->
+            <div class="alert alert-info">
+                <h6 class="alert-heading">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Istruzioni
+                </h6>
+                <ul class="mb-0 small">
+                    <li>Leggi attentamente la <strong>richiesta dell'ente</strong> nella card sopra</li>
+                    <li>Compila la <strong>risposta</strong> nel form a destra</li>
+                    <li>Puoi allegare <strong>più documenti</strong> PDF se necessario</li>
+                    <li>La richiesta sarà automaticamente <strong>chiusa</strong> dopo l'invio</li>
+                    <li>Se tutte le richieste sono chiuse, il lotto tornerà in stato <strong>"In Esame"</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- COLONNA DESTRA: Form Risposta Azienda -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Risposta Azienda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Rispondi" asp-route-richiestaId="@richiestaId" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        
+                        <!-- Hidden fields -->
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="NumeroProgressivo" />
+                        <input type="hidden" asp-for="DataRichiestaEnte" />
+                        <input type="hidden" asp-for="TestoRichiestaEnte" />
+
+                        <!-- Validation Summary -->
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Data Risposta -->
+                        <div class="mb-3">
+                            <label asp-for="DataRispostaAzienda" class="form-label">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                Data Risposta <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="DataRispostaAzienda" 
+                                   class="form-control" 
+                                   type="date" 
+                                   max="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="DataRispostaAzienda" class="text-danger small"></span>
+                            <div class="form-text">
+                                Data di invio della risposta (default: oggi)
+                            </div>
+                        </div>
+
+                        <!-- Testo Risposta -->
+                        <div class="mb-3">
+                            <label asp-for="TestoRispostaAzienda" class="form-label">
+                                <i class="bi bi-chat-left-dots me-1"></i>
+                                Testo Risposta <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="TestoRispostaAzienda" 
+                                      class="form-control" 
+                                      rows="10" 
+                                      placeholder="Inserisci qui la risposta completa alla richiesta dell'ente..."></textarea>
+                            <span asp-validation-for="TestoRispostaAzienda" class="text-danger small"></span>
+                            <div class="form-text">
+                                Risposta dettagliata alla richiesta di integrazione
+                            </div>
+                        </div>
+
+                        <!-- Upload Documenti Risposta (multiplo) -->
+                        <div class="mb-3">
+                            <label asp-for="NuovoDocumentoRispostaFile" class="form-label">
+                                <i class="bi bi-files me-1"></i>
+                                Documenti Risposta (opzionale)
+                            </label>
+                            <input asp-for="NuovoDocumentoRispostaFile"
+                                   type="file" 
+                                   class="form-control" 
+                                   accept="application/pdf"
+                                   multiple />
+                            <span asp-validation-for="NuovoDocumentoRispostaFile" class="text-danger small"></span>
+                            <div class="form-text">
+                                Carica uno o più documenti PDF (max 10 MB ciascuno)
+                            </div>
+                        </div>
+
+                        @*    <!-- Note Interne --> NON PRESENTE NEL MODELLO
+                        <div class="mb-4">
+                            <label asp-for="NoteInterne" class="form-label">
+                                <i class="bi bi-sticky me-1"></i>
+                                Note Interne (opzionale)
+                            </label>
+                            <textarea asp-for="NoteInterne" 
+                                      class="form-control" 
+                                      rows="3" 
+                                      placeholder="Note interne per uso aziendale (non visibili all'ente)..."></textarea>
+                            <span asp-validation-for="NoteInterne" class="text-danger small"></span>
+                            <div class="form-text">
+                                Eventuali annotazioni per uso interno
+                            </div>
+                        </div>*@
+
+                        <!-- Alert Conferma -->
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Attenzione
+                            </h6>
+                            <p class="mb-0 small">
+                                Dopo l'invio della risposta, la richiesta <strong>#@numeroProgressivo</strong> sarà 
+                                automaticamente <strong>chiusa</strong> e non potrà essere modificata.
+                            </p>
+                        </div>
+
+                        <!-- Bottoni -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-send me-2"></i>
+                                Invia Risposta
+                            </button>
+                            <a asp-action="Index" asp-route-lottoId="@lottoId" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // // Validazione file multipli
+        // document.querySelector('input[type="file"][multiple]')?.addEventListener('change', function() {
+        //     const maxSize = 10 * 1024 * 1024; // 10 MB per file
+        //     const files = this.files;
+        //     let hasError = false;
+            
+        //     for (let i = 0; i < files.length; i++) {
+        //         const file = files[i];
+                
+        //         // Verifica dimensione
+        //         if (file.size > maxSize) {
+        //             alert(`Il file "${file.name}" è troppo grande. La dimensione massima consentita è 10 MB per file.`);
+        //             hasError = true;
+        //             break;
+        //         }
+                
+        //         // Verifica estensione PDF
+        //         if (!file.name.toLowerCase().endsWith('.pdf')) {
+        //             alert(`Il file "${file.name}" non è un PDF. Solo file PDF sono accettati.`);
+        //             hasError = true;
+        //             break;
+        //         }
+        //     }
+            
+        //     if (hasError) {
+        //         this.value = ''; // Reset input
+        //     } else if (files.length > 0) {
+        //         // Mostra riepilogo file selezionati
+        //         console.log(`${files.length} file selezionati per l'upload`);
+        //     }
+        // });
+        
+        // Non serve loop sui files, è singolo
+        document.querySelector('input[name="NuovoDocumentoRispostaFile"]').addEventListener('change', function() {
+            const maxSize = 10 * 1024 * 1024;
+            const file = this.files[0];  // Singolo file
+
+            if (file && file.size > maxSize) {
+                alert('File troppo grande. Max 10 MB.');
+                this.value = '';
+            }
+
+            // Estensioni permesse (da validazione custom)
+            const allowed = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar'];
+            const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+            if (file && !allowed.includes(ext)) {
+                alert('Formati accettati: PDF, Word, Excel, ZIP, RAR');
+                this.value = '';
+            }
+        });
+
+        // Auto-resize textarea risposta
+        const textarea = document.querySelector('textarea[name="TestoRispostaAzienda"]');
+        if (textarea) {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+
+        // Conferma invio risposta
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const testoRisposta = document.querySelector('textarea[name="TestoRispostaAzienda"]').value.trim();
+                
+                if (!testoRisposta) {
+                    alert('Inserisci il testo della risposta prima di inviare.');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Conferma invio
+                const conferma = confirm(
+                    'Sei sicuro di voler inviare la risposta?\n\n' +
+                    'La richiesta #@numeroProgressivo sarà automaticamente chiusa e non potrà essere modificata.'
+                );
+                
+                if (!conferma) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+
+        // Warn prima di uscire se ci sono modifiche
+        let formModified = false;
+        
+        if (form) {
+            form.addEventListener('input', function() {
+                formModified = true;
+            });
+            
+            window.addEventListener('beforeunload', function(e) {
+                if (formModified) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+            
+            form.addEventListener('submit', function() {
+                formModified = false;
+            });
+        }
+
+        // Contatore caratteri risposta (opzionale)
+        const rispostaTextarea = document.querySelector('textarea[name="TestoRispostaAzienda"]');
+        if (rispostaTextarea) {
+            const counter = document.createElement('div');
+            counter.className = 'form-text text-end';
+            counter.id = 'rispostaCounter';
+            rispostaTextarea.parentNode.appendChild(counter);
+            
+            function updateCounter() {
+                const length = rispostaTextarea.value.length;
+                counter.textContent = `${length} caratteri`;
+                
+                if (length < 50) {
+                    counter.classList.add('text-danger');
+                    counter.textContent += ' (troppo breve)';
+                } else {
+                    counter.classList.remove('text-danger');
+                }
+            }
+            
+            rispostaTextarea.addEventListener('input', updateCounter);
+            updateCounter(); // Init
+        }
+
+        // Highlight campo testo richiesta per facilitare lettura
+        const testoRichiestaDiv = document.querySelector('.form-control-plaintext[style*="white-space"]');
+        if (testoRichiestaDiv) {
+            testoRichiestaDiv.style.cursor = 'text';
+            testoRichiestaDiv.addEventListener('click', function() {
+                // Seleziona testo per copia facile
+                if (window.getSelection) {
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(this);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            });
+        }
+    </script>
+}

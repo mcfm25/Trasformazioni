@@ -1,0 +1,413 @@
+﻿@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+@model SoggettoEditViewModel
+@{
+    ViewData["Title"] = "Modifica Soggetto";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">
+                <i class="bi bi-pencil-square"></i> Modifica Soggetto
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Soggetti</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Dettaglio</a></li>
+                    <li class="breadcrumb-item active">Modifica</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form asp-action="Edit" method="post" id="editForm">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <!-- Campo Hidden per ID -->
+        <input asp-for="Id" type="hidden" />
+
+        <div class="row">
+            <!-- Colonna Sinistra -->
+            <div class="col-lg-8">
+
+                <!-- Card Classificazione -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-tag-fill"></i> Classificazione</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Codice Interno -->
+                            <div class="col-md-4">
+                                <label asp-for="CodiceInterno" class="form-label"></label>
+                                <input asp-for="CodiceInterno" class="form-control" placeholder="Opzionale" />
+                                <span asp-validation-for="CodiceInterno" class="text-danger"></span>
+                            </div>
+
+                            <!-- Tipo Soggetto -->
+                            <div class="col-md-4">
+                                <label asp-for="TipoSoggetto" class="form-label"></label>
+                                <select asp-for="TipoSoggetto" class="form-select" id="tipoSoggettoSelect">
+                                    <option value="">-- Seleziona --</option>
+                                    <option value="@((int)TipoSoggetto.Azienda)">Azienda</option>
+                                    <option value="@((int)TipoSoggetto.PersonaFisica)">Persona Fisica</option>
+                                </select>
+                                <span asp-validation-for="TipoSoggetto" class="text-danger"></span>
+                            </div>
+
+                            <!-- Natura Giuridica -->
+                            <div class="col-md-4">
+                                <label asp-for="NaturaGiuridica" class="form-label"></label>
+                                <select asp-for="NaturaGiuridica" class="form-select">
+                                    <option value="">-- Seleziona --</option>
+                                    <option value="@((int)NaturaGiuridica.PA)">Pubblica Amministrazione</option>
+                                    <option value="@((int)NaturaGiuridica.Privato)">Privato</option>
+                                </select>
+                                <span asp-validation-for="NaturaGiuridica" class="text-danger"></span>
+                            </div>
+
+                            <!-- Ruoli -->
+                            <div class="col-12">
+                                <label class="form-label">Ruolo <span class="text-danger">*</span></label>
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsCliente" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IsCliente" class="form-check-label">
+                                        <i class="bi bi-cart-check"></i> Cliente
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsFornitore" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IsFornitore" class="form-check-label">
+                                        <i class="bi bi-truck"></i> Fornitore
+                                    </label>
+                                </div>
+                                <small class="text-muted">Almeno uno deve essere selezionato</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Dati Anagrafici -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-person-vcard"></i> Dati Anagrafici</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Sezione AZIENDA -->
+                        <div id="aziendaSection" style="display: none;">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label asp-for="Denominazione" class="form-label"></label>
+                                    <input asp-for="Denominazione" class="form-control" placeholder="Ragione sociale" />
+                                    <span asp-validation-for="Denominazione" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Referente" class="form-label"></label>
+                                    <input asp-for="Referente" class="form-control" placeholder="Nome referente" />
+                                    <span asp-validation-for="Referente" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sezione PERSONA FISICA -->
+                        <div id="personaFisicaSection" style="display: none;">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Nome" class="form-label"></label>
+                                    <input asp-for="Nome" class="form-control" placeholder="Mario" />
+                                    <span asp-validation-for="Nome" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Cognome" class="form-label"></label>
+                                    <input asp-for="Cognome" class="form-control" placeholder="Rossi" />
+                                    <span asp-validation-for="Cognome" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CAMPI COMUNI - SEMPRE VISIBILI -->
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label asp-for="PartitaIVA" class="form-label"></label>
+                                <input asp-for="PartitaIVA" class="form-control" placeholder="IT12345678901" />
+                                <span asp-validation-for="PartitaIVA" class="text-danger"></span>
+                                <small class="text-muted">Opzionale per entrambi i tipi</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CodiceFiscale" class="form-label"></label>
+                                <input asp-for="CodiceFiscale" class="form-control" placeholder="RSSMRA80A01H501U" maxlength="16" />
+                                <span asp-validation-for="CodiceFiscale" class="text-danger"></span>
+                                <small class="text-muted">Opzionale per entrambi i tipi</small>
+                            </div>
+                        </div>
+
+                        <!-- CODICE SDI + CODICE IPA (condizionale per PA) -->
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label asp-for="CodiceSDI" class="form-label"></label>
+                                <input asp-for="CodiceSDI" class="form-control" placeholder="0000000 o 7 caratteri" maxlength="7" />
+                                <span asp-validation-for="CodiceSDI" class="text-danger"></span>
+                                <small class="text-muted">Inserire "0000000" se si usa PEC</small>
+                            </div>
+                            <div class="col-md-6" id="codiceIPASection" style="display: none;">
+                                <label asp-for="CodiceIPA" class="form-label"></label>
+                                <input asp-for="CodiceIPA" class="form-control" placeholder="6 caratteri" maxlength="6" />
+                                <span asp-validation-for="CodiceIPA" class="text-danger"></span>
+                                <small class="text-muted">Obbligatorio per PA</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Contatti -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-envelope-fill"></i> Contatti</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email" class="form-control" type="email" placeholder="info@esempio.it" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Telefono" class="form-label"></label>
+                                <input asp-for="Telefono" class="form-control" type="tel" placeholder="+39 06 123456" />
+                                <span asp-validation-for="Telefono" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="PEC" class="form-label"></label>
+                                <input asp-for="PEC" class="form-control" type="email" placeholder="pec@pec.it" />
+                                <span asp-validation-for="PEC" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Indirizzo -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0"><i class="bi bi-geo-alt-fill"></i> Indirizzo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label asp-for="TipoVia" class="form-label"></label>
+                                <select asp-for="TipoVia" class="form-select">
+                                    <option value="">--</option>
+                                    <option value="Via">Via</option>
+                                    <option value="Viale">Viale</option>
+                                    <option value="Piazza">Piazza</option>
+                                    <option value="Corso">Corso</option>
+                                    <option value="Largo">Largo</option>
+                                    <option value="Vicolo">Vicolo</option>
+                                </select>
+                                <span asp-validation-for="TipoVia" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NomeVia" class="form-label"></label>
+                                <input asp-for="NomeVia" class="form-control" placeholder="Giuseppe Garibaldi" />
+                                <span asp-validation-for="NomeVia" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="NumeroCivico" class="form-label"></label>
+                                <input asp-for="NumeroCivico" class="form-control" placeholder="42/A" />
+                                <span asp-validation-for="NumeroCivico" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-5">
+                                <label asp-for="Citta" class="form-label"></label>
+                                <input asp-for="Citta" class="form-control" placeholder="Roma" />
+                                <span asp-validation-for="Citta" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="CAP" class="form-label"></label>
+                                <input asp-for="CAP" class="form-control" placeholder="00100" maxlength="10" />
+                                <span asp-validation-for="CAP" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-2">
+                                <label asp-for="Provincia" class="form-label"></label>
+                                <input asp-for="Provincia" class="form-control" placeholder="RM" maxlength="2" />
+                                <span asp-validation-for="Provincia" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-2">
+                                <label asp-for="Nazione" class="form-label"></label>
+                                <input asp-for="Nazione" class="form-control" placeholder="Italia" />
+                                <span asp-validation-for="Nazione" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Colonna Destra -->
+            <div class="col-lg-4">
+
+                <!-- Card Dati Commerciali -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-credit-card-fill"></i> Dati Commerciali</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="CondizioniPagamento" class="form-label"></label>
+                            <input asp-for="CondizioniPagamento" class="form-control" placeholder="30 gg d.f.f.m." />
+                            <span asp-validation-for="CondizioniPagamento" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="IBAN" class="form-label"></label>
+                            <input asp-for="IBAN" class="form-control" placeholder="IT60X0542811101000000123456" />
+                            <span asp-validation-for="IBAN" class="text-danger"></span>
+                        </div>
+                        <div id="scontoPartnerSection" style="display: none;">
+                            <label asp-for="ScontoPartner" class="form-label"></label>
+                            <div class="input-group">
+                                <input asp-for="ScontoPartner" class="form-control" type="number" step="0.01" min="0" max="100" placeholder="0.00" />
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <span asp-validation-for="ScontoPartner" class="text-danger"></span>
+                            <small class="text-muted">Applicabile solo per fornitori</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Note -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-sticky-fill"></i> Note</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea asp-for="Note" class="form-control" rows="5" placeholder="Note aggiuntive..."></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Pulsanti Azione -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary me-2">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Torna alla Lista
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-check-circle"></i> Salva Modifiche
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Toggle sezioni in base al tipo soggetto
+        document.getElementById('tipoSoggettoSelect').addEventListener('change', function() {
+            const tipo = parseInt(this.value);
+            const aziendaSection = document.getElementById('aziendaSection');
+            const personaFisicaSection = document.getElementById('personaFisicaSection');
+
+            if (tipo === @((int)TipoSoggetto.Azienda)) {
+                aziendaSection.style.display = 'block';
+                personaFisicaSection.style.display = 'none';
+            } else if (tipo === @((int)TipoSoggetto.PersonaFisica)) {
+                aziendaSection.style.display = 'none';
+                personaFisicaSection.style.display = 'block';
+            } else {
+                aziendaSection.style.display = 'none';
+                personaFisicaSection.style.display = 'none';
+            }
+        });
+
+        // ⭐ NUOVO: Gestisci Natura Giuridica (PA)
+        const naturaSelect = document.querySelector('select[name="NaturaGiuridica"]');
+        const tipoSelect = document.getElementById('tipoSoggettoSelect');
+        const codiceIPASection = document.getElementById('codiceIPASection');
+
+        function updateNaturaConstraints() {
+            const tipo = parseInt(tipoSelect.value);
+            const natura = parseInt(naturaSelect.value);
+
+            // Se PersonaFisica, disabilita opzione PA
+            if (tipo === @((int)TipoSoggetto.PersonaFisica)) {
+                // Rimuovi PA dalle opzioni se PersonaFisica
+                const paOption = naturaSelect.querySelector('option[value="@((int)NaturaGiuridica.PA)"]');
+                if (paOption) {
+                    paOption.disabled = true;
+                }
+                // Se era PA, resetta a Privato
+                if (natura === @((int)NaturaGiuridica.PA)) {
+                    naturaSelect.value = '@((int)NaturaGiuridica.Privato)';
+                }
+            } else {
+                // Abilita PA se Azienda
+                const paOption = naturaSelect.querySelector('option[value="@((int)NaturaGiuridica.PA)"]');
+                if (paOption) {
+                    paOption.disabled = false;
+                }
+            }
+
+            // Mostra Codice IPA solo se PA
+            if (natura === @((int)NaturaGiuridica.PA)) {
+                codiceIPASection.style.display = 'block';
+            } else {
+                codiceIPASection.style.display = 'none';
+            }
+        }
+
+        tipoSelect.addEventListener('change', updateNaturaConstraints);
+        naturaSelect.addEventListener('change', updateNaturaConstraints);
+
+        // Mostra campo Sconto Partner solo se Fornitore è selezionato
+        document.querySelector('input[name="IsFornitore"]').addEventListener('change', function() {
+            const scontoSection = document.getElementById('scontoPartnerSection');
+            scontoSection.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Maiuscolo automatico per Codice Fiscale, Provincia e Codice IPA
+        const cfInput = document.querySelector('input[name="CodiceFiscale"]');
+        if (cfInput) {
+            cfInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
+        const provInput = document.querySelector('input[name="Provincia"]');
+        if (provInput) {
+            provInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
+        const codiceIPAInput = document.querySelector('input[name="CodiceIPA"]');
+        if (codiceIPAInput) {
+            codiceIPAInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
+        // Trigger iniziali
+        document.getElementById('tipoSoggettoSelect').dispatchEvent(new Event('change'));
+        updateNaturaConstraints();
+        document.querySelector('input[name="IsFornitore"]').dispatchEvent(new Event('change'));
+    </script>
+}

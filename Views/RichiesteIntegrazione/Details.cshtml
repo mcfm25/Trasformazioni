@@ -1,0 +1,431 @@
+@model Trasformazioni.Models.ViewModels.RichiestaIntegrazioneDetailsViewModel
+
+@{
+    ViewData["Title"] = "Dettaglio Richiesta";
+    
+    // Recupera dati ViewBag
+    var lottoId = ViewBag.LottoId as Guid?;
+    var codiceLotto = ViewBag.CodiceLotto as string ?? "";
+    var descrizioneLotto = ViewBag.DescrizioneLotto as string ?? "";
+    var statoLotto = ViewBag.StatoLotto;
+    var codiceGara = ViewBag.CodiceGara as string ?? "";
+    var titoloGara = ViewBag.TitoloGara as string ?? "";
+    var canRispondi = ViewBag.CanRispondi as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId">@codiceLotto</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-lottoId="@lottoId">Richieste Integrazione</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Dettaglio #@Model.NumeroProgressivo</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="bi bi-file-text text-primary me-2"></i>
+                Dettaglio Richiesta #@Model.NumeroProgressivo
+            </h2>
+            <p class="text-muted mb-0">
+                Visualizzazione completa della richiesta e risposta per il lotto <strong>@codiceLotto</strong>
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <!-- Stato Badge -->
+            @if (Model.IsChiusa)
+            {
+                <span class="badge bg-success fs-5">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Chiusa
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark fs-5">
+                    <i class="bi bi-hourglass-split me-2"></i>
+                    Aperta
+                </span>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna Sinistra -->
+        <div class="col-lg-8">
+            
+            <!-- Card 1: Richiesta Ente -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-envelope-open me-2"></i>
+                        Richiesta Ente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Numero Progressivo:</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-primary">#@Model.NumeroProgressivo</span>
+                        </dd>
+
+                        <dt class="col-sm-3">Data Ricezione:</dt>
+                        <dd class="col-sm-9">
+                            <strong>@Model.DataRichiestaEnte.ToString("dd/MM/yyyy")</strong>
+                            <small class="text-muted ms-2">
+                                (@((DateTime.Now - Model.DataRichiestaEnte).Days) giorni fa)
+                            </small>
+                        </dd>
+
+                        <dt class="col-sm-3">Testo Richiesta:</dt>
+                        <dd class="col-sm-9">
+                            <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">
+                                @Model.TestoRichiestaEnte
+                            </div>
+                        </dd>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.NomeFileRichiesta))
+                        {
+                            <dt class="col-sm-3">Documento:</dt>
+                            <dd class="col-sm-9">
+                                <a href="@Model.DocumentoRichiestaPath" 
+                                   target="_blank" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-file-earmark-pdf me-2"></i>
+                                    @Model.NomeFileRichiesta
+                                    <i class="bi bi-download ms-2"></i>
+                                </a>
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Card 2: Risposta Azienda (se presente) -->
+            @if (Model.DataRispostaAzienda.HasValue || !string.IsNullOrWhiteSpace(Model.TestoRispostaAzienda))
+            {
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-reply me-2"></i>
+                            Risposta Azienda
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            @if (Model.DataRispostaAzienda.HasValue)
+                            {
+                                <dt class="col-sm-3">Data Risposta:</dt>
+                                <dd class="col-sm-9">
+                                    <strong>@Model.DataRispostaAzienda.Value.ToString("dd/MM/yyyy")</strong>
+                                    @if (!string.IsNullOrWhiteSpace(Model.RispostoDaNome))
+                                    {
+                                        <br />
+                                        <small class="text-muted">
+                                            <i class="bi bi-person me-1"></i>
+                                            Risposto da: @Model.RispostoDaNome
+                                        </small>
+                                    }
+                                </dd>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(Model.TestoRispostaAzienda))
+                            {
+                                <dt class="col-sm-3">Testo Risposta:</dt>
+                                <dd class="col-sm-9">
+                                    <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">
+                                        @Model.TestoRispostaAzienda
+                                    </div>
+                                </dd>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(Model.NomeFileRisposta))
+                            {
+                                <dt class="col-sm-3">Documento:</dt>
+                                <dd class="col-sm-9">
+                                    <a href="@Model.DocumentoRispostaPath" 
+                                       target="_blank" 
+                                       class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-file-earmark-pdf me-2"></i>
+                                        @Model.NomeFileRisposta
+                                        <i class="bi bi-download ms-2"></i>
+                                    </a>
+                                </dd>
+                            }
+                        </dl>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Alert: Nessuna Risposta -->
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Richiesta Non Ancora Evasa
+                    </h6>
+                    <p class="mb-0">
+                        Questa richiesta non ha ancora ricevuto risposta.
+                        @if (canRispondi)
+                        {
+                            <span>Puoi rispondere utilizzando il pulsante in basso.</span>
+                        }
+                    </p>
+                </div>
+            }
+
+            <!-- Card 3: Info Lotto -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box-seam me-2"></i>
+                        Informazioni Lotto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Codice Lotto:</dt>
+                        <dd class="col-sm-9">
+                            <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId">
+                                <strong>@Model.CodiceLotto</strong>
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-3">Descrizione:</dt>
+                        <dd class="col-sm-9">@Model.DescrizioneLotto</dd>
+
+                        <dt class="col-sm-3">Gara:</dt>
+                        <dd class="col-sm-9">@Model.CodiceGara - @Model.TitoloGara</dd>
+
+                        <dt class="col-sm-3">Stato Lotto:</dt>
+                        <dd class="col-sm-9">
+                            @if (statoLotto != null)
+                            {
+                                @switch (statoLotto.ToString())
+                                {
+                                    case "InEsame":
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-search me-1"></i>
+                                            In Esame
+                                        </span>
+                                        break;
+                                    case "RichiestaIntegrazione":
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-arrows-angle-contract me-1"></i>
+                                            Richiesta Integrazione
+                                        </span>
+                                        break;
+                                    case "Vinto":
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-trophy me-1"></i>
+                                            Vinto
+                                        </span>
+                                        break;
+                                    case "Perso":
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Perso
+                                        </span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@statoLotto</span>
+                                        break;
+                                }
+                            }
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Colonna Destra -->
+        <div class="col-lg-4">
+            
+            <!-- Card: Audit Trail -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Audit Trail
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0">
+                        <dt><i class="bi bi-plus-circle me-1"></i> Registrata:</dt>
+                        <dd>
+                            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            @if (!string.IsNullOrWhiteSpace(Model.CreatedBy))
+                            {
+                                <br />
+                                <small class="text-muted">da @Model.CreatedBy</small>
+                            }
+                        </dd>
+
+                        @if (Model.ModifiedAt.HasValue)
+                        {
+                            <hr />
+                            <dt><i class="bi bi-pencil me-1"></i> Ultima Modifica:</dt>
+                            <dd>
+                                @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                @if (!string.IsNullOrWhiteSpace(Model.ModifiedBy))
+                                {
+                                    <br />
+                                    <small class="text-muted">da @Model.ModifiedBy</small>
+                                }
+                            </dd>
+                        }
+
+                        @if (Model.DataRispostaAzienda.HasValue)
+                        {
+                            <hr />
+                            <dt><i class="bi bi-check-circle me-1"></i> Risposta Inviata:</dt>
+                            <dd class="mb-0">
+                                @Model.DataRispostaAzienda.Value.ToString("dd/MM/yyyy")
+                                @if (!string.IsNullOrWhiteSpace(Model.RispostoDaNome))
+                                {
+                                    <br />
+                                    <small class="text-muted">da @Model.RispostoDaNome</small>
+                                }
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Card: Tempistiche -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-stopwatch me-2"></i>
+                        Tempistiche
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @{
+                        var giorniDaRichiesta = (DateTime.Now - Model.DataRichiestaEnte).Days;
+                        var giorniRisposta = Model.DataRispostaAzienda.HasValue 
+                            ? (Model.DataRispostaAzienda.Value - Model.DataRichiestaEnte).Days 
+                            : (int?)null;
+                    }
+                    
+                    <dl class="mb-0">
+                        <dt>Tempo Trascorso:</dt>
+                        <dd>
+                            <strong>@giorniDaRichiesta giorni</strong>
+                            <small class="text-muted d-block">dalla data richiesta</small>
+                        </dd>
+
+                        @if (giorniRisposta.HasValue)
+                        {
+                            <hr />
+                            <dt>Tempo di Risposta:</dt>
+                            <dd class="mb-0">
+                                <strong>@giorniRisposta.Value giorni</strong>
+                                @if (giorniRisposta.Value <= 3)
+                                {
+                                    <span class="badge bg-success ms-2">Rapida</span>
+                                }
+                                else if (giorniRisposta.Value <= 7)
+                                {
+                                    <span class="badge bg-info ms-2">Normale</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark ms-2">Lenta</span>
+                                }
+                            </dd>
+                        }
+                        else
+                        {
+                            <hr />
+                            <dt>Stato:</dt>
+                            <dd class="mb-0">
+                                @if (giorniDaRichiesta > 7)
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        Scaduta
+                                    </span>
+                                    <small class="text-muted d-block mt-1">Oltre 7 giorni senza risposta</small>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        In Attesa
+                                    </span>
+                                }
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Card: Azioni -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (canRispondi)
+                        {
+                            <a asp-action="Rispondi" asp-route-richiestaId="@Model.Id" class="btn btn-success">
+                                <i class="bi bi-reply me-2"></i>
+                                Rispondi alla Richiesta
+                            </a>
+                        }
+
+                        <a asp-action="Index" asp-route-lottoId="@lottoId" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Torna alla Lista
+                        </a>
+
+                        <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId" class="btn btn-outline-secondary">
+                            <i class="bi bi-box-seam me-2"></i>
+                            Vai al Lotto
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Copia testo al click
+        document.querySelectorAll('.bg-light[style*="white-space"]').forEach(function(div) {
+            div.style.cursor = 'pointer';
+            div.title = 'Click per selezionare il testo';
+            
+            div.addEventListener('click', function() {
+                if (window.getSelection) {
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(this);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    
+                    // Feedback visivo
+                    this.style.backgroundColor = '#e3f2fd';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                    }, 200);
+                }
+            });
+        });
+
+        // Tooltip per badge stato
+        const statusBadge = document.querySelector('.badge.fs-5');
+        if (statusBadge) {
+            statusBadge.title = statusBadge.textContent.includes('Chiusa') 
+                ? 'La richiesta ha ricevuto risposta ed è stata chiusa'
+                : 'La richiesta è ancora aperta e in attesa di risposta';
+        }
+    </script>
+}

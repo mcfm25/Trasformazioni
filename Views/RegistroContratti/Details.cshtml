@@ -1,0 +1,1109 @@
+﻿@model Trasformazioni.Models.ViewModels.RegistroContrattiDetailsViewModel
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+@{
+    ViewData["Title"] = Model.TipoRegistro == TipoRegistro.Preventivo ? "Dettaglio Preventivo" : "Dettaglio Contratto";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge @Model.TipoBadgeClass fs-6">@Model.TipoRegistroDescrizione</span>
+                        <span class="badge @Model.StatoBadgeClass fs-6">
+                            <i class="@Model.StatoIcon me-1"></i>@Model.StatoDescrizione
+                        </span>
+                        @if (Model.IsScaduto)
+                        {
+                            <span class="badge bg-danger fs-6">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Scaduto
+                            </span>
+                        }
+                        else if (Model.IsScadenzaImminente)
+                        {
+                            <span class="badge bg-warning text-dark fs-6">
+                                <i class="bi bi-clock me-1"></i>In scadenza tra @Model.GiorniAllaScadenza giorni
+                            </span>
+                        }
+                    </div>
+                    <h2 class="mb-1">@Model.Oggetto</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="breadcrumb-item"><a asp-action="Index">Registro Contratti</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                @(string.IsNullOrWhiteSpace(Model.NumeroProtocollo) ? "Dettaglio" : Model.NumeroProtocollo)
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    @if (Model.CanEdit)
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                            <i class="bi bi-pencil me-1"></i> Modifica
+                        </a>
+                    }
+                    <a asp-action="Upload" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="bi bi-paperclip me-1"></i> Aggiungi Allegato
+                    </a>
+                    <a asp-action="UploadMultiplo" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="bi bi-paperclip me-1"></i> Carica Multipli
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Torna alla lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna Principale -->
+        <div class="col-lg-8">
+            <!-- Dati Principali -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>Informazioni Generali
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Numero Protocollo</label>
+                            <p class="mb-0 fw-semibold">
+                                @if (!string.IsNullOrWhiteSpace(Model.NumeroProtocollo))
+                                {
+                                    <code>@Model.NumeroProtocollo</code>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non assegnato</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">ID Riferimento Esterno</label>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrWhiteSpace(Model.IdRiferimentoEsterno))
+                                {
+                                    <code>@Model.IdRiferimentoEsterno</code>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Categoria</label>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrWhiteSpace(Model.CategoriaNome))
+                                {
+                                    <span class="badge bg-light text-dark">@Model.CategoriaNome</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small mb-1">Oggetto</label>
+                            <p class="mb-0">@Model.Oggetto</p>
+                        </div>
+                        @* @if (!string.IsNullOrWhiteSpace(Model.Descrizione))
+                        {
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-1">Descrizione</label>
+                                <p class="mb-0">@Model.Descrizione</p>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Note))
+                        {
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-1">Note</label>
+                                <p class="mb-0 fst-italic">@Model.Note</p>
+                            </div>
+                        } *@
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controparte -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>Controparte
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label text-muted small mb-1">Ragione Sociale</label>
+                            <p class="mb-0 fw-semibold">
+                                @if (Model.ClienteId.HasValue)
+                                {
+                                    <a asp-controller="Soggetti" asp-action="Details" asp-route-id="@Model.ClienteId"
+                                       class="text-decoration-none">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>@Model.RagioneSociale
+                                    </a>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(Model.RagioneSociale))
+                                {
+                                    @Model.RagioneSociale
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non specificato</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Tipo Controparte</label>
+                            <p class="mb-0">
+                                @if (Model.TipoControparte.HasValue)
+                                {
+                                    <span class="badge @(Model.TipoControparte == NaturaGiuridica.PA ? "bg-info" : "bg-secondary")">
+                                        @(Model.TipoControparte == NaturaGiuridica.PA ? "Pubblica Amministrazione" : "Privato")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date e Scadenze -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar3 me-2"></i>Date e Scadenze
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Data Documento</label>
+                            <p class="mb-0">@Model.DataDocumento.ToString("dd/MM/yyyy")</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Data Decorrenza</label>
+                            <p class="mb-0">
+                                @if (Model.DataDecorrenza.HasValue)
+                                {
+                                    @Model.DataDecorrenza.Value.ToString("dd/MM/yyyy")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Data Fine / Scadenza</label>
+                            <p class="mb-0">
+                                @if (Model.DataFineOScadenza.HasValue)
+                                {
+                                    <span class="@(Model.IsScaduto ? "text-danger fw-bold" : Model.IsScadenzaImminente ? "text-warning fw-bold" : "")">
+                                        @Model.DataFineOScadenza.Value.ToString("dd/MM/yyyy")
+                                    </span>
+                                    @if (Model.GiorniAllaScadenza.HasValue)
+                                    {
+                                        if (Model.GiorniAllaScadenza.Value < 0)
+                                        {
+                                            <small class="text-danger ms-2">
+                                                (scaduto da @Math.Abs(Model.GiorniAllaScadenza.Value) giorni)
+                                            </small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted ms-2">
+                                                (@Model.GiorniAllaScadenza.Value giorni)
+                                            </small>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                        @if (Model.DataInvio.HasValue || Model.DataAccettazione.HasValue)
+                        {
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small mb-1">Data Invio</label>
+                                <p class="mb-0">
+                                    @if (Model.DataInvio.HasValue)
+                                    {
+                                        @Model.DataInvio.Value.ToString("dd/MM/yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small mb-1">Data Accettazione</label>
+                                <p class="mb-0">
+                                    @if (Model.DataAccettazione.HasValue)
+                                    {
+                                        @Model.DataAccettazione.Value.ToString("dd/MM/yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </p>
+                            </div>
+                        }
+                        @if (Model.GiorniPreavvisoDisdetta.HasValue || Model.DataLimiteDisdetta.HasValue)
+                        {
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small mb-1">Preavviso Disdetta</label>
+                                <p class="mb-0">
+                                    @if (Model.GiorniPreavvisoDisdetta.HasValue)
+                                    {
+                                        <span>@Model.GiorniPreavvisoDisdetta giorni</span>
+                                        @if (Model.DataLimiteDisdetta.HasValue)
+                                        {
+                                            <small class="text-muted d-block">
+                                                Limite: @Model.DataLimiteDisdetta.Value.ToString("dd/MM/yyyy")
+                                                @if (Model.GiorniAllaDisdetta.HasValue && Model.GiorniAllaDisdetta.Value <= 30)
+                                                {
+                                                    <span class="text-warning">(@Model.GiorniAllaDisdetta giorni)</span>
+                                                }
+                                            </small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Rinnovo Automatico -->
+                    @if (Model.IsRinnovoAutomatico || Model.GiorniRinnovoAutomatico.HasValue)
+                    {
+                        <hr class="my-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-1">Rinnovo Automatico</label>
+                                <p class="mb-0">
+                                    @if (Model.IsRinnovoAutomatico)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Attivo
+                                        </span>
+                                        @if (Model.GiorniRinnovoAutomatico.HasValue)
+                                        {
+                                            <span class="ms-2">(@Model.GiorniRinnovoAutomatico giorni)</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Non attivo</span>
+                                    }
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-1">Alert Scadenza</label>
+                                <p class="mb-0">
+                                    @* @if (Model.GiorniAlertScadenza.HasValue)
+                                    { *@
+                                    <span>@Model.GiorniAlertScadenza giorni prima</span>
+                                    @if (Model.DataAlertScadenza.HasValue)
+                                    {
+                                        <small class="text-muted d-block">
+                                            Data alert: @Model.DataAlertScadenza.Value.ToString("dd/MM/yyyy")
+                                        </small>
+                                    }
+                                    @* }
+                                    else
+                                    {
+                                        <span class="text-muted">Non configurato</span>
+                                    } *@
+                                </p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Importi -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-currency-euro me-2"></i>Importi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Canone Annuo</label>
+                            <p class="mb-0 fs-5 fw-bold text-primary">
+                                @if (Model.ImportoCanoneAnnuo.HasValue)
+                                {
+                                    @Model.ImportoCanoneAnnuo.Value.ToString("C", new System.Globalization.CultureInfo("it-IT"))
+                                }
+                                else
+                                {
+                                    <span class="text-muted fw-normal fs-6">-</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Una Tantum</label>
+                            <p class="mb-0">
+                                @if (Model.ImportoUnatantum.HasValue)
+                                {
+                                    @Model.ImportoUnatantum.Value.ToString("C", new System.Globalization.CultureInfo("it-IT"))
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Totale Contratto</label>
+                            <p class="mb-0">
+                                @* @if (Model.ImportoTotale.HasValue)
+                                { *@
+                                    @Model.ImportoTotale.ToString("C", new System.Globalization.CultureInfo("it-IT"))
+                                @* }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                } *@
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Allegati -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-paperclip me-2"></i>Allegati
+                        @if (Model.Allegati?.Any() == true)
+                        {
+                            <span class="badge bg-secondary ms-2">@Model.Allegati.Count()</span>
+                        }
+                    </h5>
+                    <a asp-action="Upload" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus-lg me-1"></i>Aggiungi
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Allegati?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40px;"></th>
+                                        <th>Nome File</th>
+                                        <th style="width: 120px;">Tipo</th>
+                                        <th style="width: 100px;">Dimensione</th>
+                                        <th style="width: 120px;">Data</th>
+                                        <th style="width: 100px;" class="text-end">Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var allegato in Model.Allegati)
+                                    {
+                                       @*  <tr id="allegato-row-@allegato.Id">
+                                            <td class="text-center">
+                                                <i class="@allegato.FileIcon @allegato.FileIconColor fs-5"></i>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">@allegato.NomeFile</div>
+                                                @if (!string.IsNullOrWhiteSpace(allegato.Descrizione))
+                                                {
+                                                    <small class="text-muted">@allegato.Descrizione</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrWhiteSpace(allegato.TipoDocumentoNome))
+                                                {
+                                                    <span class="badge bg-light text-dark">@allegato.TipoDocumentoNome</span>
+                                                }
+                                            </td>
+                                            <td class="small">@allegato.DimensioneFormattata</td>
+                                            <td class="small">@allegato.DataCaricamento.ToString("dd/MM/yyyy")</td>
+                                            <td class="text-end">
+                                                <div class="btn-group btn-group-sm">
+                                                    <a asp-action="Download" asp-route-id="@allegato.Id"
+                                                       class="btn btn-outline-primary" title="Scarica">
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-danger btn-delete-allegato"
+                                                            data-id="@allegato.Id" data-nome="@allegato.NomeFile"
+                                                            title="Elimina">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr> *@
+                                        <tr id="allegato-row-@allegato.Id">
+                                            <td class="text-center">
+                                                <a asp-action="AllegatoDetails" asp-route-id="@allegato.Id"
+                                                   class="text-decoration-none">
+                                                    <i class="@allegato.FileIcon @allegato.FileIconColor fs-5"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a asp-action="AllegatoDetails" asp-route-id="@allegato.Id"
+                                                   class="fw-semibold text-decoration-none">
+                                                    @allegato.NomeFile
+                                                </a>
+                                                @if (!string.IsNullOrWhiteSpace(allegato.Descrizione))
+                                                {
+                                                    <br />
+                                                    <small class="text-muted">@allegato.Descrizione</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrWhiteSpace(allegato.TipoDocumentoNome))
+                                                {
+                                                    <span class="badge bg-light text-dark">@allegato.TipoDocumentoNome</span>
+                                                }
+                                            </td>
+                                            <td class="small">@allegato.DimensioneFormattata</td>
+                                            <td class="small">@allegato.DataCaricamento.ToString("dd/MM/yyyy")</td>
+                                            <td class="text-end">
+                                                <div class="btn-group btn-group-sm">
+                                                    <a asp-action="AllegatoDetails" asp-route-id="@allegato.Id"
+                                                       class="btn btn-outline-info" title="Dettagli e Preview">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a asp-action="Download" asp-route-id="@allegato.Id"
+                                                       class="btn btn-outline-primary" title="Scarica">
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-danger btn-delete-allegato"
+                                                            data-id="@allegato.Id" data-nome="@allegato.NomeFile"
+                                                            title="Elimina">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-folder2-open display-4 text-muted"></i>
+                            <p class="text-muted mt-2 mb-0">Nessun allegato</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Versioni / Storico Rinnovi -->
+            @if (Model.ParentId.HasValue || Model.Versioni?.Any() == true)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history me-2"></i>Storico Versioni
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.ParentId.HasValue)
+                        {
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Questo documento è un rinnovo di:
+                                <a asp-action="Details" asp-route-id="@Model.ParentId" class="alert-link">
+                                    @(Model.ParentNumeroProtocollo ?? "Documento precedente")
+                                </a>
+                            </div>
+                        }
+
+                        @if (Model.Versioni?.Any() == true)
+                        {
+                            <div class="list-group">
+                                @foreach (var versione in Model.Versioni.OrderByDescending(v => v.DataDocumento))
+                                {
+                                    <a asp-action="Details" asp-route-id="@versione.Id"
+                                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">
+                                                @(versione.NumeroProtocollo ?? "Senza protocollo")
+                                            </div>
+                                            <small class="text-muted">
+                                                @versione.DataDocumento.ToString("dd/MM/yyyy") - @versione.Oggetto
+                                            </small>
+                                        </div>
+                                        <span class="badge @versione.StatoBadgeClass">@versione.StatoDescrizione</span>
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Info Audit -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informazioni di Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small mb-1">Responsabile Interno</label>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrWhiteSpace(Model.ResponsabileInterno))
+                                {
+                                    <i class="bi bi-person me-1"></i>
+                                    @Model.ResponsabileInterno
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non assegnato</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small mb-1">Creato il</label>
+                            <p class="mb-0">
+                                @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                @if (!string.IsNullOrWhiteSpace(Model.CreatedBy))
+                                {
+                                    <span class="text-muted">da @Model.CreatedBy</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small mb-1">Ultima modifica</label>
+                            <p class="mb-0">
+                                @if (Model.ModifiedAt.HasValue)
+                                {
+                                    <span>@Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    @if (!string.IsNullOrWhiteSpace(Model.ModifiedBy))
+                                    {
+                                        <span class="text-muted">da @Model.ModifiedBy</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Mai modificato</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Azioni Workflow -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>Azioni
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (Model.CanInviare)
+                        {
+                            <button type="button" class="btn btn-primary btn-workflow"
+                                    data-action="Invia" data-confirm="Confermi l'invio del documento?">
+                                <i class="bi bi-send me-2"></i>Invia al Cliente
+                            </button>
+                        }
+
+                        @if (Model.CanMandareInRevisione)
+                        {
+                            <button type="button" class="btn btn-warning btn-workflow-stato"
+                                    data-stato="@((int)StatoRegistro.InRevisione)"
+                                    data-confirm="Confermi di voler mandare il documento in revisione?">
+                                <i class="bi bi-search me-2"></i>Manda in Revisione
+                            </button>
+                        }
+
+                        @if (Model.CanTornareInBozza)
+                        {
+                            <button type="button" class="btn btn-secondary btn-workflow-stato"
+                                    data-stato="@((int)StatoRegistro.Bozza)"
+                                    data-confirm="Confermi di voler riportare il documento in bozza?">
+                                <i class="bi bi-pencil me-2"></i>Torna in Bozza
+                            </button>
+                        }
+
+                        @if (Model.CanAttivare)
+                        {
+                            <button type="button" class="btn btn-success btn-workflow"
+                                    data-action="Attiva" data-confirm="Confermi l'attivazione del contratto?">
+                                <i class="bi bi-check-circle me-2"></i>Attiva Contratto
+                            </button>
+                        }
+
+                        @if (Model.CanRinnovare)
+                        {
+                            <a asp-action="Rinnova" asp-route-id="@Model.Id" class="btn btn-info">
+                                <i class="bi bi-arrow-repeat me-2"></i>Rinnova Contratto
+                            </a>
+                            <button type="button" class="btn btn-outline-info btn-workflow"
+                                    data-action="RinnovaRapido" data-confirm="Confermi il rinnovo rapido con i parametri esistenti?">
+                                <i class="bi bi-lightning me-2"></i>Rinnovo Rapido
+                            </button>
+                        }
+
+                        @if (Model.Stato == StatoRegistro.InScadenza)
+                        {
+                            <button type="button" class="btn btn-outline-warning btn-workflow"
+                                    data-action="ProponiRinnovo" data-confirm="Confermi la proposta di rinnovo?">
+                                <i class="bi bi-arrow-repeat me-2"></i>Proponi Rinnovo
+                            </button>
+                        }
+
+                        @if (Model.CanSospendere)
+                        {
+                            <button type="button" class="btn btn-warning btn-workflow"
+                                    data-action="Sospendi" data-confirm="Confermi la sospensione del contratto?">
+                                <i class="bi bi-pause-circle me-2"></i>Sospendi
+                            </button>
+                        }
+
+                        @if (Model.CanRiattivare)
+                        {
+                            <button type="button" class="btn btn-success btn-workflow"
+                                    data-action="Riattiva" data-confirm="Confermi la riattivazione del contratto?">
+                                <i class="bi bi-play-circle me-2"></i>Riattiva
+                            </button>
+                        }
+
+                        @if (Model.CanAnnullare)
+                        {
+                            <button type="button" class="btn btn-outline-danger btn-workflow"
+                                    data-action="Annulla" data-confirm="Sei sicuro di voler annullare questo documento? L'operazione non è reversibile.">
+                                <i class="bi bi-x-circle me-2"></i>Annulla
+                            </button>
+                        }
+
+                        @if (Model.CanDelete)
+                        {
+                            <hr>
+                            <button type="button" class="btn btn-danger" id="btnDelete">
+                                <i class="bi bi-trash me-2"></i>Elimina
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cambio Stato -->
+            @if (Model.CanChangeStato && Model.StatiDisponibili.Count() > 1)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-arrow-left-right me-2"></i>Cambio Stato
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Stato attuale</label>
+                            <div>
+                                <span class="badge @Model.StatoBadgeClass fs-6">
+                                    <i class="@Model.StatoIcon me-1"></i>@Model.StatoDescrizione
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="selectNuovoStato" class="form-label">Nuovo Stato</label>
+                            <select id="selectNuovoStato" class="form-select">
+                                <option value="">-- Seleziona nuovo stato --</option>
+                                @foreach (var stato in Model.StatiDisponibili.Where(s => s != Model.Stato))
+                                {
+                                    <option value="@((int)stato)">
+                                        @RegistroContrattiDetailsViewModel.GetStatoDescrizione(stato)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" id="btnCambiaStato" disabled>
+                            <i class="bi bi-arrow-repeat me-2"></i>Cambia Stato
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <!-- Riepilogo Rapido -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>Riepilogo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Tipo</span>
+                            <span class="badge @Model.TipoBadgeClass">@Model.TipoRegistroDescrizione</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Stato</span>
+                            <span class="badge @Model.StatoBadgeClass">@Model.StatoDescrizione</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Categoria</span>
+                            <span>@(Model.CategoriaNome ?? "-")</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Scadenza</span>
+                            <span class="@(Model.IsScaduto ? "text-danger" : Model.IsScadenzaImminente ? "text-warning" : "")">
+                                @(Model.DataFineOScadenza?.ToString("dd/MM/yyyy") ?? "-")
+                            </span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Canone Annuo</span>
+                            <span class="fw-bold">
+                                @(Model.ImportoCanoneAnnuo?.ToString("C", new System.Globalization.CultureInfo("it-IT")) ?? "-")
+                            </span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Allegati</span>
+                            <span class="badge bg-secondary">@(Model.Allegati?.Count() ?? 0)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conferma Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conferma Eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare questo registro?</p>
+                <p class="text-muted small mb-0">Questa azione non può essere annullata.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-1"></i> Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conferma Allegato -->
+<div class="modal fade" id="deleteAllegatoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conferma Eliminazione Allegato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare l'allegato <strong id="deleteAllegatoNome"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAllegato">
+                    <i class="bi bi-trash me-1"></i> Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conferma Workflow -->
+<div class="modal fade" id="workflowModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="workflowModalTitle">Conferma Azione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p id="workflowModalMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" id="confirmWorkflow">
+                    <i class="bi bi-check-lg me-1"></i> Conferma
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const registroId = '@Model.Id';
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const deleteAllegatoModal = new bootstrap.Modal(document.getElementById('deleteAllegatoModal'));
+            const workflowModal = new bootstrap.Modal(document.getElementById('workflowModal'));
+            let deleteAllegatoId = null;
+            let workflowAction = null;
+            let workflowNuovoStato = null;
+
+            // Eliminazione registro
+            $('#btnDelete').on('click', function () {
+                deleteModal.show();
+            });
+
+            $('#confirmDelete').on('click', function () {
+                const btn = $(this);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Eliminazione...');
+
+                $.ajax({
+                    url: '@Url.Action("Delete")/' + registroId,
+                    type: 'POST',
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        deleteModal.hide();
+                        if (response.success) {
+                            window.location.href = '@Url.Action("Index")';
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        deleteModal.hide();
+                        showAlert('danger', 'Errore durante l\'eliminazione.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-trash me-1"></i> Elimina');
+                    }
+                });
+            });
+
+            // Eliminazione allegato
+            $('.btn-delete-allegato').on('click', function () {
+                deleteAllegatoId = $(this).data('id');
+                $('#deleteAllegatoNome').text($(this).data('nome'));
+                deleteAllegatoModal.show();
+            });
+
+            $('#confirmDeleteAllegato').on('click', function () {
+                if (!deleteAllegatoId) return;
+
+                const btn = $(this);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Eliminazione...');
+
+                $.ajax({
+                    url: '@Url.Action("DeleteAllegato")/' + deleteAllegatoId,
+                    type: 'POST',
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        deleteAllegatoModal.hide();
+                        if (response.success) {
+                            $('#allegato-row-' + deleteAllegatoId).fadeOut(300, function () { $(this).remove(); });
+                            showAlert('success', response.message);
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        deleteAllegatoModal.hide();
+                        showAlert('danger', 'Errore durante l\'eliminazione.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-trash me-1"></i> Elimina');
+                        deleteAllegatoId = null;
+                    }
+                });
+            });
+
+            // // Azioni workflow
+            // $('.btn-workflow').on('click', function () {
+            //     workflowAction = $(this).data('action');
+            //     const confirmMsg = $(this).data('confirm');
+            //     $('#workflowModalTitle').text('Conferma: ' + workflowAction);
+            //     $('#workflowModalMessage').text(confirmMsg);
+            //     workflowModal.show();
+            // });
+
+            // $('#confirmWorkflow').on('click', function () {
+            //     if (!workflowAction) return;
+
+            //     const btn = $(this);
+            //     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Elaborazione...');
+
+            //     $.ajax({
+            //         url: '@Url.Action("Index")/' + workflowAction + '/' + registroId,
+            //         type: 'POST',
+            //         headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            //         success: function (response) {
+            //             workflowModal.hide();
+            //             if (response.success) {
+            //                 if (response.redirectUrl) {
+            //                     window.location.href = response.redirectUrl;
+            //                 } else {
+            //                     location.reload();
+            //                 }
+            //             } else {
+            //                 showAlert('danger', response.message);
+            //             }
+            //         },
+            //         error: function () {
+            //             workflowModal.hide();
+            //             showAlert('danger', 'Errore durante l\'operazione.');
+            //         },
+            //         complete: function () {
+            //             btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> Conferma');
+            //             workflowAction = null;
+            //         }
+            //     });
+            // });
+
+            // Azioni workflow (action specifiche: Invia, Attiva, etc.)
+            $('.btn-workflow').on('click', function () {
+                workflowAction = $(this).data('action');
+                workflowNuovoStato = null; // Reset stato
+                const confirmMsg = $(this).data('confirm');
+                $('#workflowModalTitle').text('Conferma: ' + workflowAction);
+                $('#workflowModalMessage').text(confirmMsg);
+                workflowModal.show();
+            });
+
+            // Azioni workflow con CambiaStato (per transizioni generiche: InRevisione, Bozza)
+            $('.btn-workflow-stato').on('click', function () {
+                workflowNuovoStato = $(this).data('stato');
+                workflowAction = null; // Reset action
+                const confirmMsg = $(this).data('confirm');
+                $('#workflowModalTitle').text('Conferma Cambio Stato');
+                $('#workflowModalMessage').text(confirmMsg);
+                workflowModal.show();
+            });
+
+            $('#confirmWorkflow').on('click', function () {
+                // Se non c'è né action né stato, esci
+                if (!workflowAction && workflowNuovoStato === null) return;
+
+                const btn = $(this);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Elaborazione...');
+
+                let ajaxUrl, ajaxData;
+
+                if (workflowNuovoStato !== null) {
+                    // Usa CambiaStato per transizioni generiche
+                    ajaxUrl = '@Url.Action("CambiaStato")/' + registroId;
+                    ajaxData = { nuovoStato: workflowNuovoStato };
+                } else {
+                    // Usa action specifica (Invia, Attiva, etc.)
+                    ajaxUrl = '@Url.Action("Index")/' + workflowAction + '/' + registroId;
+                    ajaxData = null;
+                }
+
+                $.ajax({
+                    url: ajaxUrl,
+                    type: 'POST',
+                    data: ajaxData,
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        workflowModal.hide();
+                        if (response.success) {
+                            if (response.redirectUrl) {
+                                window.location.href = response.redirectUrl;
+                            } else {
+                                location.reload();
+                            }
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        workflowModal.hide();
+                        showAlert('danger', 'Errore durante l\'operazione.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> Conferma');
+                        workflowAction = null;
+                        workflowNuovoStato = null;
+                    }
+                });
+            });
+
+            // Cambio stato da dropdown
+            const selectNuovoStato = $('#selectNuovoStato');
+            const btnCambiaStato = $('#btnCambiaStato');
+
+            // Abilita/disabilita bottone in base alla selezione
+            selectNuovoStato.on('change', function () {
+                btnCambiaStato.prop('disabled', !$(this).val());
+            });
+
+            // Click su Cambia Stato
+            btnCambiaStato.on('click', function () {
+                const nuovoStato = selectNuovoStato.val();
+                if (!nuovoStato) return;
+
+                const statoText = selectNuovoStato.find('option:selected').text();
+
+                // Usa il modal esistente per conferma
+                workflowNuovoStato = parseInt(nuovoStato);
+                workflowAction = null;
+                $('#workflowModalTitle').text('Conferma Cambio Stato');
+                $('#workflowModalMessage').text('Confermi di voler cambiare lo stato in "' + statoText + '"?');
+                workflowModal.show();
+            });
+
+            function showAlert(type, message) {
+                const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+                const alert = $(`
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-${icon} me-2"></i>${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                $('.container-fluid.py-4').find('.alert').remove();
+                $('.container-fluid.py-4 h2').closest('.row').after(alert);
+            }
+        });
+    </script>
+    @Html.AntiForgeryToken()
+}

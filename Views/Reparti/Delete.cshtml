@@ -1,0 +1,95 @@
+﻿@model Trasformazioni.Models.ViewModels.RepartoDetailsViewModel
+@{
+    ViewData["Title"] = "Elimina Reparto";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Reparti</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Nome</a></li>
+            <li class="breadcrumb-item active">Elimina</li>
+        </ol>
+    </nav>
+
+    <!-- Messaggi -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Conferma Eliminazione
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Attenzione!</strong> Stai per eliminare il seguente reparto.
+                        Questa operazione non può essere annullata.
+                    </div>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Nome</dt>
+                        <dd class="col-sm-8">@Model.Nome</dd>
+
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8">@Model.Email</dd>
+
+                        @if (!string.IsNullOrEmpty(Model.Descrizione))
+                        {
+                            <dt class="col-sm-4">Descrizione</dt>
+                            <dd class="col-sm-8">@Model.Descrizione</dd>
+                        }
+
+                        <dt class="col-sm-4">Utenti assegnati</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.UtentiCount > 0)
+                            {
+                                <span class="badge bg-danger">@Model.UtentiCount</span>
+                                <span class="text-danger small ms-2">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    Non è possibile eliminare un reparto con utenti assegnati
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">0</span>
+                            }
+                        </dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Annulla
+                            </a>
+                            @if (Model.UtentiCount == 0)
+                            {
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash me-1"></i>Elimina Reparto
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-danger" disabled>
+                                    <i class="bi bi-trash me-1"></i>Elimina Reparto
+                                </button>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

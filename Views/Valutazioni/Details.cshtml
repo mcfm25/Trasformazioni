@@ -1,0 +1,239 @@
+@model Trasformazioni.Models.ViewModels.ValutazioneLottoDetailsViewModel
+
+@{
+    ViewData["Title"] = "Dettaglio Valutazione";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId">@Model.CodiceLotto</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Dettaglio Valutazione</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h2>
+                <i class="bi bi-clipboard-check text-primary me-2"></i>
+                Dettaglio Valutazione Completa
+            </h2>
+            <p class="text-muted">Lotto: <strong>@Model.CodiceLotto</strong> - @Model.DescrizioneLotto</p>
+        </div>
+        <div class="col-md-2 text-end">
+            <a asp-controller="Lotti" asp-action="Details" asp-route-id="@Model.LottoId" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-1"></i>
+                Torna al Lotto
+            </a>
+        </div>
+    </div>
+
+    <!-- Info Gara -->
+    <div class="card mb-4 bg-light">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="bi bi-info-circle me-2"></i>
+                Informazioni Gara e Lotto
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Gara:</strong> @Model.CodiceGara - @Model.TitoloGara
+                </div>
+                <div class="col-md-3">
+                    <strong>Ente:</strong> @Model.EnteAppaltante
+                </div>
+                <div class="col-md-3">
+                    <strong>Tipologia Lotto:</strong> @Model.TipologiaLotto
+                </div>
+                <div class="col-md-2">
+                    <strong>Importo Base:</strong> @Model.ImportoBaseAsta?.ToString("C2")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Valutazione Tecnica -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-check me-2"></i>
+                        Valutazione Tecnica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.DataValutazioneTecnica.HasValue)
+                    {
+                        <div class="mb-3">
+                            <strong>Stato:</strong>
+                            @if (Model.TecnicaApprovata == true)
+                            {
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-check-circle me-1"></i>Approvata
+                                </span>
+                            }
+                            else if (Model.TecnicaApprovata == false)
+                            {
+                                <span class="badge bg-danger ms-2">
+                                    <i class="bi bi-x-circle me-1"></i>Rifiutata
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="bi bi-clock me-1"></i>In Valutazione
+                                </span>
+                            }
+                        </div>
+
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Data Valutazione:</dt>
+                            <dd class="col-sm-7">@Model.DataValutazioneTecnica.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                            <dt class="col-sm-5">Valutatore:</dt>
+                            <dd class="col-sm-7">@Model.ValutatoreTecnicoNome</dd>
+
+                            @if (!string.IsNullOrEmpty(Model.MotivoRifiutoTecnico))
+                            {
+                                <dt class="col-sm-5 mt-2">Motivo Rifiuto:</dt>
+                                <dd class="col-sm-7 mt-2">
+                                    <div class="alert alert-danger mb-0 py-2">
+                                        @Model.MotivoRifiutoTecnico
+                                    </div>
+                                </dd>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.NoteTecniche))
+                            {
+                                <dt class="col-sm-5 mt-2">Note:</dt>
+                                <dd class="col-sm-7 mt-2">
+                                    <div class="alert alert-info mb-0 py-2">
+                                        @Model.NoteTecniche
+                                    </div>
+                                </dd>
+                            }
+                        </dl>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            <i class="bi bi-hourglass-split me-2"></i>
+                            Valutazione tecnica non ancora effettuata
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Valutazione Economica -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-currency-euro me-2"></i>
+                        Valutazione Economica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.DataValutazioneEconomica.HasValue)
+                    {
+                        <div class="mb-3">
+                            <strong>Stato:</strong>
+                            @if (Model.EconomicaApprovata == true)
+                            {
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-check-circle me-1"></i>Approvata
+                                </span>
+                            }
+                            else if (Model.EconomicaApprovata == false)
+                            {
+                                <span class="badge bg-danger ms-2">
+                                    <i class="bi bi-x-circle me-1"></i>Rifiutata
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="bi bi-clock me-1"></i>In Valutazione
+                                </span>
+                            }
+                        </div>
+
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Data Valutazione:</dt>
+                            <dd class="col-sm-7">@Model.DataValutazioneEconomica.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                            <dt class="col-sm-5">Valutatore:</dt>
+                            <dd class="col-sm-7">@Model.ValutatoreEconomicoNome</dd>
+
+                            @if (!string.IsNullOrEmpty(Model.MotivoRifiutoEconomico))
+                            {
+                                <dt class="col-sm-5 mt-2">Motivo Rifiuto:</dt>
+                                <dd class="col-sm-7 mt-2">
+                                    <div class="alert alert-danger mb-0 py-2">
+                                        @Model.MotivoRifiutoEconomico
+                                    </div>
+                                </dd>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.NoteEconomiche))
+                            {
+                                <dt class="col-sm-5 mt-2">Note:</dt>
+                                <dd class="col-sm-7 mt-2">
+                                    <div class="alert alert-info mb-0 py-2">
+                                        @Model.NoteEconomiche
+                                    </div>
+                                </dd>
+                            }
+                        </dl>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            <i class="bi bi-hourglass-split me-2"></i>
+                            Valutazione economica non ancora effettuata
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Sistema -->
+    <div class="card bg-light">
+        <div class="card-body">
+            <h6 class="card-title text-muted">
+                <i class="bi bi-clock-history me-2"></i>
+                Informazioni di Sistema
+            </h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <strong>Creato il:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        @if (!string.IsNullOrEmpty(Model.CreatedBy))
+                        {
+                            <span> da @Model.CreatedBy</span>
+                        }
+                    </small>
+                </div>
+                <div class="col-md-6">
+                    @if (Model.ModifiedAt.HasValue)
+                    {
+                        <small class="text-muted">
+                            <strong>Ultima modifica:</strong> @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                            @if (!string.IsNullOrEmpty(Model.ModifiedBy))
+                            {
+                                <span> da @Model.ModifiedBy</span>
+                            }
+                        </small>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,654 @@
+﻿@model Trasformazioni.Models.ViewModels.RegistroContrattiCreateViewModel
+@using Trasformazioni.Models.Enums
+@{
+    var isRinnovo = ViewBag.IsRinnovo == true;
+    var tipoDescrizione = Model.TipoRegistro == TipoRegistro.Preventivo ? "Preventivo" : "Contratto";
+    ViewData["Title"] = isRinnovo ? $"Rinnovo {tipoDescrizione}" : $"Nuovo {tipoDescrizione}";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>@ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Registro Contratti</a></li>
+                    @if (isRinnovo && Model.ParentId.HasValue)
+                    {
+                        <li class="breadcrumb-item">
+                            <a asp-action="Details" asp-route-id="@Model.ParentId">@(Model.ParentNumeroProtocollo ?? "Originale")</a>
+                        </li>
+                    }
+                    <li class="breadcrumb-item active" aria-current="page">@(isRinnovo ? "Rinnovo" : "Nuovo")</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Alert Rinnovo -->
+    @if (isRinnovo && Model.ParentId.HasValue)
+    {
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i>
+            Stai creando un rinnovo del documento <strong>@(Model.ParentNumeroProtocollo ?? Model.ParentOggetto)</strong>.
+            I dati sono stati precompilati dal contratto originale.
+        </div>
+    }
+
+    <!-- Alert Clonazione -->
+    @if (ViewBag.IsClone == true)
+    {
+        <div class="alert alert-secondary mb-4">
+            <i class="bi bi-copy me-2"></i>
+            Stai creando una <strong>copia</strong> di un documento esistente.
+            I dati sono stati precompilati ma il documento sarà indipendente (nessun collegamento gerarchico).
+            <strong>Ricorda di assegnare un nuovo numero protocollo.</strong>
+        </div>
+    }
+
+    <form asp-action="Create" method="post" id="registroForm">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="row">
+            <!-- Colonna Principale -->
+            <div class="col-lg-8">
+                <!-- Dati Identificativi -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-earmark-text me-2"></i>Dati Identificativi
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Tipo Registro -->
+                            <div class="col-md-4">
+                                <label asp-for="TipoRegistro" class="form-label">Tipo <span class="text-danger">*</span></label>
+                                <select asp-for="TipoRegistro" asp-items="Model.TipiRegistroSelectList"
+                                        class="form-select" required>
+                                </select>
+                                <span asp-validation-for="TipoRegistro" class="text-danger"></span>
+                            </div>
+
+                            @* <!-- Numero Protocollo -->
+                            <div class="col-md-4">
+                                <label asp-for="NumeroProtocollo" class="form-label">Numero Protocollo</label>
+                                <input asp-for="NumeroProtocollo" class="form-control"
+                                       placeholder="Es: PROT-2024-001" maxlength="50" />
+                                <span asp-validation-for="NumeroProtocollo" class="text-danger"></span>
+                                <small id="protocollo-validation-message" class="form-text"></small>
+                            </div> *@
+                            <!-- Numero Protocollo -->
+                            <div class="col-md-4">
+                                <label asp-for="NumeroProtocollo" class="form-label">
+                                    Numero Protocollo
+                                    <small class="text-muted">(auto se vuoto)</small>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="NumeroProtocollo" class="form-control"
+                                           placeholder="Lascia vuoto per generazione automatica" maxlength="50" />
+                                    <button type="button" class="btn btn-outline-secondary" id="btnGeneraProtocollo"
+                                            title="Genera protocollo automatico">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="NumeroProtocollo" class="text-danger"></span>
+                                <small id="protocollo-validation-message" class="form-text"></small>
+                            </div>
+
+                            <!-- ID Riferimento Esterno -->
+                            <div class="col-md-4">
+                                <label asp-for="IdRiferimentoEsterno" class="form-label">ID Rif. Esterno</label>
+                                <input asp-for="IdRiferimentoEsterno" class="form-control"
+                                       placeholder="Identificativo esterno..." maxlength="100" />
+                                <span asp-validation-for="IdRiferimentoEsterno" class="text-danger"></span>
+                            </div>
+
+                            <!-- Categoria -->
+                            <div class="col-md-6">
+                                <label asp-for="CategoriaContrattoId" class="form-label">Categoria <span class="text-danger">*</span></label>
+                                <select asp-for="CategoriaContrattoId" asp-items="Model.CategorieSelectList"
+                                        class="form-select" required>
+                                    <option value="">-- Seleziona categoria --</option>
+                                </select>
+                                <span asp-validation-for="CategoriaContrattoId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Responsabile -->
+                            <div class="col-md-6">
+                                <label asp-for="UtenteId" class="form-label">Responsabile Interno</label>
+                                <select asp-for="UtenteId" asp-items="Model.UtentiSelectList" class="form-select">
+                                    <option value="">-- Seleziona responsabile --</option>
+                                </select>
+                                <span asp-validation-for="UtenteId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Oggetto -->
+                            <div class="col-12">
+                                <label asp-for="Oggetto" class="form-label">Oggetto <span class="text-danger">*</span></label>
+                                <input asp-for="Oggetto" class="form-control"
+                                       placeholder="Descrizione sintetica del contratto/preventivo"
+                                       maxlength="500" required />
+                                <span asp-validation-for="Oggetto" class="text-danger"></span>
+                            </div>
+
+                            @* <!-- Descrizione -->
+                            <div class="col-12">
+                                <label asp-for="Descrizione" class="form-label">Descrizione</label>
+                                <textarea asp-for="Descrizione" class="form-control" rows="3"
+                                          placeholder="Descrizione dettagliata (opzionale)" maxlength="2000"></textarea>
+                                <span asp-validation-for="Descrizione" class="text-danger"></span>
+                            </div> *@
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documento Padre (Versione Precedente) -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-diagram-3 me-2"></i>Collegamento a Documento Esistente
+                            <small class="text-muted fw-normal ms-2">(opzionale)</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="ParentId" class="form-label">Documento Padre / Versione Precedente</label>
+                                <select asp-for="ParentId" asp-items="Model.ParentSelectList" class="form-select" id="parentSelect">
+                                    <option value="">-- Nessun collegamento (documento indipendente) --</option>
+                                </select>
+                                <span asp-validation-for="ParentId" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Seleziona un documento esistente se questo è un rinnovo, una revisione o una nuova versione.
+                                </small>
+                            </div>
+                        </div>
+
+                        @if (Model.ParentId.HasValue && !string.IsNullOrEmpty(Model.ParentNumeroProtocollo))
+                        {
+                            <div class="alert alert-info mt-3 mb-0">
+                                <i class="bi bi-link-45deg me-2"></i>
+                                Collegato a: <strong>@Model.ParentNumeroProtocollo</strong>
+                                @if (!string.IsNullOrEmpty(Model.ParentOggetto))
+                                {
+                                    <span class="text-muted">- @Model.ParentOggetto</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Controparte -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-building me-2"></i>Controparte
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Cliente da Anagrafica -->
+                            <div class="col-md-8">
+                                <label asp-for="ClienteId" class="form-label">Cliente (da anagrafica)</label>
+                                <select asp-for="ClienteId" asp-items="Model.ClientiSelectList"
+                                        class="form-select" id="clienteSelect">
+                                    <option value="">-- Seleziona cliente o inserisci manualmente --</option>
+                                </select>
+                                <span asp-validation-for="ClienteId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Tipo Controparte -->
+                            <div class="col-md-4">
+                                <label asp-for="TipoControparte" class="form-label">Tipo</label>
+                                <select asp-for="TipoControparte" asp-items="Model.NatureGiuridicheSelectList"
+                                        class="form-select" id="tipoControparteSelect">
+                                    <option value="">-- Seleziona --</option>
+                                </select>
+                                <span asp-validation-for="TipoControparte" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    Compilato automaticamente se selezioni un cliente dall'anagrafica
+                                </small>
+                            </div>
+
+                            <!-- Ragione Sociale Manuale -->
+                            <div class="col-12" id="ragioneSocialeContainer">
+                                <label asp-for="RagioneSociale" class="form-label">Ragione Sociale</label>
+                                <input asp-for="RagioneSociale" class="form-control"
+                                       placeholder="Inserisci manualmente se non presente in anagrafica"
+                                       maxlength="200" id="ragioneSocialeInput" />
+                                <span asp-validation-for="RagioneSociale" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    Compilato automaticamente se selezioni un cliente dall'anagrafica
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date e Scadenze -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calendar3 me-2"></i>Date e Scadenze
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Data Documento -->
+                            <div class="col-md-4">
+                                <label asp-for="DataDocumento" class="form-label">Data Documento <span class="text-danger">*</span></label>
+                                <input asp-for="DataDocumento" type="date" class="form-control" required />
+                                <span asp-validation-for="DataDocumento" class="text-danger"></span>
+                            </div>
+
+                            <!-- Data Decorrenza -->
+                            <div class="col-md-4">
+                                <label asp-for="DataDecorrenza" class="form-label">Data Decorrenza</label>
+                                <input asp-for="DataDecorrenza" type="date" class="form-control" />
+                                <span asp-validation-for="DataDecorrenza" class="text-danger"></span>
+                            </div>
+
+                            <!-- Data Fine / Scadenza -->
+                            <div class="col-md-4">
+                                <label asp-for="DataFineOScadenza" class="form-label">Data Scadenza</label>
+                                <input asp-for="DataFineOScadenza" type="date" class="form-control" />
+                                <span asp-validation-for="DataFineOScadenza" class="text-danger"></span>
+                            </div>
+
+                            <!-- Preavviso Disdetta -->
+                            <div class="col-md-4">
+                                <label asp-for="GiorniPreavvisoDisdetta" class="form-label">Preavviso Disdetta (giorni)</label>
+                                <input asp-for="GiorniPreavvisoDisdetta" type="number" class="form-control"
+                                       min="0" max="365" placeholder="Es: 30" />
+                                <span asp-validation-for="GiorniPreavvisoDisdetta" class="text-danger"></span>
+                            </div>
+
+                            <!-- Alert Scadenza -->
+                            <div class="col-md-4">
+                                <label asp-for="GiorniAlertScadenza" class="form-label">Alert Scadenza (giorni prima)</label>
+                                <input asp-for="GiorniAlertScadenza" type="number" class="form-control"
+                                       min="0" max="365" placeholder="Es: 60" />
+                                <span asp-validation-for="GiorniAlertScadenza" class="text-danger"></span>
+                            </div>
+
+                            <!-- Durata Calcolata -->
+                            <div class="col-md-4">
+                                <label class="form-label">Durata</label>
+                                <div class="form-control-plaintext" id="durataCalcolata">
+                                    <span class="text-muted">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Rinnovo Automatico -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsRinnovoAutomatico" class="form-check-input"
+                                           type="checkbox" role="switch" id="rinnovoAutomaticoSwitch" />
+                                    <label asp-for="IsRinnovoAutomatico" class="form-check-label">
+                                        Rinnovo Automatico
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Se attivo, il contratto verrà rinnovato automaticamente alla scadenza
+                                </small>
+                            </div>
+                            <div class="col-md-6" id="giorniRinnovoContainer">
+                                <label asp-for="GiorniRinnovoAutomatico" class="form-label">Durata Rinnovo (giorni)</label>
+                                <input asp-for="GiorniRinnovoAutomatico" type="number" class="form-control"
+                                       min="1" max="3650" placeholder="Es: 365" />
+                                <span asp-validation-for="GiorniRinnovoAutomatico" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Importi -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-currency-euro me-2"></i>Importi
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Canone Annuo -->
+                            <div class="col-md-4">
+                                <label asp-for="ImportoCanoneAnnuo" class="form-label">Canone Annuo</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    <input asp-for="ImportoCanoneAnnuo" type="number" step="0.01"
+                                           class="form-control" placeholder="0.00" min="0" />
+                                </div>
+                                <span asp-validation-for="ImportoCanoneAnnuo" class="text-danger"></span>
+                            </div>
+
+                            <!-- Una Tantum -->
+                            <div class="col-md-4">
+                                <label asp-for="ImportoUnatantum" class="form-label">Una Tantum</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    <input asp-for="ImportoUnatantum" type="number" step="0.01"
+                                           class="form-control" placeholder="0.00" min="0" />
+                                </div>
+                                <span asp-validation-for="ImportoUnatantum" class="text-danger"></span>
+                            </div>
+
+                            @* <!-- Totale -->
+                            <div class="col-md-4">
+                                <label asp-for="ImportoTotale" class="form-label">Importo Totale</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    <input asp-for="ImportoTotale" type="number" step="0.01"
+                                           class="form-control" placeholder="0.00" min="0" />
+                                </div>
+                                <span asp-validation-for="ImportoTotale" class="text-danger"></span>
+                            </div> *@
+                        </div>
+                    </div>
+                </div>
+
+                @* <!-- Note -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-sticky me-2"></i>Note
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-0">
+                            <textarea asp-for="Note" class="form-control" rows="3"
+                                      placeholder="Note interne (opzionale)" maxlength="2000"></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div> *@
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Riepilogo -->
+                <div class="card border-0 shadow-sm mb-4 sticky-top" style="top: 1rem;">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clipboard-check me-2"></i>Riepilogo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-4">
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Tipo</span>
+                                <span id="riepilogoTipo" class="badge bg-secondary">--</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Categoria</span>
+                                <span id="riepilogoCategoria">--</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Cliente</span>
+                                <span id="riepilogoCliente">--</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Scadenza</span>
+                                <span id="riepilogoScadenza">--</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Canone Annuo</span>
+                                <span id="riepilogoCanone" class="fw-bold">--</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Rinnovo Auto</span>
+                                <span id="riepilogoRinnovo">--</span>
+                            </li>
+                        </ul>
+
+                        @if (isRinnovo && Model.ParentId.HasValue)
+                        {
+                            <div class="alert alert-info small mb-3">
+                                <i class="bi bi-link me-1"></i>
+                                Collegato a: <strong>@(Model.ParentNumeroProtocollo ?? Model.ParentOggetto)</strong>
+                            </div>
+                        }
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-lg me-2"></i>@(isRinnovo ? "Crea Rinnovo" : "Salva")
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Annulla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            // Elementi
+            const tipoRegistroSelect = $('#TipoRegistro');
+            const categoriaSelect = $('#CategoriaContrattoId');
+            const clienteSelect = $('#clienteSelect');
+            const ragioneSocialeInput = $('#ragioneSocialeInput');
+            const tipoControparteSelect = $('#tipoControparteSelect');
+            const dataDecorrenzaInput = $('#DataDecorrenza');
+            const dataScadenzaInput = $('#DataFineOScadenza');
+            const canoneInput = $('#ImportoCanoneAnnuo');
+            const rinnovoSwitch = $('#rinnovoAutomaticoSwitch');
+            const giorniRinnovoContainer = $('#giorniRinnovoContainer');
+            const protocolloInput = $('#NumeroProtocollo');
+            const protocolloMessage = $('#protocollo-validation-message');
+
+            // Inizializzazione
+            toggleGiorniRinnovo();
+            updateRiepilogo();
+            updateDurataCalcolata();
+
+            // Generazione automatica protocollo
+            $('#btnGeneraProtocollo').on('click', function () {
+                const btn = $(this);
+                const tipo = tipoRegistroSelect.val(); // 0 = Preventivo, 1 = Contratto
+
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+                $.ajax({
+                    url: '@Url.Action("GeneraProtocollo")',
+                    data: { tipo: tipo },
+                    success: function (response) {
+                        debugger;
+                        if (response.success) {
+                            protocolloInput.val(response.protocollo);
+                            protocolloMessage.text('✓ Generato').removeClass('text-danger').addClass('text-success');
+                        } else {
+                            protocolloMessage.text('✗ ' + response.message).removeClass('text-success').addClass('text-danger');
+                        }
+                    },
+                    error: function () {
+                        protocolloMessage.text('✗ Errore di comunicazione').removeClass('text-success').addClass('text-danger');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-magic"></i>');
+                    }
+                });
+            });
+
+            // Aggiorna prefisso suggerito quando cambia il tipo
+            tipoRegistroSelect.on('change', function () {
+                // Se il protocollo è vuoto o è stato generato automaticamente, suggerisci rigenerazione
+                const currentProtocollo = protocolloInput.val();
+                if (currentProtocollo && (currentProtocollo.startsWith('PREV-') || currentProtocollo.startsWith('CONTR-'))) {
+                    protocolloMessage.text('ℹ️ Tipo cambiato - clicca ✨ per rigenerare').removeClass('text-success text-danger').addClass('text-info');
+                }
+            });
+
+            // Toggle giorni rinnovo
+            function toggleGiorniRinnovo() {
+                if (rinnovoSwitch.is(':checked')) {
+                    giorniRinnovoContainer.show();
+                } else {
+                    giorniRinnovoContainer.hide();
+                }
+            }
+            rinnovoSwitch.on('change', function () {
+                toggleGiorniRinnovo();
+                updateRiepilogo();
+            });
+
+            // Calcolo durata
+            function updateDurataCalcolata() {
+                const dataDecorrenza = dataDecorrenzaInput.val();
+                const dataScadenza = dataScadenzaInput.val();
+                const durataEl = $('#durataCalcolata');
+
+                if (dataDecorrenza && dataScadenza) {
+                    const d1 = new Date(dataDecorrenza);
+                    const d2 = new Date(dataScadenza);
+                    const diffTime = d2 - d1;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays > 0) {
+                        const years = Math.floor(diffDays / 365);
+                        const months = Math.floor((diffDays % 365) / 30);
+                        const days = diffDays % 30;
+
+                        let durataText = '';
+                        if (years > 0) durataText += years + ' ann' + (years > 1 ? 'i' : 'o') + ' ';
+                        if (months > 0) durataText += months + ' mes' + (months > 1 ? 'i' : 'e') + ' ';
+                        if (days > 0 && years === 0) durataText += days + ' giorn' + (days > 1 ? 'i' : 'o');
+
+                        durataEl.html('<span class="text-success">' + durataText.trim() + ' (' + diffDays + ' gg)</span>');
+                    } else {
+                        durataEl.html('<span class="text-danger">Date non valide</span>');
+                    }
+                } else {
+                    durataEl.html('<span class="text-muted">--</span>');
+                }
+            }
+            dataDecorrenzaInput.on('change', function () { updateDurataCalcolata(); updateRiepilogo(); });
+            dataScadenzaInput.on('change', function () { updateDurataCalcolata(); updateRiepilogo(); });
+
+            // Aggiorna riepilogo
+            function updateRiepilogo() {
+                // Tipo
+                const tipoVal = tipoRegistroSelect.val();
+                const tipoText = tipoVal == '0' ? 'Preventivo' : 'Contratto';
+                const tipoBadge = tipoVal == '0' ? 'bg-info' : 'bg-primary';
+                $('#riepilogoTipo').text(tipoText).removeClass().addClass('badge ' + tipoBadge);
+
+                // Categoria
+                const categoriaText = categoriaSelect.find('option:selected').text();
+                $('#riepilogoCategoria').text(categoriaText !== '-- Seleziona categoria --' ? categoriaText : '--');
+
+                // Cliente
+                const clienteText = clienteSelect.find('option:selected').text();
+                const ragioneSociale = ragioneSocialeInput.val();
+                if (clienteText && clienteText !== '-- Seleziona cliente o inserisci manualmente --') {
+                    $('#riepilogoCliente').text(clienteText);
+                } else if (ragioneSociale) {
+                    $('#riepilogoCliente').text(ragioneSociale);
+                } else {
+                    $('#riepilogoCliente').text('--');
+                }
+
+                // Scadenza
+                const dataScadenza = dataScadenzaInput.val();
+                if (dataScadenza) {
+                    const d = new Date(dataScadenza);
+                    $('#riepilogoScadenza').text(d.toLocaleDateString('it-IT'));
+                } else {
+                    $('#riepilogoScadenza').text('--');
+                }
+
+                // Canone
+                const canone = parseFloat(canoneInput.val());
+                if (!isNaN(canone) && canone > 0) {
+                    $('#riepilogoCanone').text('€ ' + canone.toLocaleString('it-IT', { minimumFractionDigits: 2 }));
+                } else {
+                    $('#riepilogoCanone').text('--');
+                }
+
+                // Rinnovo
+                if (rinnovoSwitch.is(':checked')) {
+                    const giorniRinnovo = $('#GiorniRinnovoAutomatico').val();
+                    $('#riepilogoRinnovo').html('<span class="badge bg-success">Sì</span>' + (giorniRinnovo ? ' (' + giorniRinnovo + ' gg)' : ''));
+                } else {
+                    $('#riepilogoRinnovo').html('<span class="badge bg-secondary">No</span>');
+                }
+            }
+
+            // Eventi per aggiornamento riepilogo
+            tipoRegistroSelect.on('change', updateRiepilogo);
+            categoriaSelect.on('change', updateRiepilogo);
+            clienteSelect.on('change', updateRiepilogo);
+            ragioneSocialeInput.on('input', updateRiepilogo);
+            canoneInput.on('input', updateRiepilogo);
+            $('#GiorniRinnovoAutomatico').on('input', updateRiepilogo);
+
+            // Validazione numero protocollo
+            let protocolloTimeout;
+            protocolloInput.on('blur', function () {
+                const protocollo = $(this).val().trim();
+                if (!protocollo) {
+                    protocolloMessage.text('').removeClass('text-success text-danger');
+                    return;
+                }
+
+                clearTimeout(protocolloTimeout);
+                protocolloTimeout = setTimeout(function () {
+                    $.ajax({
+                        url: '@Url.Action("CheckNumeroProtocollo")',
+                        data: { numeroProtocollo: protocollo },
+                        success: function (response) {
+                            if (response === true) {
+                                protocolloMessage.text('✓ Disponibile').removeClass('text-danger').addClass('text-success');
+                            } else {
+                                protocolloMessage.text('✗ ' + response).removeClass('text-success').addClass('text-danger');
+                            }
+                        }
+                    });
+                }, 300);
+            });
+            protocolloInput.on('input', function () {
+                protocolloMessage.text('').removeClass('text-success text-danger');
+            });
+
+            // Validazione date
+            $('#registroForm').on('submit', function (e) {
+                const dataDecorrenza = dataDecorrenzaInput.val();
+                const dataScadenza = dataScadenzaInput.val();
+
+                if (dataDecorrenza && dataScadenza) {
+                    if (new Date(dataScadenza) < new Date(dataDecorrenza)) {
+                        e.preventDefault();
+                        alert('La data di scadenza non può essere precedente alla data di decorrenza.');
+                        dataScadenzaInput.focus();
+                        return false;
+                    }
+                }
+
+                // Verifica rinnovo automatico
+                if (rinnovoSwitch.is(':checked')) {
+                    const giorniRinnovo = $('#GiorniRinnovoAutomatico').val();
+                    if (!giorniRinnovo || giorniRinnovo <= 0) {
+                        e.preventDefault();
+                        alert('Se il rinnovo automatico è attivo, specificare i giorni di rinnovo.');
+                        $('#GiorniRinnovoAutomatico').focus();
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
+}

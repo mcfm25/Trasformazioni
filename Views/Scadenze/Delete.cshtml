@@ -1,0 +1,285 @@
+@model Trasformazioni.Models.ViewModels.ScadenzaDetailsViewModel
+
+@{
+    ViewData["Title"] = "Elimina Scadenza";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Scadenzario</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Dettaglio</a></li>
+                    <li class="breadcrumb-item active">Elimina</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Alert Pericolo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Attenzione!
+                </h4>
+                <p class="mb-0">
+                    Stai per eliminare questa scadenza. Questa operazione <strong>non può essere annullata</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blocco se automatica -->
+    @if (Model.IsAutomatica)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="bi bi-robot"></i>
+                        Scadenza Automatica
+                    </h4>
+                    <p>
+                        Le scadenze automatiche <strong>non possono essere eliminate</strong> manualmente.
+                        Vengono gestite automaticamente dal sistema in base agli eventi delle gare e dei lotti.
+                    </p>
+                    <hr />
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="bi bi-arrow-left"></i> Torna al Dettaglio
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Titolo -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-danger">
+                    <i class="bi bi-trash"></i>
+                    Conferma Eliminazione Scadenza
+                </h2>
+            </div>
+        </div>
+
+        <!-- Messaggi -->
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="row">
+            <!-- Dati da Eliminare -->
+            <div class="col-lg-8">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calendar-event"></i>
+                            Dati Scadenza
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">Tipo:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-secondary">@Model.Tipo.ToString()</span>
+                            </dd>
+
+                            <dt class="col-sm-4">Data Scadenza:</dt>
+                            <dd class="col-sm-8">
+                                <strong>@Model.DataScadenza.ToString("dd/MM/yyyy")</strong>
+                            </dd>
+
+                            <dt class="col-sm-4">Descrizione:</dt>
+                            <dd class="col-sm-8">@Model.Descrizione</dd>
+
+                            <dt class="col-sm-4">Stato:</dt>
+                            <dd class="col-sm-8">
+                                @if (Model.IsCompletata)
+                                {
+                                    <span class="badge bg-success">Completata</span>
+                                    @if (Model.DataCompletamento.HasValue)
+                                    {
+                                        <span>il @Model.DataCompletamento.Value.ToString("dd/MM/yyyy")</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Attiva</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">Giorni Preavviso:</dt>
+                            <dd class="col-sm-8">@Model.GiorniPreavviso giorni</dd>
+
+                            @if (!string.IsNullOrEmpty(Model.Note))
+                            {
+                                <dt class="col-sm-4">Note:</dt>
+                                <dd class="col-sm-8">@Model.Note</dd>
+                            }
+                        </dl>
+
+                        @if (Model.GaraId.HasValue || Model.LottoId.HasValue || Model.PreventivoId.HasValue)
+                        {
+                            <hr />
+                            <h6 class="text-muted">Entità Correlate</h6>
+                            <dl class="row mb-0">
+                                @if (Model.GaraId.HasValue)
+                                {
+                                    <dt class="col-sm-4">Gara:</dt>
+                                    <dd class="col-sm-8">@Model.CodiceGara - @Model.TitoloGara</dd>
+                                }
+                                @if (Model.LottoId.HasValue)
+                                {
+                                    <dt class="col-sm-4">Lotto:</dt>
+                                    <dd class="col-sm-8">@Model.CodiceLotto - @Model.DescrizioneLotto</dd>
+                                }
+                                @if (Model.PreventivoId.HasValue)
+                                {
+                                    <dt class="col-sm-4">Preventivo:</dt>
+                                    <dd class="col-sm-8">@Model.FornitorePreventivo</dd>
+                                }
+                            </dl>
+                        }
+                    </div>
+                </div>
+
+                <!-- Form Conferma -->
+                <div class="card border-danger mt-4">
+                    <div class="card-body">
+                        <form asp-action="Delete" method="post">
+                            <input type="hidden" name="id" value="@Model.Id" />
+
+                            <div class="alert alert-warning mb-4">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Nota:</strong> L'eliminazione è un'operazione di <em>soft delete</em>.
+                                Il record verrà marcato come eliminato ma rimarrà nel database per scopi di audit.
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary btn-lg">
+                                    <i class="bi bi-arrow-left"></i> Annulla
+                                </a>
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="bi bi-trash"></i> Conferma Eliminazione
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Laterale -->
+            <div class="col-lg-4">
+                <!-- Warning Box -->
+                <div class="card bg-warning text-dark mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            Conseguenze dell'Eliminazione
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0 small">
+                            <li>La scadenza non apparirà più nel calendario</li>
+                            <li>Non riceverai più notifiche per questa scadenza</li>
+                            <li>Il record rimarrà nel database (soft delete)</li>
+                            <li>Le entità correlate (Gara, Lotto, Preventivo) non saranno modificate</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Info Audit -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-clock-history"></i>
+                            Informazioni Record
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong>Creata il:</strong><br />
+                            <small>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                        </p>
+                        @if (Model.ModifiedAt.HasValue)
+                        {
+                            <hr />
+                            <p class="mb-0">
+                                <strong>Ultima modifica:</strong><br />
+                                <small>@Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                            </p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Azioni Alternative -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-lightbulb"></i>
+                            Alternative
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small mb-3">
+                            Non sei sicuro di voler eliminare? Puoi invece:
+                        </p>
+                        <div class="d-grid gap-2">
+                            @if (!Model.IsCompletata)
+                            {
+                                <button class="btn btn-sm btn-success" onclick="completaScadenza('@Model.Id')">
+                                    <i class="bi bi-check-circle"></i> Marca come Completata
+                                </button>
+                            }
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i> Modifica i dati
+                            </a>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-eye"></i> Rivedi i dettagli
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function completaScadenza(id) {
+            if (!confirm('Confermi di voler completare questa scadenza invece di eliminarla?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Completa")',
+                type: 'POST',
+                data: { id: id },
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        window.location.href = '@Url.Action("Details")/' + id;
+                    } else {
+                        alert('Errore: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Errore durante il completamento della scadenza');
+                }
+            });
+        }
+    </script>
+}

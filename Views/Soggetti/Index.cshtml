@@ -1,0 +1,378 @@
+﻿@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+@model PagedResult<SoggettoListViewModel>
+@{
+    ViewData["Title"] = "Soggetti";
+    var filters = ViewBag.CurrentFilters as SoggettoFilterViewModel ?? new SoggettoFilterViewModel();
+
+    // Configurazione paginazione
+    ViewData["PaginationRoute"] = new Dictionary<string, object>
+    {
+        ["SearchTerm"] = filters.SearchTerm ?? "",
+        ["TipoSoggetto"] = filters.TipoSoggetto?.ToString() ?? "",
+        ["NaturaGiuridica"] = filters.NaturaGiuridica?.ToString() ?? "",
+        ["IsCliente"] = filters.IsCliente?.ToString() ?? "",
+        ["IsFornitore"] = filters.IsFornitore?.ToString() ?? "",
+        ["PageSize"] = filters.PageSize,
+        ["OrderBy"] = filters.OrderBy ?? "",
+        ["OrderDirection"] = filters.OrderDirection ?? ""
+    };
+}
+
+<div class="container-fluid">
+    <!-- Header con titolo e pulsante Nuovo -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">
+                <i class="bi bi-people-fill"></i> Soggetti
+            </h1>
+            <p class="lead text-muted">Gestione clienti e fornitori</p>
+        </div>
+        <div class="col-auto">
+            @if (User.IsInRole("Amministrazione") || User.IsInRole("Manager"))
+            {
+                <a asp-action="Create" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle"></i> Nuovo Soggetto
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Alert Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Form Filtri -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-funnel"></i> Filtri e Ricerca
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" asp-action="Index" id="filterForm">
+                <div class="row g-3">
+                    <!-- Ricerca Full-Text -->
+                    <div class="col-md-4">
+                        <label class="form-label">Ricerca</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text"
+                                   class="form-control"
+                                   name="SearchTerm"
+                                   value="@filters.SearchTerm"
+                                   placeholder="Nome, email, P.IVA, CF, città...">
+                        </div>
+                    </div>
+
+                    <!-- Filtro Tipo Soggetto -->
+                    <div class="col-md-2">
+                        <label class="form-label">Tipo</label>
+                        <select class="form-select" name="TipoSoggetto">
+                            <option value="">Tutti i tipi</option>
+                            <option value="@((int)TipoSoggetto.Azienda)"
+                                    selected="@(filters.TipoSoggetto == TipoSoggetto.Azienda)">
+                                Azienda
+                            </option>
+                            <option value="@((int)TipoSoggetto.PersonaFisica)"
+                                    selected="@(filters.TipoSoggetto == TipoSoggetto.PersonaFisica)">
+                                Persona Fisica
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Natura Giuridica -->
+                    <div class="col-md-2">
+                        <label class="form-label">Natura</label>
+                        <select class="form-select" name="NaturaGiuridica">
+                            <option value="">Tutte</option>
+                            <option value="@((int)NaturaGiuridica.PA)"
+                                    selected="@(filters.NaturaGiuridica == NaturaGiuridica.PA)">
+                                PA
+                            </option>
+                            <option value="@((int)NaturaGiuridica.Privato)"
+                                    selected="@(filters.NaturaGiuridica == NaturaGiuridica.Privato)">
+                                Privato
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Cliente -->
+                    <div class="col-md-2">
+                        <label class="form-label">Cliente</label>
+                        <select class="form-select" name="IsCliente">
+                            <option value="">Tutti</option>
+                            <option value="true" selected="@(filters.IsCliente == true)">Solo Clienti</option>
+                            <option value="false" selected="@(filters.IsCliente == false)">Non Clienti</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Fornitore -->
+                    <div class="col-md-2">
+                        <label class="form-label">Fornitore</label>
+                        <select class="form-select" name="IsFornitore">
+                            <option value="">Tutti</option>
+                            <option value="true" selected="@(filters.IsFornitore == true)">Solo Fornitori</option>
+                            <option value="false" selected="@(filters.IsFornitore == false)">Non Fornitori</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <!-- Ordinamento -->
+                    <div class="col-md-3">
+                        <label class="form-label">Ordina per</label>
+                        <div class="input-group">
+                            <select class="form-select" name="OrderBy">
+                                <option value="nome" selected="@(filters.OrderBy == "nome")">Nome</option>
+                                <option value="tipo" selected="@(filters.OrderBy == "tipo")">Tipo</option>
+                                <option value="natura" selected="@(filters.OrderBy == "natura")">Natura</option>
+                                <option value="citta" selected="@(filters.OrderBy == "citta")">Città</option>
+                                <option value="email" selected="@(filters.OrderBy == "email")">Email</option>
+                                <option value="ruolo" selected="@(filters.OrderBy == "ruolo")">Ruolo</option>
+                            </select>
+                            <select class="form-select" name="OrderDirection" style="max-width: 100px;">
+                                <option value="asc" selected="@(filters.OrderDirection == "asc")">↑ A-Z</option>
+                                <option value="desc" selected="@(filters.OrderDirection == "desc")">↓ Z-A</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Elementi per pagina -->
+                    <div class="col-md-2">
+                        <label class="form-label">Per pagina</label>
+                        <select class="form-select" name="PageSize" onchange="document.getElementById('filterForm').submit();">
+                            <option value="10" selected="@(filters.PageSize == 10)">10</option>
+                            <option value="20" selected="@(filters.PageSize == 20)">20</option>
+                            <option value="50" selected="@(filters.PageSize == 50)">50</option>
+                            <option value="100" selected="@(filters.PageSize == 100)">100</option>
+                        </select>
+                    </div>
+
+                    <!-- Pulsanti Azione -->
+                    <div class="col-md-7 d-flex align-items-end justify-content-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-funnel-fill"></i> Applica Filtri
+                        </button>
+                        @if (filters.HasFilters)
+                        {
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancella Filtri
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <!-- Hidden campo per PageNumber (resettato a 1 quando si filtrano) -->
+                <input type="hidden" name="PageNumber" value="1" />
+            </form>
+        </div>
+    </div>
+
+    <!-- Info Risultati e Paginazione Top -->
+    @if (Model.TotalItems > 0)
+    {
+        <div class="row mb-3">
+            <div class="col">
+                <p class="text-muted mb-0">
+                    Mostra <strong>@Model.FirstItemOnPage-@Model.LastItemOnPage</strong> di <strong>@Model.TotalItems</strong> soggetti
+                    @if (filters.HasFilters)
+                    {
+                        <span class="badge bg-info">Filtrati</span>
+                    }
+                </p>
+            </div>
+            <div class="col-auto">
+                @await Html.PartialAsync("_PaginationPartial", Model)
+            </div>
+        </div>
+    }
+
+    <!-- Tabella Risultati -->
+    @if (Model.TotalItems == 0)
+    {
+        <div class="alert alert-info text-center py-5">
+            <i class="bi bi-info-circle" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">Nessun soggetto trovato</h4>
+            <p class="mb-0">
+                @if (filters.HasFilters)
+                {
+                    <text>Prova a modificare i filtri di ricerca.</text>
+                }
+                else
+                {
+                    <text>Inizia creando il primo soggetto.</text>
+                }
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Codice</th>
+                            <th>Nome/Denominazione</th>
+                            <th>Tipo</th>
+                            <th>Natura</th>
+                            <th>Ruolo</th>
+                            <th>Email</th>
+                            <th>Telefono</th>
+                            <th>Città</th>
+                            <th class="text-end">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var soggetto in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(soggetto.CodiceInterno))
+                                    {
+                                        <span class="badge bg-secondary">@soggetto.CodiceInterno</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <strong>@soggetto.NomeCompleto</strong>
+                                </td>
+                                <td>
+                                    @if (soggetto.TipoSoggetto == TipoSoggetto.Azienda)
+                                    {
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-building"></i> Azienda
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-person"></i> Persona Fisica
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (soggetto.NaturaGiuridica == NaturaGiuridica.PA)
+                                    {
+                                        <span class="badge bg-success">PA</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Privato</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (soggetto.IsCliente && soggetto.IsFornitore)
+                                    {
+                                        <span class="badge bg-warning text-dark">Cliente & Fornitore</span>
+                                    }
+                                    else if (soggetto.IsCliente)
+                                    {
+                                        <span class="badge bg-primary">Cliente</span>
+                                    }
+                                    else if (soggetto.IsFornitore)
+                                    {
+                                        <span class="badge bg-info">Fornitore</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="mailto:@soggetto.Email" class="text-decoration-none">
+                                        <i class="bi bi-envelope"></i> @soggetto.Email
+                                    </a>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(soggetto.Telefono))
+                                    {
+                                        <a href="tel:@soggetto.Telefono" class="text-decoration-none">
+                                            <i class="bi bi-telephone"></i> @soggetto.Telefono
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(soggetto.Citta))
+                                    {
+                                        <i class="bi bi-geo-alt"></i> 
+                                        @soggetto.Citta
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details"
+                                           asp-route-id="@soggetto.Id"
+                                           class="btn btn-outline-info"
+                                           title="Dettagli">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (User.IsInRole("Amministrazione") || User.IsInRole("Manager"))
+                                        {
+                                            <a asp-action="Edit"
+                                               asp-route-id="@soggetto.Id"
+                                               class="btn btn-outline-warning"
+                                               title="Modifica">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        }
+                                        @if (User.IsInRole("Amministrazione"))
+                                        {
+                                            <a asp-action="Delete"
+                                               asp-route-id="@soggetto.Id"
+                                               class="btn btn-outline-danger"
+                                               title="Elimina">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Paginazione Bottom -->
+        <div class="row mt-3">
+            <div class="col">
+                <p class="text-muted mb-0">
+                    Pagina <strong>@Model.PageNumber</strong> di <strong>@Model.TotalPages</strong>
+                </p>
+            </div>
+            <div class="col-auto">
+                @await Html.PartialAsync("_PaginationPartial", Model)
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-submit form quando cambia PageSize
+        document.querySelector('select[name="PageSize"]').addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    </script>
+}

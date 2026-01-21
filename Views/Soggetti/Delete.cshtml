@@ -1,0 +1,271 @@
+﻿@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+@model SoggettoDetailsViewModel
+@{
+    ViewData["Title"] = "Elimina Soggetto";
+}
+
+<div class="container-fluid">
+    <!-- Header con Warning -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 text-danger">
+                <i class="bi bi-exclamation-triangle-fill"></i> Elimina Soggetto
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Soggetti</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Dettaglio</a></li>
+                    <li class="breadcrumb-item active">Elimina</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Alert Warning -->
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">
+            <i class="bi bi-exclamation-octagon-fill"></i> Attenzione!
+        </h4>
+        <p class="mb-0">
+            Stai per eliminare il soggetto <strong>@Model.NomeCompleto</strong>.
+            Questa operazione è <strong>reversibile</strong> (soft delete), ma il soggetto non sarà più visibile nelle liste.
+        </p>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna Sinistra - Riepilogo Dati -->
+        <div class="col-lg-8">
+
+            <!-- Card Riepilogo Soggetto -->
+            <div class="card border-danger mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-x-fill"></i> Riepilogo Soggetto da Eliminare</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Identificativi -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Nome/Denominazione:</strong>
+                            <p class="fs-5 mb-0">@Model.NomeCompleto</p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Tipo:</strong>
+                            <p class="mb-0">
+                                @if (Model.TipoSoggetto == TipoSoggetto.Azienda)
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-building"></i> Azienda
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-person"></i> Persona Fisica
+                                    </span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Ruolo:</strong>
+                            <p class="mb-0">
+                                @if (Model.IsCliente && Model.IsFornitore)
+                                {
+                                    <span class="badge bg-warning text-dark">Cliente & Fornitore</span>
+                                }
+                                else if (Model.IsCliente)
+                                {
+                                    <span class="badge bg-primary">Cliente</span>
+                                }
+                                else if (Model.IsFornitore)
+                                {
+                                    <span class="badge bg-info">Fornitore</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Dati Anagrafici -->
+                    <div class="row mb-3">
+                        @if (Model.TipoSoggetto == TipoSoggetto.Azienda)
+                        {
+                            <div class="col-md-6">
+                                <strong>Partita IVA:</strong>
+                                <p class="mb-0">@(Model.PartitaIVA ?? "-")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Referente:</strong>
+                                <p class="mb-0">@(Model.Referente ?? "-")</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-12">
+                                <strong>Codice Fiscale:</strong>
+                                <p class="mb-0">@(Model.CodiceFiscale ?? "-")</p>
+                            </div>
+                        }
+                    </div>
+
+                    <hr />
+
+                    <!-- Contatti -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Email:</strong>
+                            <p class="mb-0">
+                                <i class="bi bi-envelope"></i> @Model.Email
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Telefono:</strong>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.Telefono))
+                                {
+                                    <i class="bi bi-telephone"></i>
+                                    @Model.Telefono
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Informazioni Aggiuntive -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informazioni Aggiuntive</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Indirizzo:</strong>
+                            <p class="mb-0 small">
+                                @if (!string.IsNullOrEmpty(Model.IndirizzoCompleto) && Model.IndirizzoCompleto != "N/D")
+                                {
+                                    @Model.IndirizzoCompleto
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non disponibile</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Creato il:</strong>
+                            <p class="mb-0 small">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                            @if (!string.IsNullOrEmpty(Model.CreatedBy))
+                            {
+                                <small class="text-muted">da @Model.CreatedBy</small>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Colonna Destra - Conferma e Azioni -->
+        <div class="col-lg-4">
+
+            <!-- Card Conferma Eliminazione -->
+            <div class="card border-danger mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-shield-exclamation"></i> Conferma Necessaria</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        <i class="bi bi-info-circle"></i> Questa è un'operazione di <strong>soft delete</strong>:
+                    </p>
+                    <ul class="mb-3">
+                        <li>Il soggetto sarà nascosto dalle liste</li>
+                        <li>I dati saranno conservati nel database</li>
+                        <li>Un amministratore può ripristinarlo</li>
+                        <li>Le relazioni esistenti rimarranno intatte</li>
+                    </ul>
+
+                    <div class="alert alert-warning mb-0">
+                        <small>
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Nota:</strong> Se questo soggetto è collegato ad altre entità
+                            (es. gare, preventivi, ordini), le relazioni saranno mantenute.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Form Eliminazione -->
+            <div class="card border-danger">
+                <div class="card-body">
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="d-grid gap-2">
+                            <!-- Pulsante Annulla -->
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+
+                            <!-- Pulsante Torna alla Lista -->
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Torna alla Lista
+                            </a>
+
+                            <hr />
+
+                            <!-- Pulsante Conferma Eliminazione -->
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-trash-fill"></i> Conferma Eliminazione
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Card Help -->
+            <div class="card border-info mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-question-circle"></i> Hai bisogno di aiuto?</h6>
+                </div>
+                <div class="card-body small">
+                    <p class="mb-2">
+                        <strong>Cosa succede dopo l'eliminazione?</strong>
+                    </p>
+                    <ul class="mb-0">
+                        <li>Il soggetto scompare dalle ricerche</li>
+                        <li>Non può essere selezionato in nuove operazioni</li>
+                        <li>Le operazioni esistenti rimangono valide</li>
+                        <li>Puoi contattare un amministratore per ripristinarlo</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Conferma aggiuntiva via JavaScript per sicurezza
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const confirmed = confirm('Sei sicuro di voler eliminare questo soggetto?\n\nNome: @Model.NomeCompleto\n\nL\'operazione può essere annullata da un amministratore.');
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    </script>
+}

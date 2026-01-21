@@ -1,0 +1,214 @@
+﻿@model Trasformazioni.Models.ViewModels.RepartoDetailsViewModel
+@{
+    ViewData["Title"] = $"Reparto - {Model.Nome}";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Reparti</a></li>
+            <li class="breadcrumb-item active">@Model.Nome</li>
+        </ol>
+    </nav>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna principale -->
+        <div class="col-lg-8">
+            <!-- Dati Reparto -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>@Model.Nome
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i>Modifica
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i>Elimina
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Nome</label>
+                            <p class="mb-0 fw-semibold">@Model.Nome</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Email</label>
+                            <p class="mb-0">
+                                <a href="mailto:@Model.Email" class="text-decoration-none">
+                                    <i class="bi bi-envelope me-1"></i>@Model.Email
+                                </a>
+                            </p>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small">Descrizione</label>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.Descrizione))
+                                {
+                                    @Model.Descrizione
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">Nessuna descrizione</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utenti del Reparto -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people me-2"></i>Utenti
+                        <span class="badge bg-secondary ms-2">@Model.UtentiCount</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Utenti.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th class="text-center">Stato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var utente in Model.Utenti)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <i class="bi bi-person me-2"></i>@utente.NomeCompleto
+                                            </td>
+                                            <td>
+                                                <a href="mailto:@utente.Email" class="text-decoration-none">
+                                                    @utente.Email
+                                                </a>
+                                            </td>
+                                            <td class="text-center">
+                                                @if (utente.IsAttivo)
+                                                {
+                                                    <span class="badge bg-success">Attivo</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inattivo</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-people display-6 text-muted"></i>
+                            <p class="text-muted mt-2 mb-0">Nessun utente assegnato a questo reparto</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna laterale -->
+        <div class="col-lg-4">
+            <!-- Info Audit -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informazioni
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Creato il</span>
+                            <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Creato da</span>
+                            <span>@(string.IsNullOrEmpty(Model.CreatedBy) ? "-" : Model.CreatedBy)</span>
+                        </li>
+                        @if (Model.ModifiedAt.HasValue)
+                        {
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Modificato il</span>
+                                <span>@Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Modificato da</span>
+                                <span>@(string.IsNullOrEmpty(Model.ModifiedBy) ? "-" : Model.ModifiedBy)</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Azioni rapide -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>Azioni
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-2"></i>Modifica Reparto
+                        </a>
+                        @if (Model.UtentiCount == 0)
+                        {
+                            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                                <i class="bi bi-trash me-2"></i>Elimina Reparto
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-danger" disabled
+                                    title="Non è possibile eliminare un reparto con utenti assegnati">
+                                <i class="bi bi-trash me-2"></i>Elimina Reparto
+                            </button>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Rimuovi prima gli utenti per poter eliminare il reparto
+                            </small>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pulsante Indietro -->
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Torna all'elenco
+        </a>
+    </div>
+</div>

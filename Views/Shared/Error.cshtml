@@ -1,0 +1,55 @@
+﻿@model Trasformazioni.Models.ViewModels.ErrorViewModel
+@{
+    ViewData["Title"] = "Errore";
+}
+
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5 text-center">
+                    <!-- Icon -->
+                    <div class="mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="text-danger" viewBox="0 0 16 16">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+                        </svg>
+                    </div>
+
+                    <!-- Header -->
+                    <h1 class="h3 fw-bold mb-3">Si è verificato un errore</h1>
+
+                    <!-- Message -->
+                    <p class="text-muted mb-4">
+                        Ci scusiamo per l'inconveniente. Si è verificato un errore durante l'elaborazione della richiesta.
+                    </p>
+
+                    @if (Model.ShowRequestId)
+                    {
+                        <div class="alert alert-light border mb-4" role="alert">
+                            <p class="mb-0 small">
+                                <strong>Request ID:</strong> <code>@Model.RequestId</code>
+                            </p>
+                        </div>
+                    }
+
+                    <!-- Actions -->
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                            Torna alla Home
+                        </a>
+                        <button onclick="history.back()" class="btn btn-outline-secondary">
+                            Indietro
+                        </button>
+                    </div>
+
+                    <!-- Support Info -->
+                    <div class="mt-4">
+                        <p class="text-muted small mb-0">
+                            Se il problema persiste, contatta l'assistenza tecnica.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

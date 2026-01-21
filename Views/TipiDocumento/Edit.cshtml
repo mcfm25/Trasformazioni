@@ -1,0 +1,223 @@
+@model Trasformazioni.Models.ViewModels.TipoDocumentoEditViewModel
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Mappings
+
+@{
+    ViewData["Title"] = $"Modifica: {Model.Nome}";
+    var aree = ViewBag.Aree as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Index">
+                <i class="bi bi-file-earmark-text"></i> Tipi Documento
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Details" asp-route-id="@Model.Id">@Model.Nome</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Modifica</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-pencil"></i> Modifica Tipo Documento
+    </h1>
+    <div>
+        @if (Model.IsSystem)
+        {
+            <span class="badge bg-secondary fs-6">
+                <i class="bi bi-lock"></i> Tipo di Sistema
+            </span>
+        }
+    </div>
+</div>
+
+@if (Model.IsSystem)
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i>
+        <strong>Attenzione:</strong> Questo è un tipo di sistema. 
+        Puoi modificare solo la descrizione, il nome e l'area non possono essere cambiati.
+    </div>
+}
+
+@if (!Model.CanChangeArea)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        L'area non può essere modificata perché ci sono documenti associati a questo tipo.
+    </div>
+}
+
+<div class="row">
+    <!-- Form (8 col) -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Modifica Dati</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="IsSystem" />
+                    
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Area -->
+                    <div class="mb-3">
+                        <label asp-for="Area" class="form-label">
+                            <i class="bi bi-grid"></i> Area <span class="text-danger">*</span>
+                        </label>
+                        @if (Model.IsSystem || !Model.CanChangeArea)
+                        {
+                            <input type="hidden" asp-for="Area" />
+                            <div class="form-control bg-light">
+                                <i class="bi @TipoDocumentoMappingExtensions.GetAreaIcon(Model.Area) me-2"></i>
+                                @TipoDocumentoMappingExtensions.GetAreaDisplayName(Model.Area)
+                                <i class="bi bi-lock ms-2 text-muted" title="Non modificabile"></i>
+                            </div>
+                            <small class="form-text text-muted">
+                                @if (Model.IsSystem)
+                                {
+                                    <text>L'area dei tipi di sistema non può essere modificata.</text>
+                                }
+                                else
+                                {
+                                    <text>L'area non può essere modificata perché ci sono documenti associati.</text>
+                                }
+                            </small>
+                        }
+                        else
+                        {
+                            <select asp-for="Area" asp-items="@aree" class="form-select">
+                                <option value="">-- Seleziona Area --</option>
+                            </select>
+                            <span asp-validation-for="Area" class="text-danger"></span>
+                        }
+                    </div>
+
+                    <!-- Nome -->
+                    <div class="mb-3">
+                        <label asp-for="Nome" class="form-label">
+                            <i class="bi bi-type"></i> Nome <span class="text-danger">*</span>
+                        </label>
+                        @if (Model.IsSystem)
+                        {
+                            <input asp-for="Nome" class="form-control bg-light" readonly />
+                            <small class="form-text text-muted">
+                                Il nome dei tipi di sistema non può essere modificato.
+                            </small>
+                        }
+                        else
+                        {
+                            <input asp-for="Nome" class="form-control" />
+                            <span asp-validation-for="Nome" class="text-danger"></span>
+                        }
+                    </div>
+
+                    <!-- Descrizione -->
+                    <div class="mb-3">
+                        <label asp-for="Descrizione" class="form-label">
+                            <i class="bi bi-text-paragraph"></i> Descrizione
+                        </label>
+                        <textarea asp-for="Descrizione" class="form-control" rows="3" 
+                                  placeholder="Descrizione opzionale..."></textarea>
+                        <span asp-validation-for="Descrizione" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            La descrizione può sempre essere modificata.
+                        </small>
+                    </div>
+
+                    <hr />
+
+                    <!-- Bottoni -->
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Annulla
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle"></i> Salva Modifiche
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Info (4 col) -->
+    <div class="col-lg-4">
+        <!-- Stato -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Stato</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tipo:</span>
+                    @if (Model.IsSystem)
+                    {
+                        <span class="badge bg-secondary"><i class="bi bi-lock"></i> Sistema</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info"><i class="bi bi-person"></i> Personalizzato</span>
+                    }
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Area:</span>
+                    <span class="badge @TipoDocumentoMappingExtensions.GetAreaBadgeClass(Model.Area)">
+                        @TipoDocumentoMappingExtensions.GetAreaDisplayName(Model.Area)
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Modifica Area:</span>
+                    @if (Model.CanChangeArea && !Model.IsSystem)
+                    {
+                        <span class="badge bg-success"><i class="bi bi-check"></i> Permessa</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger"><i class="bi bi-x"></i> Bloccata</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Azioni -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning"></i> Azioni</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-info">
+                        <i class="bi bi-eye"></i> Vedi Dettaglio
+                    </a>
+                    @if (!Model.IsSystem)
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Elimina
+                        </a>
+                    }
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-list"></i> Torna alla Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,392 @@
+﻿@model Trasformazioni.Models.ViewModels.AllegatoRegistroUploadViewModel
+@{
+    ViewData["Title"] = "Carica Allegato";
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>@ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Registro Contratti</a></li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId">
+                            @(Model.RegistroNumeroProtocollo ?? Model.RegistroOggetto ?? "Dettaglio")
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Carica Allegato</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+        </div>
+    }
+
+
+    <!-- Info Registro -->
+    <div class="alert alert-light border mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="mb-1">
+                    <i class="bi bi-file-earmark-text me-2"></i>@Model.RegistroOggetto
+                </h6>
+                @if (!string.IsNullOrWhiteSpace(Model.RegistroNumeroProtocollo))
+                {
+                    <small class="text-muted">Protocollo: <code>@Model.RegistroNumeroProtocollo</code></small>
+                }
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Torna ai dettagli
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Form Upload -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cloud-upload me-2"></i>Carica Nuovo Allegato
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <input type="hidden" asp-for="RegistroContrattiId" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- Dropzone Area -->
+                        <div class="mb-4">
+                            <label asp-for="File" class="form-label">File <span class="text-danger">*</span></label>
+                            <div class="dropzone-container border rounded p-4 text-center" id="dropzone">
+                                <input asp-for="File" type="file" class="d-none" id="fileInput" required />
+                                <div id="dropzone-content">
+                                    <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
+                                    <p class="mb-2 mt-3">
+                                        Trascina qui il file oppure
+                                        <a href="#" class="text-primary" id="browseLink">sfoglia</a>
+                                    </p>
+                                    <small class="text-muted">
+                                        Formati: @string.Join(", ", Model.AllowedExtensions ?? new[] { "pdf", "doc", "docx", "xls", "xlsx" })
+                                        <br>
+                                        Dimensione massima: @((Model.MaxFileSize / (1024 * 1024)).ToString("N0")) MB
+                                    </small>
+                                </div>
+                                <div id="file-preview" class="d-none">
+                                    <i class="bi bi-file-earmark-check display-4 text-success"></i>
+                                    <p class="mb-1 mt-3 fw-semibold" id="file-name"></p>
+                                    <small class="text-muted" id="file-size"></small>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeFile">
+                                            <i class="bi bi-x-lg me-1"></i>Rimuovi
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <span asp-validation-for="File" class="text-danger"></span>
+                        </div>
+
+                        <!-- Tipo Documento -->
+                        <div class="mb-3">
+                            <label asp-for="TipoDocumentoId" class="form-label">Tipo Documento</label>
+                            <select asp-for="TipoDocumentoId" asp-items="Model.TipiDocumentoSelectList" class="form-select">
+                                <option value="">-- Seleziona tipo (opzionale) --</option>
+                            </select>
+                            <span asp-validation-for="TipoDocumentoId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Descrizione -->
+                        <div class="mb-4">
+                            <label asp-for="Descrizione" class="form-label">Descrizione</label>
+                            <textarea asp-for="Descrizione" class="form-control" rows="2"
+                                      placeholder="Descrizione opzionale dell'allegato" maxlength="500"></textarea>
+                            <span asp-validation-for="Descrizione" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                <span id="descrizione-count">0</span>/500 caratteri
+                            </small>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mb-4 d-none" id="upload-progress">
+                            <label class="form-label">Caricamento in corso...</label>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" style="width: 0%;" id="progress-bar">
+                                    0%
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-cloud-upload me-1"></i> Carica Allegato
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Allegati Esistenti -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-paperclip me-2"></i>Allegati Esistenti
+                    </h5>
+                    @if (Model.AllegatiEsistenti?.Any() == true)
+                    {
+                        <span class="badge bg-secondary">@Model.AllegatiEsistenti.Count()</span>
+                    }
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AllegatiEsistenti?.Any() == true)
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var allegato in Model.AllegatiEsistenti.Take(10))
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="text-truncate" style="max-width: 200px;">
+                                        <i class="@allegato.FileIcon @allegato.FileIconColor me-2"></i>
+                                        <span class="small" title="@allegato.NomeFile">@allegato.NomeFile</span>
+                                    </div>
+                                    <a asp-action="Download" asp-route-id="@allegato.Id"
+                                       class="btn btn-sm btn-outline-primary" title="Scarica">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        @if (Model.AllegatiEsistenti.Count() > 10)
+                        {
+                            <div class="p-2 text-center border-top">
+                                <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" class="small">
+                                    Visualizza tutti (@Model.AllegatiEsistenti.Count())
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-folder2-open display-6 text-muted"></i>
+                            <p class="text-muted small mt-2 mb-0">Nessun allegato</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informazioni
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Formati accettati: <strong>@string.Join(", ", Model.AllowedExtensions ?? new[] { "pdf", "doc", "docx" })</strong>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Dimensione massima: <strong>@((Model.MaxFileSize / (1024 * 1024)).ToString("N0")) MB</strong>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-info me-2"></i>
+                            I file vengono archiviati in modo sicuro
+                        </li>
+                        <li>
+                            <i class="bi bi-shield-check text-primary me-2"></i>
+                            Accesso riservato agli utenti autorizzati
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .dropzone-container {
+            border: 2px dashed #dee2e6 !important;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background-color: #f8f9fa;
+        }
+
+            .dropzone-container:hover,
+            .dropzone-container.dragover {
+                border-color: #0d6efd !important;
+                background-color: #e7f1ff;
+            }
+
+            .dropzone-container.has-file {
+                border-color: #198754 !important;
+                background-color: #d1e7dd;
+            }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            const dropzone = $('#dropzone');
+            const fileInput = $('#fileInput');
+            const dropzoneContent = $('#dropzone-content');
+            const filePreview = $('#file-preview');
+            const fileName = $('#file-name');
+            const fileSize = $('#file-size');
+            const removeFileBtn = $('#removeFile');
+            const browseLink = $('#browseLink');
+            const descrizioneTextarea = $('#Descrizione');
+            const descrizioneCount = $('#descrizione-count');
+            const uploadForm = $('#uploadForm');
+            const submitBtn = $('#submitBtn');
+            const progressContainer = $('#upload-progress');
+            const progressBar = $('#progress-bar');
+
+            const maxFileSize = @(Model.MaxFileSize);
+            const allowedExtensions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AllowedExtensions ?? new[] { "pdf", "doc", "docx" }));
+
+            // Contatore caratteri descrizione
+            function updateDescrizioneCount() {
+                descrizioneCount.text(descrizioneTextarea.val().length);
+            }
+            descrizioneTextarea.on('input', updateDescrizioneCount);
+            updateDescrizioneCount();
+
+            // Click su dropzone o link sfoglia
+            browseLink.on('click', function (e) {
+                e.preventDefault();
+                fileInput.trigger('click');
+            });
+
+            dropzone.on('click', function (e) {
+                if (e.target === dropzone[0] || $(e.target).closest('#dropzone-content').length) {
+                    fileInput.trigger('click');
+                }
+            });
+
+            // Drag & Drop
+            dropzone.on('dragover dragenter', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.addClass('dragover');
+            });
+
+            dropzone.on('dragleave dragend drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.removeClass('dragover');
+            });
+
+            dropzone.on('drop', function (e) {
+                const files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            // Selezione file
+            fileInput.on('change', function () {
+                if (this.files.length > 0) {
+                    handleFile(this.files[0]);
+                }
+            });
+
+            // Gestione file selezionato
+            function handleFile(file) {
+                // Validazione estensione
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes('.' + extension) && !allowedExtensions.includes(extension)) {
+                    alert('Formato file non supportato. Formati accettati: ' + allowedExtensions.join(', '));
+                    resetFileInput();
+                    return;
+                }
+
+                // Validazione dimensione
+                if (file.size > maxFileSize) {
+                    alert('Il file supera la dimensione massima consentita di ' + (maxFileSize / (1024 * 1024)) + ' MB');
+                    resetFileInput();
+                    return;
+                }
+
+                // Mostra preview
+                fileName.text(file.name);
+                fileSize.text(formatFileSize(file.size));
+                dropzoneContent.addClass('d-none');
+                filePreview.removeClass('d-none');
+                dropzone.addClass('has-file');
+
+                // Aggiorna input file se drop
+                if (fileInput[0].files.length === 0) {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput[0].files = dataTransfer.files;
+                }
+            }
+
+            // Rimuovi file
+            removeFileBtn.on('click', function (e) {
+                e.stopPropagation();
+                resetFileInput();
+            });
+
+            function resetFileInput() {
+                fileInput.val('');
+                dropzoneContent.removeClass('d-none');
+                filePreview.addClass('d-none');
+                dropzone.removeClass('has-file');
+            }
+
+            // Formatta dimensione file
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Submit con progress (per upload AJAX, opzionale)
+            uploadForm.on('submit', function (e) {
+                if (!fileInput[0].files.length) {
+                    e.preventDefault();
+                    alert('Seleziona un file da caricare.');
+                    return false;
+                }
+
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Caricamento...');
+            });
+        });
+    </script>
+}

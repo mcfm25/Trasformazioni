@@ -1,0 +1,119 @@
+﻿@model Trasformazioni.Models.ViewModels.UserProfileViewModel
+@{
+    ViewData["Title"] = "Modifica Profilo";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8 col-xl-7">
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h1 class="h3 fw-bold mb-1">Modifica Profilo</h1>
+                <p class="text-muted mb-0">Aggiorna le tue informazioni personali</p>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form asp-action="Edit" asp-controller="Profile" method="post">
+                        <input type="hidden" asp-for="Id" />
+
+                        <!-- Validation Summary -->
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- Nome e Cognome -->
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label asp-for="Nome" class="form-label fw-semibold">Nome</label>
+                                <input asp-for="Nome"
+                                       class="form-control"
+                                       placeholder="Mario"
+                                       autocomplete="given-name" />
+                                <span asp-validation-for="Nome" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Cognome" class="form-label fw-semibold">Cognome</label>
+                                <input asp-for="Cognome"
+                                       class="form-control"
+                                       placeholder="Rossi"
+                                       autocomplete="family-name" />
+                                <span asp-validation-for="Cognome" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                            <input asp-for="Email"
+                                   class="form-control"
+                                   placeholder="nome@esempio.it"
+                                   autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                            <div class="form-text small">
+                                Modificando l'email dovrai confermare il nuovo indirizzo.
+                            </div>
+                        </div>
+
+                        <!-- Telefono -->
+                        <div class="mb-3">
+                            <label asp-for="PhoneNumber" class="form-label fw-semibold">Telefono</label>
+                            <input asp-for="PhoneNumber"
+                                   class="form-control"
+                                   placeholder="+39 123 456 7890"
+                                   autocomplete="tel" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Reparto -->
+                        <div class="mb-3">
+@*                             <label asp-for="Reparto" class="form-label fw-semibold">Reparto</label>
+                            <input asp-for="Reparto"
+                                   class="form-control"
+                                   placeholder="Es: Amministrazione"
+                                   autocomplete="organization-title" />
+                            <span asp-validation-for="Reparto" class="text-danger small"></span> *@
+                            <label asp-for="RepartoId" class="form-label">Reparto</label>
+                            <select asp-for="RepartoId" asp-items="Model.RepartiSelectList" class="form-select">
+                                <option value="">-- Seleziona Reparto --</option>
+                            </select>
+                            <span asp-validation-for="RepartoId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Data Assunzione -->
+                        <div class="mb-4">
+                            <label asp-for="DataAssunzione" class="form-label fw-semibold">Data Assunzione</label>
+                            <input asp-for="DataAssunzione"
+                                   class="form-control"
+                                   type="date" />
+                            <span asp-validation-for="DataAssunzione" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a asp-action="Index" asp-controller="Profile" class="btn btn-outline-secondary">
+                                Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Salva Modifiche
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="alert alert-light border mt-3" role="alert">
+                <p class="mb-0 small">
+                    <strong>Nota:</strong> Le modifiche al profilo saranno visibili immediatamente dopo il salvataggio.
+                    Per modificare la password, utilizza la sezione dedicata.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

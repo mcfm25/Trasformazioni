@@ -1,0 +1,211 @@
+﻿@model Trasformazioni.Models.ViewModels.UserListViewModel
+@{
+    ViewData["Title"] = "Dettagli Utente";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-9">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">Dettagli Utente</h1>
+                    <p class="text-muted mb-0">Visualizza e gestisci le informazioni dell'utente</p>
+                </div>
+                <div>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
+                        </svg>
+                        Torna alla lista
+                    </a>
+                </div>
+            </div>
+
+            <!-- Success/Error Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="row g-4">
+                <!-- User Info Card -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <h5 class="card-title fw-semibold mb-0">Informazioni Personali</h5>
+                                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                    Modifica
+                                </a>
+                            </div>
+
+                            <div class="row g-3">
+                                <!-- Nome Completo -->
+                                <div class="col-12">
+                                    <div class="pb-3 border-bottom">
+                                        <label class="form-label text-muted small mb-1">Nome Completo</label>
+                                        <p class="mb-0 fw-semibold">@Model.NomeCompleto</p>
+                                    </div>
+                                </div>
+
+                                <!-- Nome e Cognome -->
+                                <div class="col-md-6">
+                                    <div class="pb-3 border-bottom">
+                                        <label class="form-label text-muted small mb-1">Nome</label>
+                                        <p class="mb-0">@Model.Nome</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="pb-3 border-bottom">
+                                        <label class="form-label text-muted small mb-1">Cognome</label>
+                                        <p class="mb-0">@Model.Cognome</p>
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="col-12">
+                                    <div class="pb-3 border-bottom">
+                                        <label class="form-label text-muted small mb-1">Email</label>
+                                        <p class="mb-0">@Model.Email</p>
+                                    </div>
+                                </div>
+
+                                <!-- Reparto -->
+                                <div class="col-md-6">
+                                    <div class="pb-3 border-bottom">
+                                        <label class="form-label text-muted small mb-1">Reparto</label>
+                                        <p class="mb-0">
+                                            @if (!string.IsNullOrEmpty(Model.RepartoNome))
+                                            {
+                                                @Model.RepartoNome
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Non specificato</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Data Assunzione -->
+                                <div class="col-md-6">
+                                    <div class="pb-3 border-bottom">
+                                        <label class="form-label text-muted small mb-1">Data Assunzione</label>
+                                        <p class="mb-0">@Model.DataAssunzione.ToString("dd/MM/yyyy")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Roles Card -->
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h5 class="card-title fw-semibold mb-3">Ruoli Assegnati</h5>
+
+                            @if (Model.Ruoli.Any())
+                            {
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var role in Model.Ruoli)
+                                    {
+                                        <span class="badge bg-info text-dark fs-6 px-3 py-2">@role</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted mb-0">Nessun ruolo assegnato a questo utente.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Status Card -->
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body p-4">
+                            <h6 class="fw-semibold mb-3">Stato Account</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                @if (Model.IsAttivo)
+                                {
+                                    <span class="badge bg-success fs-6 px-3 py-2">Attivo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary fs-6 px-3 py-2">Non Attivo</span>
+                                }
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                @if (Model.IsAttivo)
+                                {
+                                    <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-warning w-100" onclick="return confirm('Sei sicuro di voler disattivare questo utente?')">
+                                            Disattiva Utente
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-success w-100">
+                                            Attiva Utente
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions Card -->
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body p-4">
+                            <h6 class="fw-semibold mb-3">Azioni</h6>
+                            <div class="d-grid gap-2">
+                                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
+                                    </svg>
+                                    Modifica Utente
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="card border-danger">
+                        <div class="card-body p-4">
+                            <h6 class="fw-semibold text-danger mb-3">Zona Pericolosa</h6>
+                            <p class="small text-muted mb-3">
+                                L'eliminazione è permanente e non può essere annullata.
+                            </p>
+                            <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Sei sicuro di voler eliminare questo utente? Questa azione non può essere annullata.')">
+                                    Elimina Utente
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

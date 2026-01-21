@@ -1,0 +1,222 @@
+﻿@model Trasformazioni.Models.ViewModels.UserCreateViewModel
+@{
+    ViewData["Title"] = "Crea Nuovo Utente";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-9">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">Crea Nuovo Utente</h1>
+                    <p class="text-muted mb-0">Compila i campi per creare un nuovo utente nel sistema</p>
+                </div>
+                <div>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Indietro
+                    </a>
+                </div>
+            </div>
+
+            <form asp-action="Create" asp-controller="User" method="post">
+
+                <!-- Validation Summary -->
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-4">
+                    <!-- Personal Info Card -->
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-body p-4">
+                                <h5 class="card-title fw-semibold mb-4">Informazioni Personali</h5>
+
+                                <!-- Nome e Cognome -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label asp-for="Nome" class="form-label fw-semibold">Nome</label>
+                                        <input asp-for="Nome"
+                                               class="form-control"
+                                               placeholder="Mario"
+                                               autocomplete="given-name"
+                                               autofocus />
+                                        <span asp-validation-for="Nome" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Cognome" class="form-label fw-semibold">Cognome</label>
+                                        <input asp-for="Cognome"
+                                               class="form-control"
+                                               placeholder="Rossi"
+                                               autocomplete="family-name" />
+                                        <span asp-validation-for="Cognome" class="text-danger small"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                                    <input asp-for="Email"
+                                           class="form-control"
+                                           placeholder="nome@esempio.it"
+                                           autocomplete="email" />
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
+                                </div>
+
+                                <!-- Telefono -->
+                                <div class="mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label fw-semibold">Telefono</label>
+                                    <input asp-for="PhoneNumber"
+                                           class="form-control"
+                                           placeholder="+39 123 456 7890"
+                                           autocomplete="tel" />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                                </div>
+
+                                <!-- Reparto -->
+                                <div class="mb-3">
+@*                                     <label asp-for="Reparto" class="form-label fw-semibold">Reparto</label>
+                                    <input asp-for="Reparto"
+                                           class="form-control"
+                                           placeholder="Es: Amministrazione"
+                                           autocomplete="organization-title" />
+                                    <span asp-validation-for="Reparto" class="text-danger small"></span> *@
+                                    <label asp-for="RepartoId" class="form-label">Reparto</label>
+                                    <select asp-for="RepartoId" asp-items="Model.RepartiSelectList" class="form-select">
+                                        <option value="">-- Seleziona Reparto --</option>
+                                    </select>
+                                    <span asp-validation-for="RepartoId" class="text-danger"></span>
+                                </div>
+
+                                <!-- Data Assunzione -->
+                                <div class="mb-3">
+                                    <label asp-for="DataAssunzione" class="form-label fw-semibold">Data Assunzione</label>
+                                    <input asp-for="DataAssunzione"
+                                           class="form-control"
+                                           type="date" />
+                                    <span asp-validation-for="DataAssunzione" class="text-danger small"></span>
+                                </div>
+
+                                <!-- Password -->
+                                <div class="mb-3">
+                                    <label asp-for="Password" class="form-label fw-semibold">Password</label>
+                                    <input asp-for="Password"
+                                           class="form-control"
+                                           placeholder="Minimo 8 caratteri"
+                                           autocomplete="new-password" />
+                                    <span asp-validation-for="Password" class="text-danger small"></span>
+                                    <div class="form-text small">
+                                        La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola e un numero.
+                                    </div>
+                                </div>
+
+                                <!-- Confirm Password -->
+                                <div class="mb-3">
+                                    <label asp-for="ConfirmPassword" class="form-label fw-semibold">Conferma Password</label>
+                                    <input asp-for="ConfirmPassword"
+                                           class="form-control"
+                                           placeholder="Ripeti la password"
+                                           autocomplete="new-password" />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Roles Card -->
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body p-4">
+                                <h5 class="card-title fw-semibold mb-3">Gestione Ruoli</h5>
+
+                                <p class="text-muted small mb-3">
+                                    Seleziona i ruoli da assegnare al nuovo utente
+                                </p>
+
+                                @if (Model.AvailableRoles.Any())
+                                {
+                                    <div class="row g-2">
+                                        @foreach (var role in Model.AvailableRoles)
+                                        {
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           name="SelectedRoles"
+                                                           value="@role.RoleName"
+                                                           id="role_@role.RoleName"
+                                                           @(role.IsSelected ? "checked" : "") />
+                                                    <label class="form-check-label" for="role_@role.RoleName">
+                                                        @role.RoleName
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0">Nessun ruolo disponibile</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Sidebar -->
+                    <div class="col-lg-4">
+                        <!-- Status Card -->
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-body p-4">
+                                <h6 class="fw-semibold mb-3">Stato Account</h6>
+
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsAttivo"
+                                           class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           id="isAttivoSwitch" />
+                                    <label class="form-check-label" for="isAttivoSwitch">
+                                        <span class="fw-semibold">Account Attivo</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-text small mt-2">
+                                    Gli utenti non attivi non possono accedere al sistema
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Card -->
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body p-4">
+                                <h6 class="fw-semibold mb-3">Crea Utente</h6>
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+                                        </svg>
+                                        Crea Utente
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        Annulla
+                                    </a>
+                                </div>
+
+                                <div class="alert alert-light border mt-3 mb-0" role="alert">
+                                    <p class="mb-0 small">
+                                        L'utente riceverà un'email con le credenziali di accesso.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

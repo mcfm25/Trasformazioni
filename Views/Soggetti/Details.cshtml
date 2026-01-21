@@ -1,0 +1,426 @@
+﻿@using Trasformazioni.Models.Enums
+@using Trasformazioni.Models.ViewModels
+@model SoggettoDetailsViewModel
+@{
+    ViewData["Title"] = "Dettaglio Soggetto";
+}
+
+<div class="container-fluid">
+    <!-- Header con azioni -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">
+                <i class="bi bi-person-badge-fill"></i> @Model.NomeCompleto
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Soggetti</a></li>
+                    <li class="breadcrumb-item active">Dettaglio</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Torna alla Lista
+                </a>
+                @if (User.IsInRole("Amministrazione") || User.IsInRole("Manager"))
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Modifica
+                    </a>
+                }
+                @if (User.IsInRole("Amministrazione"))
+                {
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Elimina
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna Sinistra -->
+        <div class="col-lg-8">
+
+            <!-- Card Classificazione -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-tag-fill"></i> Classificazione</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Codice Interno:</strong>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.CodiceInterno))
+                                {
+                                    <span class="badge bg-secondary fs-6">@Model.CodiceInterno</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non impostato</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Tipo:</strong>
+                            <p class="mb-0">
+                                @if (Model.TipoSoggetto == TipoSoggetto.Azienda)
+                                {
+                                    <span class="badge bg-primary fs-6">
+                                        <i class="bi bi-building"></i> Azienda
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info fs-6">
+                                        <i class="bi bi-person"></i> Persona Fisica
+                                    </span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Natura:</strong>
+                            <p class="mb-0">
+                                @if (Model.NaturaGiuridica == NaturaGiuridica.PA)
+                                {
+                                    <span class="badge bg-success fs-6">PA</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary fs-6">Privato</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Ruolo:</strong>
+                            <p class="mb-0">
+                                @if (Model.IsCliente && Model.IsFornitore)
+                                {
+                                    <span class="badge bg-warning text-dark fs-6">Cliente & Fornitore</span>
+                                }
+                                else if (Model.IsCliente)
+                                {
+                                    <span class="badge bg-primary fs-6">Cliente</span>
+                                }
+                                else if (Model.IsFornitore)
+                                {
+                                    <span class="badge bg-info fs-6">Fornitore</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Dati Anagrafici -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-vcard"></i> Dati Anagrafici</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.TipoSoggetto == TipoSoggetto.Azienda)
+                    {
+                        <!-- Dati Azienda -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <strong>Denominazione / Ragione Sociale:</strong>
+                                <p class="mb-0">@(Model.Denominazione ?? "-")</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Referente:</strong>
+                                <p class="mb-0">@(Model.Referente ?? "-")</p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Dati Persona Fisica -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Nome:</strong>
+                                <p class="mb-0">@(Model.Nome ?? "-")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Cognome:</strong>
+                                <p class="mb-0">@(Model.Cognome ?? "-")</p>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- P.IVA e CF - SEMPRE VISIBILI -->
+                    <div class="row mt-3 pt-3 border-top">
+                        <div class="col-md-6">
+                            <strong>Partita IVA:</strong>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.PartitaIVA))
+                                {
+                                    <span class="badge bg-dark">@Model.PartitaIVA</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Codice Fiscale:</strong>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.CodiceFiscale))
+                                {
+                                    <span class="badge bg-dark">@Model.CodiceFiscale</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Codice SDI + Codice IPA -->
+                    <div class="row mt-3 pt-3 border-top">
+                        <div class="col-md-6">
+                            <strong>Codice SDI:</strong>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.CodiceSDI))
+                                {
+                                    <span class="badge bg-secondary">@Model.CodiceSDI</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Non impostato</span>
+                                }
+                            </p>
+                        </div>
+                        @if (Model.NaturaGiuridica == NaturaGiuridica.PA)
+                        {
+                            <div class="col-md-6">
+                                <strong>Codice IPA:</strong>
+                                <p class="mb-0">
+                                    @if (!string.IsNullOrEmpty(Model.CodiceIPA))
+                                    {
+                                        <span class="badge bg-success">@Model.CodiceIPA</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">⚠ Obbligatorio per PA</span>
+                                    }
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Contatti -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-envelope-fill"></i> Contatti</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <strong>Email:</strong>
+                            <p class="mb-0">
+                                <a href="mailto:@Model.Email" class="text-decoration-none">
+                                    <i class="bi bi-envelope"></i> @Model.Email
+                                </a>
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>Telefono:</strong>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.Telefono))
+                                {
+                                    <a href="tel:@Model.Telefono" class="text-decoration-none">
+                                        <i class="bi bi-telephone"></i> @Model.Telefono
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>PEC:</strong>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.PEC))
+                                {
+                                    <a href="mailto:@Model.PEC" class="text-decoration-none">
+                                        <i class="bi bi-envelope-at"></i> @Model.PEC
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Indirizzo -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt-fill"></i> Indirizzo</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.IndirizzoCompleto) && Model.IndirizzoCompleto != "N/D")
+                    {
+                        <p class="lead mb-0">
+                            <i class="bi bi-house-door"></i> @Model.IndirizzoCompleto
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Indirizzo non disponibile</p>
+                    }
+
+                    <!-- Dettaglio indirizzo -->
+                    <div class="row mt-3 pt-3 border-top small text-muted">
+                        <div class="col-md-3">
+                            <strong>Via:</strong> @(Model.TipoVia ?? "-") @(Model.NomeVia ?? "-")
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Civico:</strong> @(Model.NumeroCivico ?? "-")
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Città:</strong> @(Model.Citta ?? "-")
+                        </div>
+                        <div class="col-md-2">
+                            <strong>CAP:</strong> @(Model.CAP ?? "-")
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Prov.:</strong> @(Model.Provincia ?? "-")
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Colonna Destra -->
+        <div class="col-lg-4">
+
+            <!-- Card Dati Commerciali -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-credit-card-fill"></i> Dati Commerciali</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Condizioni di Pagamento:</strong>
+                        <p class="mb-0">@(Model.CondizioniPagamento ?? "-")</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>IBAN:</strong>
+                        <p class="mb-0">
+                            @if (!string.IsNullOrEmpty(Model.IBAN))
+                            {
+                                <code class="text-dark">@Model.IBAN</code>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </p>
+                    </div>
+                    @if (Model.IsFornitore && Model.ScontoPartner.HasValue)
+                    {
+                        <div class="alert alert-info mb-0">
+                            <strong>Sconto Partner:</strong>
+                            <h4 class="mb-0">@Model.ScontoPartner.Value.ToString("0.00")%</h4>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Card Note -->
+            @if (!string.IsNullOrEmpty(Model.Note))
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-sticky-fill"></i> Note</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0" style="white-space: pre-wrap;">@Model.Note</p>
+                    </div>
+                </div>
+            }
+
+            <!-- Card Info Audit -->
+            <div class="card mb-4 border-secondary">
+                <div class="card-header bg-light text-muted">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informazioni Sistema</h6>
+                </div>
+                <div class="card-body small text-muted">
+                    <div class="mb-2">
+                        <strong>Creato il:</strong><br />
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.CreatedBy))
+                    {
+                        <div class="mb-2">
+                            <strong>Creato da:</strong><br />
+                            @Model.CreatedBy
+                        </div>
+                    }
+                    <div class="mb-2">
+                        <strong>Modificato il:</strong><br />
+                        @Model.ModifiedAt?.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.ModifiedBy))
+                    {
+                        <div class="mb-0">
+                            <strong>Modificato da:</strong><br />
+                            @Model.ModifiedBy
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Card Azioni Rapide -->
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightning-fill"></i> Azioni Rapide</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="mailto:@Model.Email" class="btn btn-outline-primary">
+                            <i class="bi bi-envelope"></i> Invia Email
+                        </a>
+                        @if (!string.IsNullOrEmpty(Model.Telefono))
+                        {
+                            <a href="tel:@Model.Telefono" class="btn btn-outline-success">
+                                <i class="bi bi-telephone"></i> Chiama
+                            </a>
+                        }
+                        @if (User.IsInRole("Amministrazione") || User.IsInRole("Manager"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning">
+                                <i class="bi bi-pencil"></i> Modifica Dati
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

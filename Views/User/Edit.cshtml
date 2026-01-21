@@ -1,0 +1,198 @@
+﻿@model Trasformazioni.Models.ViewModels.UserEditViewModel
+@{
+    ViewData["Title"] = "Modifica Utente";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-9">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">Modifica Utente</h1>
+                    <p class="text-muted mb-0">Aggiorna le informazioni dell'utente</p>
+                </div>
+                <div>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        Annulla
+                    </a>
+                </div>
+            </div>
+
+            <form asp-action="Edit" asp-controller="User" method="post">
+                <input type="hidden" asp-for="Id" />
+
+                <!-- Validation Summary -->
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-4">
+                    <!-- Personal Info Card -->
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-body p-4">
+                                <h5 class="card-title fw-semibold mb-4">Informazioni Personali</h5>
+
+                                <!-- Nome e Cognome -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label asp-for="Nome" class="form-label fw-semibold">Nome</label>
+                                        <input asp-for="Nome"
+                                               class="form-control"
+                                               placeholder="Mario"
+                                               autocomplete="given-name" />
+                                        <span asp-validation-for="Nome" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Cognome" class="form-label fw-semibold">Cognome</label>
+                                        <input asp-for="Cognome"
+                                               class="form-control"
+                                               placeholder="Rossi"
+                                               autocomplete="family-name" />
+                                        <span asp-validation-for="Cognome" class="text-danger small"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                                    <input asp-for="Email"
+                                           class="form-control"
+                                           placeholder="nome@esempio.it"
+                                           autocomplete="email" />
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
+                                </div>
+
+                                <!-- Telefono -->
+                                <div class="mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label fw-semibold">Telefono</label>
+                                    <input asp-for="PhoneNumber"
+                                           class="form-control"
+                                           placeholder="+39 123 456 7890"
+                                           autocomplete="tel" />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                                </div>
+
+                                <!-- Reparto -->
+                                <div class="mb-3">
+@*                                     <label asp-for="Reparto" class="form-label fw-semibold">Reparto</label>
+                                    <input asp-for="Reparto"
+                                           class="form-control"
+                                           placeholder="Es: Amministrazione"
+                                           autocomplete="organization-title" />
+                                    <span asp-validation-for="Reparto" class="text-danger small"></span> *@
+                                    <label asp-for="RepartoId" class="form-label">Reparto</label>
+                                    <select asp-for="RepartoId" asp-items="Model.RepartiSelectList" class="form-select">
+                                        <option value="">-- Seleziona Reparto --</option>
+                                    </select>
+                                    <span asp-validation-for="RepartoId" class="text-danger"></span>
+                                </div>
+
+                                <!-- Data Assunzione -->
+                                <div class="mb-3">
+                                    <label asp-for="DataAssunzione" class="form-label fw-semibold">Data Assunzione</label>
+                                    <input asp-for="DataAssunzione"
+                                           class="form-control"
+                                           type="date" />
+                                    <span asp-validation-for="DataAssunzione" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Roles Card -->
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body p-4">
+                                <h5 class="card-title fw-semibold mb-3">Gestione Ruoli</h5>
+
+                                <p class="text-muted small mb-3">
+                                    Seleziona i ruoli da assegnare all'utente
+                                </p>
+
+                                @if (Model.AvailableRoles.Any())
+                                {
+                                    <div class="row g-2">
+                                        @foreach (var role in Model.AvailableRoles)
+                                        {
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           name="SelectedRoles"
+                                                           value="@role.RoleName"
+                                                           id="role_@role.RoleName"
+                                                           @(role.IsSelected ? "checked" : "") />
+                                                    <label class="form-check-label" for="role_@role.RoleName">
+                                                        @role.RoleName
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0">Nessun ruolo disponibile</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Sidebar -->
+                    <div class="col-lg-4">
+                        <!-- Status Card -->
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-body p-4">
+                                <h6 class="fw-semibold mb-3">Stato Account</h6>
+
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsAttivo"
+                                           class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           id="isAttivoSwitch" />
+                                    <label class="form-check-label" for="isAttivoSwitch">
+                                        <span class="fw-semibold">Account Attivo</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-text small mt-2">
+                                    Gli utenti non attivi non possono accedere al sistema
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Card -->
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body p-4">
+                                <h6 class="fw-semibold mb-3">Salva Modifiche</h6>
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z" />
+                                        </svg>
+                                        Salva Modifiche
+                                    </button>
+                                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                                        Annulla
+                                    </a>
+                                </div>
+
+                                <div class="alert alert-light border mt-3 mb-0" role="alert">
+                                    <p class="mb-0 small">
+                                        Le modifiche saranno applicate immediatamente
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,424 @@
+@model IEnumerable<Trasformazioni.Models.ViewModels.RichiestaIntegrazioneListViewModel>
+
+@{
+    ViewData["Title"] = "Richieste Integrazione";
+    
+    // Recupera dati ViewBag
+    var lottoId = ViewBag.LottoId as Guid?;
+    var codiceLotto = ViewBag.CodiceLotto as string ?? "";
+    var descrizioneLotto = ViewBag.DescrizioneLotto as string ?? "";
+    var statoLotto = ViewBag.StatoLotto;
+    var codiceGara = ViewBag.CodiceGara as string ?? "";
+    var titoloGara = ViewBag.TitoloGara as string ?? "";
+    
+    var filter = ViewBag.Filter as string ?? "tutte";
+    var totaleRichieste = ViewBag.TotaleRichieste as int? ?? 0;
+    var richiesteAperte = ViewBag.RichiesteAperte as int? ?? 0;
+    var richiesteChiuse = ViewBag.RichiesteChiuse as int? ?? 0;
+    var richiesteNonRisposte = ViewBag.RichiesteNonRisposte as int? ?? 0;
+    
+    var canCreateNewRequest = ViewBag.CanCreateNewRequest as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Index">Lotti</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId">@codiceLotto</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Richieste Integrazione</li>
+        </ol>
+    </nav>
+
+    <!-- Header con Info Lotto -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="bi bi-arrows-angle-contract text-warning me-2"></i>
+                Richieste Integrazione: @codiceLotto
+            </h2>
+            <p class="text-muted mb-0">
+                Gestione ping-pong richieste/risposte con l'ente
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            @if (canCreateNewRequest)
+            {
+                <a asp-action="Create" asp-route-lottoId="@lottoId" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Registra Nuova Richiesta
+                </a>
+            }
+            <a asp-controller="Lotti" asp-action="Details" asp-route-id="@lottoId" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Torna al Lotto
+            </a>
+        </div>
+    </div>
+
+    <!-- Card Info Lotto -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Codice Lotto:</dt>
+                        <dd class="col-sm-8"><strong>@codiceLotto</strong></dd>
+                        
+                        <dt class="col-sm-4">Descrizione:</dt>
+                        <dd class="col-sm-8">@descrizioneLotto</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Gara:</dt>
+                        <dd class="col-sm-8">@codiceGara - @titoloGara</dd>
+                        
+                        <dt class="col-sm-4">Stato Lotto:</dt>
+                        <dd class="col-sm-8">
+                            @if (statoLotto != null)
+                            {
+                                @switch (statoLotto.ToString())
+                                {
+                                    case "InEsame":
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-search me-1"></i>
+                                            In Esame
+                                        </span>
+                                        break;
+                                    case "RichiestaIntegrazione":
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-arrows-angle-contract me-1"></i>
+                                            Richiesta Integrazione
+                                        </span>
+                                        break;
+                                    case "Vinto":
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-trophy me-1"></i>
+                                            Vinto
+                                        </span>
+                                        break;
+                                    case "Perso":
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Perso
+                                        </span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@statoLotto</span>
+                                        break;
+                                }
+                            }
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@totaleRichieste</h3>
+                    <small class="text-muted">Totale Richieste</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-warning">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-warning">@richiesteAperte</h3>
+                    <small class="text-muted">Aperte</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-success">@richiesteChiuse</h3>
+                    <small class="text-muted">Chiuse</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-danger">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-danger">@richiesteNonRisposte</h3>
+                    <small class="text-muted">Non Risposte</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Filtri -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link @(filter == "tutte" ? "active" : "")" 
+               asp-action="Index" 
+               asp-route-lottoId="@lottoId" 
+               asp-route-filter="tutte">
+                <i class="bi bi-list-ul me-1"></i>
+                Tutte (@totaleRichieste)
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link @(filter == "aperte" ? "active" : "")" 
+               asp-action="Index" 
+               asp-route-lottoId="@lottoId" 
+               asp-route-filter="aperte">
+                <i class="bi bi-exclamation-circle me-1"></i>
+                Aperte (@richiesteAperte)
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link @(filter == "chiuse" ? "active" : "")" 
+               asp-action="Index" 
+               asp-route-lottoId="@lottoId" 
+               asp-route-filter="chiuse">
+                <i class="bi bi-check-circle me-1"></i>
+                Chiuse (@richiesteChiuse)
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tabella Richieste -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 80px;">#Prog</th>
+                                <th style="width: 120px;">Data Richiesta</th>
+                                <th>Testo Richiesta</th>
+                                <th style="width: 100px;" class="text-center">Stato</th>
+                                <th style="width: 120px;">Data Risposta</th>
+                                <th style="width: 150px;" class="text-center">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var richiesta in Model)
+                            {
+                                // Determina classe riga in base allo stato
+                                var rowClass = "";
+                                var isScaduta = false;
+                                
+                                if (!richiesta.IsChiusa)
+                                {
+                                    // Richiesta aperta
+                                    var giorniDaRichiesta = (DateTime.Now - richiesta.DataRichiestaEnte).Days;
+                                    
+                                    if (giorniDaRichiesta > 7 && !richiesta.DataRispostaAzienda.HasValue)
+                                    {
+                                        // Scaduta (>7 giorni e non risposta)
+                                        rowClass = "table-danger";
+                                        isScaduta = true;
+                                    }
+                                    else
+                                    {
+                                        // Aperta normale
+                                        rowClass = "table-warning";
+                                    }
+                                }
+                                else
+                                {
+                                    // Chiusa
+                                    rowClass = "table-success";
+                                }
+                                
+                                <tr class="@rowClass">
+                                    <!-- Numero Progressivo -->
+                                    <td>
+                                        <strong>#@richiesta.NumeroProgressivo</strong>
+                                    </td>
+                                    
+                                    <!-- Data Richiesta -->
+                                    <td>
+                                        <small>@richiesta.DataRichiestaEnte.ToString("dd/MM/yyyy")</small>
+                                    </td>
+                                    
+                                    <!-- Testo Richiesta (anteprima) -->
+                                    <td>
+                                        @{
+                                            var testoAnteprima = richiesta.TestoRichiestaEnte?.Length > 100
+                                                ? richiesta.TestoRichiestaEnte.Substring(0, 100) + "..."
+                                                : richiesta.TestoRichiestaEnte;
+                                        }
+                                        @testoAnteprima
+                                        
+                                        @if (!string.IsNullOrWhiteSpace(richiesta.NomeFileRichiesta))
+                                        {
+                                            <br />
+                                            <small class="text-muted">
+                                                <i class="bi bi-paperclip"></i> @richiesta.NomeFileRichiesta
+                                            </small>
+                                        }
+                                    </td>
+                                    
+                                    <!-- Stato -->
+                                    <td class="text-center">
+                                        @if (richiesta.IsChiusa)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                Chiusa
+                                            </span>
+                                        }
+                                        else if (isScaduta)
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                                Scaduta
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-hourglass-split me-1"></i>
+                                                Aperta
+                                            </span>
+                                        }
+                                    </td>
+                                    
+                                    <!-- Data Risposta -->
+                                    <td>
+                                        @if (richiesta.DataRispostaAzienda.HasValue)
+                                        {
+                                            <small>@richiesta.DataRispostaAzienda.Value.ToString("dd/MM/yyyy")</small>
+                                            @if (!string.IsNullOrWhiteSpace(richiesta.RispostoDaNome))
+                                            {
+                                                <br />
+                                                <small class="text-muted">@richiesta.RispostoDaNome</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    
+                                    <!-- Azioni -->
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Visualizza -->
+                                            <a asp-action="Details" 
+                                               asp-route-richiestaId="@richiesta.Id" 
+                                               class="btn btn-outline-primary"
+                                               title="Visualizza dettaglio">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            
+                                            <!-- Rispondi (solo se aperta) -->
+                                            @if (!richiesta.IsChiusa && !richiesta.DataRispostaAzienda.HasValue)
+                                            {
+                                                <a asp-action="Rispondi" 
+                                                   asp-route-richiestaId="@richiesta.Id" 
+                                                   class="btn btn-outline-success"
+                                                   title="Rispondi">
+                                                    <i class="bi bi-reply"></i>
+                                                </a>
+                                            }
+                                            
+                                            <!-- Elimina (solo se non risposta) -->
+                                            @if (!richiesta.DataRispostaAzienda.HasValue)
+                                            {
+                                                <button type="button" 
+                                                        class="btn btn-outline-danger"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteModal-@richiesta.Id"
+                                                        title="Elimina">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Modal Conferma Eliminazione -->
+                                @if (!richiesta.DataRispostaAzienda.HasValue)
+                                {
+                                    <div class="modal fade" id="deleteModal-@richiesta.Id" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">
+                                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                                        Conferma Eliminazione
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Sei sicuro di voler eliminare la richiesta <strong>#@richiesta.NumeroProgressivo</strong>?</p>
+                                                    <p class="text-muted mb-0">
+                                                        <small>Data richiesta: @richiesta.DataRichiestaEnte.ToString("dd/MM/yyyy")</small>
+                                                    </p>
+                                                    <p class="text-danger mb-0">
+                                                        <strong>Attenzione:</strong> Questa azione non può essere annullata.
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        Annulla
+                                                    </button>
+                                                    <form asp-action="Delete" asp-route-richiestaId="@richiesta.Id" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-danger">
+                                                            <i class="bi bi-trash me-2"></i>
+                                                            Sì, elimina
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Legenda -->
+                <div class="alert alert-light border mt-3 mb-0">
+                    <small>
+                        <strong>Legenda:</strong>
+                        <span class="badge bg-danger ms-2">Scaduta</span> Oltre 7 giorni senza risposta
+                        <span class="badge bg-warning text-dark ms-2">Aperta</span> Da evadere
+                        <span class="badge bg-success ms-2">Chiusa</span> Risposta inviata
+                    </small>
+                </div>
+            }
+            else
+            {
+                <!-- Nessuna richiesta -->
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h4 class="mt-3">Nessuna richiesta trovata</h4>
+                    @if (filter == "aperte")
+                    {
+                        <p class="text-muted">Non ci sono richieste aperte per questo lotto.</p>
+                    }
+                    else if (filter == "chiuse")
+                    {
+                        <p class="text-muted">Non ci sono richieste chiuse per questo lotto.</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Non sono ancora state registrate richieste per questo lotto.</p>
+                        @if (canCreateNewRequest)
+                        {
+                            <a asp-action="Create" asp-route-lottoId="@lottoId" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Registra Prima Richiesta
+                            </a>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

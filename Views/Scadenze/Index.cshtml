@@ -1,0 +1,566 @@
+@model Trasformazioni.Models.ViewModels.ScadenzaFilterViewModel
+
+@{
+    ViewData["Title"] = "Scadenzario";
+
+    var scadenzeImminenti = ViewBag.ScadenzeImminenti as IEnumerable<Trasformazioni.Models.ViewModels.ScadenzaListViewModel> ?? Enumerable.Empty<Trasformazioni.Models.ViewModels.ScadenzaListViewModel>();
+    var scadenzeScadute = ViewBag.ScadenzeScadute as IEnumerable<Trasformazioni.Models.ViewModels.ScadenzaListViewModel> ?? Enumerable.Empty<Trasformazioni.Models.ViewModels.ScadenzaListViewModel>();
+    var scadenzeOggi = ViewBag.ScadenzeOggi as IEnumerable<Trasformazioni.Models.ViewModels.ScadenzaListViewModel> ?? Enumerable.Empty<Trasformazioni.Models.ViewModels.ScadenzaListViewModel>();
+
+    var totaleScadenze = ViewBag.TotaleScadenze ?? 0;
+    var totaleAttive = ViewBag.TotaleAttive ?? 0;
+    var totaleCompletate = ViewBag.TotaleCompletate ?? 0;
+    var totaleScaduteCount = ViewBag.TotaleScadute ?? 0;
+}
+
+@section Styles {
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
+    <style>
+        .fc-event {
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .fc-event:hover {
+            opacity: 0.9;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 1.3rem;
+        }
+        .stat-card {
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        .scadenza-item {
+            border-left: 4px solid;
+            transition: background-color 0.2s;
+        }
+        .scadenza-item:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        .scadenza-scaduta {
+            border-left-color: #dc3545;
+        }
+        .scadenza-oggi {
+            border-left-color: #fd7e14;
+        }
+        .scadenza-imminente {
+            border-left-color: #ffc107;
+        }
+        .scadenza-attiva {
+            border-left-color: #0d6efd;
+        }
+        .scadenza-completata {
+            border-left-color: #198754;
+            opacity: 0.7;
+        }
+        .legenda-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .legenda-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        #calendar {
+            min-height: 500px;
+        }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>
+                        <i class="bi bi-calendar-check text-primary"></i>
+                        Scadenzario
+                    </h2>
+                    <p class="text-muted mb-0">Gestione scadenze gare, lotti e preventivi</p>
+                </div>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nuova Scadenza
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messaggi -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Statistiche Rapide -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar3 fs-2"></i>
+                    <h3 class="mt-2 mb-0">@totaleScadenze</h3>
+                    <small>Totale Scadenze</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock fs-2"></i>
+                    <h3 class="mt-2 mb-0">@totaleAttive</h3>
+                    <small>Attive</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle fs-2"></i>
+                    <h3 class="mt-2 mb-0">@totaleCompletate</h3>
+                    <small>Completate</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-danger text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle fs-2"></i>
+                    <h3 class="mt-2 mb-0">@totaleScaduteCount</h3>
+                    <small>Scadute</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna Filtri -->
+        <div class="col-lg-3 mb-4">
+            <!-- Filtri -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel"></i> Filtri Calendario
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo Scadenza</label>
+                            <select id="filterTipo" class="form-select form-select-sm">
+                                <option value="">Tutti i tipi</option>
+                                @foreach (var tipo in ViewBag.TipiScadenza as IEnumerable<SelectListItem>)
+                                {
+                                    <option value="@tipo.Value">@tipo.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Gara</label>
+                            <select id="filterGara" class="form-select form-select-sm">
+                                <option value="">Tutte le gare</option>
+                                @foreach (var gara in ViewBag.GareFilter as SelectList)
+                                {
+                                    <option value="@gara.Value">@gara.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Lotto</label>
+                            <select id="filterLotto" class="form-select form-select-sm">
+                                <option value="">Tutti i lotti</option>
+                                @foreach (var lotto in ViewBag.LottiFilter as SelectList)
+                                {
+                                    <option value="@lotto.Value">@lotto.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" id="filterMostraCompletate" class="form-check-input" checked />
+                                <label class="form-check-label" for="filterMostraCompletate">
+                                    Mostra completate
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="button" id="btnApplicaFiltri" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-funnel-fill"></i> Applica Filtri
+                        </button>
+                        <button type="button" id="btnResetFiltri" class="btn btn-outline-secondary btn-sm w-100 mt-2">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Legenda -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-palette"></i> Legenda
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="legenda-item mb-2">
+                        <div class="legenda-color" style="background-color: #dc3545;"></div>
+                        <span>Scaduta</span>
+                    </div>
+                    <div class="legenda-item mb-2">
+                        <div class="legenda-color" style="background-color: #fd7e14;"></div>
+                        <span>Oggi</span>
+                    </div>
+                    <div class="legenda-item mb-2">
+                        <div class="legenda-color" style="background-color: #ffc107;"></div>
+                        <span>In scadenza (7 giorni)</span>
+                    </div>
+                    <div class="legenda-item mb-2">
+                        <div class="legenda-color" style="background-color: #0d6efd;"></div>
+                        <span>Attiva</span>
+                    </div>
+                    <div class="legenda-item">
+                        <div class="legenda-color" style="background-color: #198754;"></div>
+                        <span>Completata</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna Calendario -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar3"></i> Calendario Scadenze
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna Scadenze Imminenti -->
+        <div class="col-lg-3 mb-4">
+            <!-- Scadenze Scadute -->
+            @if (scadenzeScadute.Any())
+            {
+                <div class="card border-danger mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            Scadute (@scadenzeScadute.Count())
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" style="max-height: 200px; overflow-y: auto;">
+                            @foreach (var scadenza in scadenzeScadute.Take(5))
+                            {
+                                <a asp-action="Details" asp-route-id="@scadenza.Id" 
+                                   class="list-group-item list-group-item-action scadenza-item scadenza-scaduta">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong class="d-block">@scadenza.Descrizione</strong>
+                                            <small class="text-muted">
+                                                @scadenza.DataScadenza.ToString("dd/MM/yyyy")
+                                                @if (!string.IsNullOrEmpty(scadenza.CodiceLotto))
+                                                {
+                                                    <span>• @scadenza.CodiceLotto</span>
+                                                }
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-success btn-completa" 
+                                                data-id="@scadenza.Id" 
+                                                title="Completa"
+                                                onclick="event.preventDefault(); completaScadenza('@scadenza.Id');">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Scadenze Oggi -->
+            @if (scadenzeOggi.Any())
+            {
+                <div class="card border-warning mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="bi bi-calendar-event-fill"></i>
+                            Oggi (@scadenzeOggi.Count())
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" style="max-height: 200px; overflow-y: auto;">
+                            @foreach (var scadenza in scadenzeOggi)
+                            {
+                                <a asp-action="Details" asp-route-id="@scadenza.Id" 
+                                   class="list-group-item list-group-item-action scadenza-item scadenza-oggi">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong class="d-block">@scadenza.Descrizione</strong>
+                                            <small class="text-muted">
+                                                @if (!string.IsNullOrEmpty(scadenza.CodiceLotto))
+                                                {
+                                                    <span>@scadenza.CodiceLotto</span>
+                                                }
+                                                else if (!string.IsNullOrEmpty(scadenza.CodiceGara))
+                                                {
+                                                    <span>@scadenza.CodiceGara</span>
+                                                }
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-success btn-completa" 
+                                                data-id="@scadenza.Id" 
+                                                title="Completa"
+                                                onclick="event.preventDefault(); completaScadenza('@scadenza.Id');">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Scadenze Imminenti (prossimi 7 giorni) -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-fill"></i>
+                        Prossimi 7 giorni (@scadenzeImminenti.Count())
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    @if (scadenzeImminenti.Any())
+                    {
+                        <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                            @foreach (var scadenza in scadenzeImminenti.OrderBy(s => s.DataScadenza))
+                            {
+                                var itemClass = scadenza.IsOggi ? "scadenza-oggi" : "scadenza-imminente";
+                                <a asp-action="Details" asp-route-id="@scadenza.Id" 
+                                   class="list-group-item list-group-item-action scadenza-item @itemClass">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong class="d-block">@scadenza.Descrizione</strong>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar"></i>
+                                                @scadenza.DataScadenza.ToString("dd/MM/yyyy")
+                                                @if (!string.IsNullOrEmpty(scadenza.CodiceLotto))
+                                                {
+                                                    <span>• @scadenza.CodiceLotto</span>
+                                                }
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-success btn-completa" 
+                                                data-id="@scadenza.Id" 
+                                                title="Completa"
+                                                onclick="event.preventDefault(); completaScadenza('@scadenza.Id');">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center text-muted">
+                            <i class="bi bi-check-circle fs-3"></i>
+                            <p class="mb-0 mt-2">Nessuna scadenza nei prossimi 7 giorni</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Dettaglio Rapido -->
+<div class="modal fade" id="modalDettaglioScadenza" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dettaglio Scadenza</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalDettaglioBody">
+                <!-- Contenuto caricato via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                <a href="#" id="btnVediDettaglio" class="btn btn-primary">
+                    <i class="bi bi-eye"></i> Vedi Dettaglio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/it.global.min.js"></script>
+    
+    <script>
+        let calendar;
+        const antiForgeryToken = $('input[name="__RequestVerificationToken"]').val() || 
+                                 document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initCalendar();
+            initFilterEvents();
+        });
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'it',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                buttonText: {
+                    today: 'Oggi',
+                    month: 'Mese',
+                    week: 'Settimana',
+                    list: 'Lista'
+                },
+                events: function(info, successCallback, failureCallback) {
+                    fetchEvents(info.start, info.end, successCallback, failureCallback);
+                },
+                eventClick: function(info) {
+                    info.jsEvent.preventDefault();
+                    if (info.event.url) {
+                        window.location.href = info.event.url;
+                    }
+                },
+                eventDidMount: function(info) {
+                    // Tooltip con dettagli
+                    const props = info.event.extendedProps;
+                    let tooltipContent = `<strong>${info.event.title}</strong><br/>`;
+                    tooltipContent += `${props.descrizione}<br/>`;
+                    if (props.codiceGara) tooltipContent += `Gara: ${props.codiceGara}<br/>`;
+                    if (props.codiceLotto) tooltipContent += `Lotto: ${props.codiceLotto}<br/>`;
+                    if (props.isAutomatica) tooltipContent += `<em>(Automatica)</em>`;
+
+                    new bootstrap.Tooltip(info.el, {
+                        title: tooltipContent,
+                        html: true,
+                        placement: 'top',
+                        trigger: 'hover',
+                        container: 'body'
+                    });
+                },
+                dayMaxEvents: 3,
+                moreLinkClick: 'popover',
+                height: 'auto'
+            });
+
+            calendar.render();
+        }
+
+        function fetchEvents(start, end, successCallback, failureCallback) {
+            const tipo = $('#filterTipo').val();
+            const garaId = $('#filterGara').val();
+            const lottoId = $('#filterLotto').val();
+            const mostraCompletate = $('#filterMostraCompletate').is(':checked');
+
+            // Formatta le date come YYYY-MM-DD (senza timezone UTC)
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            $.ajax({
+                url: '@Url.Action("GetEventiCalendario")',
+                type: 'GET',
+                data: {
+                    start: formatDate(start),
+                    end: formatDate(end),
+                    tipo: tipo || null,
+                    garaId: garaId || null,
+                    lottoId: lottoId || null,
+                    mostraCompletate: mostraCompletate
+                },
+                success: function(data) {
+                    successCallback(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Errore caricamento eventi:', error);
+                    failureCallback(error);
+                }
+            });
+        }
+
+        function initFilterEvents() {
+            $('#btnApplicaFiltri').on('click', function() {
+                calendar.refetchEvents();
+            });
+
+            $('#btnResetFiltri').on('click', function() {
+                $('#filterTipo').val('');
+                $('#filterGara').val('');
+                $('#filterLotto').val('');
+                $('#filterMostraCompletate').prop('checked', true);
+                calendar.refetchEvents();
+            });
+        }
+
+        function completaScadenza(id) {
+            if (!confirm('Confermi di voler completare questa scadenza?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Completa")',
+                type: 'POST',
+                data: { id: id },
+                headers: {
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Mostra messaggio e ricarica la pagina
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert('Errore: ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Errore:', error);
+                    alert('Errore durante il completamento della scadenza');
+                }
+            });
+        }
+    </script>
+}

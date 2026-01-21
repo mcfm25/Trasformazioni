@@ -1,0 +1,269 @@
+@model Trasformazioni.Models.ViewModels.TipoDocumentoDetailsViewModel
+@using Trasformazioni.Models.Enums
+@using Trasformazioni.Mappings
+
+@{
+    ViewData["Title"] = $"Dettaglio: {Model.Nome}";
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Index">
+                <i class="bi bi-file-earmark-text"></i> Tipi Documento
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Nome</li>
+    </ol>
+</nav>
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-file-earmark-text"></i> @Model.Nome
+        </h1>
+        <div class="mt-2">
+            <span class="badge @TipoDocumentoMappingExtensions.GetAreaBadgeClass(Model.Area) fs-6">
+                <i class="bi @TipoDocumentoMappingExtensions.GetAreaIcon(Model.Area)"></i>
+                @Model.AreaDisplayName
+            </span>
+            @if (Model.IsSystem)
+            {
+                <span class="badge bg-secondary fs-6 ms-2">
+                    <i class="bi bi-lock"></i> Sistema
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-info fs-6 ms-2">
+                    <i class="bi bi-person"></i> Personalizzato
+                </span>
+            }
+        </div>
+    </div>
+    <div class="btn-group">
+        @if (Model.CanEdit)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Modifica
+            </a>
+        }
+        @if (Model.CanDelete)
+        {
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Elimina
+            </a>
+        }
+    </div>
+</div>
+
+<div class="row">
+    <!-- Contenuto Principale (8 col) -->
+    <div class="col-lg-8">
+        <!-- Informazioni -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informazioni</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">Nome</label>
+                        <p class="mb-0 fs-5"><strong>@Model.Nome</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Area</label>
+                        <p class="mb-0">
+                            <span class="badge @TipoDocumentoMappingExtensions.GetAreaBadgeClass(Model.Area) fs-6">
+                                <i class="bi @TipoDocumentoMappingExtensions.GetAreaIcon(Model.Area)"></i>
+                                @Model.AreaDisplayName
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="mb-3">
+                    <label class="text-muted small">Descrizione</label>
+                    @if (!string.IsNullOrEmpty(Model.Descrizione))
+                    {
+                        <p class="mb-0">@Model.Descrizione</p>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-muted fst-italic">Nessuna descrizione disponibile</p>
+                    }
+                </div>
+
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="text-muted small">Tipo</label>
+                        <p class="mb-0">
+                            @if (Model.IsSystem)
+                            {
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-lock"></i> Tipo di Sistema
+                                </span>
+                                <br />
+                                <small class="text-muted">Non eliminabile</small>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">
+                                    <i class="bi bi-person"></i> Personalizzato
+                                </span>
+                                <br />
+                                <small class="text-muted">Creato dall'utente</small>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Documenti Associati</label>
+                        <p class="mb-0">
+                            @if (Model.NumeroDocumenti > 0)
+                            {
+                                <span class="badge bg-primary fs-5">@Model.NumeroDocumenti</span>
+                                <br />
+                                <small class="text-muted">documenti utilizzano questo tipo</small>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Nessun documento associato</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Limitazioni -->
+        @if (Model.IsSystem || Model.NumeroDocumenti > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Limitazioni</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        @if (Model.IsSystem)
+                        {
+                            <li>
+                                <strong>Tipo di sistema:</strong> Il nome e l'area non possono essere modificati.
+                                Solo la descrizione è modificabile.
+                            </li>
+                            <li>
+                                <strong>Non eliminabile:</strong> I tipi di sistema non possono essere eliminati
+                                in quanto necessari per il corretto funzionamento dell'applicativo.
+                            </li>
+                        }
+                        @if (Model.NumeroDocumenti > 0)
+                        {
+                            <li>
+                                <strong>Documenti associati:</strong> L'area non può essere modificata
+                                perché ci sono @Model.NumeroDocumenti documento/i associato/i.
+                            </li>
+                            @if (!Model.IsSystem)
+                            {
+                                <li>
+                                    <strong>Non eliminabile:</strong> Per eliminare questo tipo, è necessario
+                                    prima riassegnare o eliminare tutti i documenti associati.
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Sidebar (4 col) -->
+    <div class="col-lg-4">
+        <!-- Azioni -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning"></i> Azioni</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    @if (Model.CanEdit)
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Modifica
+                        </a>
+                    }
+                    @if (Model.CanDelete)
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Elimina
+                        </a>
+                    }
+                    <hr />
+                    <a asp-action="Index" asp-route-area="@((int)Model.Area)" class="btn btn-outline-primary">
+                        <i class="bi bi-list"></i> Altri tipi "@Model.AreaDisplayName"
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-grid"></i> Tutti i Tipi
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Audit -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history"></i> Informazioni Sistema</h6>
+            </div>
+            <div class="card-body small">
+                <div class="mb-2">
+                    <label class="text-muted">Creato il:</label>
+                    <p class="mb-0">
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        @if (!string.IsNullOrEmpty(Model.CreatedBy))
+                        {
+                            <br /><small class="text-muted">da @Model.CreatedBy</small>
+                        }
+                    </p>
+                </div>
+                @if (Model.ModifiedAt.HasValue)
+                {
+                    <div>
+                        <label class="text-muted">Ultima modifica:</label>
+                        <p class="mb-0">
+                            @Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                            @if (!string.IsNullOrEmpty(Model.ModifiedBy))
+                            {
+                                <br /><small class="text-muted">da @Model.ModifiedBy</small>
+                            }
+                        </p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

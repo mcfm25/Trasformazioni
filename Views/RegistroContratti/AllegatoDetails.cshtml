@@ -1,0 +1,507 @@
+@model Trasformazioni.Models.ViewModels.AllegatoRegistroDetailsViewModel
+@{
+    ViewData["Title"] = $"Dettaglio Allegato - {Model.NomeFile}";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header con Breadcrumb -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Registro Contratti</a></li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId">
+                            @(Model.RegistroNumeroProtocollo ?? "Dettaglio")
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Allegato</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-3">
+                <div class="@Model.FileIconColor" style="font-size: 2.5rem;">
+                    <i class="fa-solid @Model.FileIcon"></i>
+                </div>
+                <div>
+                    <h2 class="mb-0">@Model.NomeFile</h2>
+                    <p class="text-muted mb-0">
+                        <span class="badge bg-secondary me-2">@Model.Estensione</span>
+                        @Model.DimensioneFormattata
+                        <span class="mx-2">•</span>
+                        <span class="@Model.StatoUploadBadgeClass">@Model.StatoUploadDescrizione</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Colonna Preview -->
+        <div class="col-lg-8">
+            <!-- Card Preview -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-eye me-2"></i>Anteprima
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <a asp-action="Download" asp-route-id="@Model.Id" 
+                           class="btn btn-outline-primary" title="Scarica">
+                            <i class="bi bi-download me-1"></i>Scarica
+                        </a>
+                        @if (Model.CanPreview)
+                        {
+                            <a asp-action="Preview" asp-route-id="@Model.Id" 
+                               target="_blank" class="btn btn-outline-secondary" title="Apri in nuova scheda">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>Nuova Scheda
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.CanPreview)
+                    {
+                        @if (Model.MimeType == "application/pdf")
+                        {
+                            <!-- Preview PDF -->
+                            <div class="ratio" style="width: 100%; height: 600px; border: none;"> @* style="--bs-aspect-ratio: 141.42%;"> *@
+                                <iframe src="@Url.Action("Preview", new { id = Model.Id })" 
+                                        class="border-0"
+                                        title="Anteprima PDF">
+                                </iframe>
+                            </div>
+                        }
+                        else if (Model.MimeType.StartsWith("image/"))
+                        {
+                            <!-- Preview Immagine -->
+                            <div class="text-center p-4 bg-light">
+                                <img src="@Url.Action("Preview", new { id = Model.Id })" 
+                                     alt="@Model.NomeFile"
+                                     class="img-fluid rounded shadow-sm"
+                                     style="max-height: 600px; cursor: zoom-in;"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal" />
+                                <p class="text-muted mt-2 mb-0">
+                                    <small><i class="bi bi-zoom-in me-1"></i>Clicca per ingrandire</small>
+                                </p>
+                            </div>
+                        }
+                        else if (Model.MimeType.StartsWith("text/"))
+                        {
+                            <!-- Preview Testo -->
+                            <div class="p-3">
+                                <iframe src="@Url.Action("Preview", new { id = Model.Id })" 
+                                        class="w-100 border rounded"
+                                        style="min-height: 400px;"
+                                        title="Anteprima Testo">
+                                </iframe>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <!-- No Preview Available -->
+                        <div class="text-center py-5">
+                            <div class="@Model.FileIconColor mb-3" style="font-size: 5rem; opacity: 0.5;">
+                                <i class="fa-solid @Model.FileIcon"></i>
+                            </div>
+                            <h5 class="text-muted">Anteprima non disponibile</h5>
+                            <p class="text-muted mb-4">
+                                Questo tipo di file (@Model.MimeType) non supporta l'anteprima nel browser.
+                            </p>
+                            <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-primary btn-lg">
+                                <i class="bi bi-download me-2"></i>Scarica il File
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Card Descrizione -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-card-text me-2"></i>Descrizione
+                    </h5>
+                    @if (Model.CanEdit)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnEditDescrizione">
+                            <i class="bi bi-pencil me-1"></i>Modifica
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    <div id="descrizioneView">
+                        @if (!string.IsNullOrWhiteSpace(Model.Descrizione))
+                        {
+                            <p class="mb-0">@Model.Descrizione</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0 fst-italic">Nessuna descrizione</p>
+                        }
+                    </div>
+                    <div id="descrizioneEdit" style="display: none;">
+                        <textarea id="txtDescrizione" class="form-control mb-2" rows="3" 
+                                  placeholder="Inserisci una descrizione...">@Model.Descrizione</textarea>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-sm" id="btnSaveDescrizione">
+                                <i class="bi bi-check-lg me-1"></i>Salva
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCancelDescrizione">
+                                Annulla
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Azioni -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>Azioni
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-primary">
+                            <i class="bi bi-download me-2"></i>Scarica File
+                        </a>
+                        
+                        @if (Model.CanPreview)
+                        {
+                            <a asp-action="Preview" asp-route-id="@Model.Id" 
+                               target="_blank" class="btn btn-outline-primary">
+                                <i class="bi bi-box-arrow-up-right me-2"></i>Apri in Nuova Scheda
+                            </a>
+                        }
+
+                        <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Torna al Registro
+                        </a>
+
+                        @if (Model.CanDelete)
+                        {
+                            <hr class="my-2">
+                            <button type="button" class="btn btn-outline-danger" id="btnDeleteAllegato">
+                                <i class="bi bi-trash me-2"></i>Elimina Allegato
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informazioni File -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informazioni File
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Nome File</span>
+                            <span class="text-end" style="max-width: 200px; word-break: break-all;">
+                                @Model.NomeFile
+                            </span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Tipo</span>
+                            <span class="badge bg-info">@Model.TipoDocumentoNome</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Dimensione</span>
+                            <span>@Model.DimensioneFormattata</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Formato</span>
+                            <span><code>@Model.MimeType</code></span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Stato</span>
+                            <span class="@Model.StatoUploadBadgeClass">@Model.StatoUploadDescrizione</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Anteprima</span>
+                            @if (Model.CanPreview)
+                            {
+                                <span class="badge bg-success">Disponibile</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Non disponibile</span>
+                            }
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Riferimento Registro -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>Registro Associato
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Numero Protocollo</small>
+                        <a asp-action="Details" asp-route-id="@Model.RegistroContrattiId" 
+                           class="fw-semibold text-decoration-none">
+                            @(Model.RegistroNumeroProtocollo ?? "N/D")
+                        </a>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.RegistroOggetto))
+                    {
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Oggetto</small>
+                            <span>@Model.RegistroOggetto</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.RegistroRagioneSociale))
+                    {
+                        <div class="mb-0">
+                            <small class="text-muted d-block">Cliente</small>
+                            <span>@Model.RegistroRagioneSociale</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Informazioni Caricamento -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Cronologia
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Caricato il</span>
+                            <span>@Model.DataCaricamento.ToString("dd/MM/yyyy HH:mm")</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Caricato da</span>
+                            <span>@(string.IsNullOrWhiteSpace(Model.CaricatoDaNome) ? "N/D" : Model.CaricatoDaNome)</span>
+                        </li>
+                        @if (Model.ModifiedAt.HasValue)
+                        {
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Modificato il</span>
+                                <span>@Model.ModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Modificato da</span>
+                                <span>@(Model.ModifiedBy ?? "N/D")</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Immagine Full Screen -->
+@if (Model.MimeType.StartsWith("image/"))
+{
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">@Model.NomeFile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-0">
+                    <img src="@Url.Action("Preview", new { id = Model.Id })" 
+                         alt="@Model.NomeFile"
+                         class="img-fluid mb-2" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal Conferma Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Conferma Eliminazione
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare l'allegato <strong>@Model.NomeFile</strong>?</p>
+                <p class="text-muted mb-0">Questa azione non può essere annullata.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmDelete">
+                    <i class="bi bi-trash me-1"></i>Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const allegatoId = '@Model.Id';
+            const registroId = '@Model.RegistroContrattiId';
+
+            // === GESTIONE DESCRIZIONE ===
+            const descrizioneView = $('#descrizioneView');
+            const descrizioneEdit = $('#descrizioneEdit');
+            const txtDescrizione = $('#txtDescrizione');
+            const originalDescrizione = txtDescrizione.val();
+
+            $('#btnEditDescrizione').on('click', function () {
+                descrizioneView.hide();
+                descrizioneEdit.show();
+                txtDescrizione.focus();
+            });
+
+            $('#btnCancelDescrizione').on('click', function () {
+                txtDescrizione.val(originalDescrizione);
+                descrizioneEdit.hide();
+                descrizioneView.show();
+            });
+
+            $('#btnSaveDescrizione').on('click', function () {
+                const btn = $(this);
+                const nuovaDescrizione = txtDescrizione.val().trim();
+
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Salvataggio...');
+
+                $.ajax({
+                    url: '@Url.Action("UpdateAllegatoDescrizione")',
+                    type: 'POST',
+                    data: {
+                        id: allegatoId,
+                        descrizione: nuovaDescrizione
+                    },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Aggiorna la view
+                            if (nuovaDescrizione) {
+                                descrizioneView.html('<p class="mb-0">' + nuovaDescrizione + '</p>');
+                            } else {
+                                descrizioneView.html('<p class="text-muted mb-0 fst-italic">Nessuna descrizione</p>');
+                            }
+                            descrizioneEdit.hide();
+                            descrizioneView.show();
+                            showToast('success', response.message);
+                        } else {
+                            showToast('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        showToast('danger', 'Errore durante il salvataggio.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i>Salva');
+                    }
+                });
+            });
+
+            // === GESTIONE ELIMINAZIONE ===
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+            $('#btnDeleteAllegato').on('click', function () {
+                deleteModal.show();
+            });
+
+            $('#btnConfirmDelete').on('click', function () {
+                const btn = $(this);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Eliminazione...');
+
+                $.ajax({
+                    url: '@Url.Action("DeleteAllegato")/' + allegatoId,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        deleteModal.hide();
+                        if (response.success) {
+                            // Redirect al registro
+                            window.location.href = '@Url.Action("Details")/' + registroId + '?message=Allegato eliminato con successo';
+                        } else {
+                            showToast('danger', response.message);
+                        }
+                    },
+                    error: function () {
+                        deleteModal.hide();
+                        showToast('danger', 'Errore durante l\'eliminazione.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="bi bi-trash me-1"></i>Elimina');
+                    }
+                });
+            });
+
+            // === HELPER TOAST ===
+            function showToast(type, message) {
+                // Crea toast dinamico
+                const toastHtml = `
+                    <div class="toast align-items-center text-bg-${type} border-0" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">${message}</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `;
+
+                // Container per i toast (crealo se non esiste)
+                let container = document.querySelector('.toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                    document.body.appendChild(container);
+                }
+
+                container.insertAdjacentHTML('beforeend', toastHtml);
+                const toastEl = container.lastElementChild;
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+
+                // Rimuovi dopo che si è nascosto
+                toastEl.addEventListener('hidden.bs.toast', function () {
+                    toastEl.remove();
+                });
+            }
+        });
+    </script>
+
+    @Html.AntiForgeryToken()
+}
